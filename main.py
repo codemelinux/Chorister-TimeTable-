@@ -36,7 +36,7 @@ load_local_env()
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-me-admin")
 SESSION_SECRET = os.getenv("SESSION_SECRET", "dev-session-secret")
-IS_PRODUCTION = os.getenv("VERCEL_ENV") == "production"
+IS_PRODUCTION = os.getenv("VERCEL_ENV") == "production" or os.getenv("RENDER") == "true"
 
 if IS_PRODUCTION:
     if ADMIN_PASSWORD == "change-me-admin":
