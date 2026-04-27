@@ -6,9 +6,9 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
@@ -17,9 +17,32 @@ import database as db
 
 BASE_DIR = Path(__file__).resolve().parent
 PUBLIC_DIR = BASE_DIR / "public"
+
+
+def load_local_env():
+    env_path = BASE_DIR / ".env"
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip())
+
+
+load_local_env()
+
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-me-admin")
 SESSION_SECRET = os.getenv("SESSION_SECRET", "dev-session-secret")
 IS_PRODUCTION = os.getenv("VERCEL_ENV") == "production"
+
+if IS_PRODUCTION:
+    if ADMIN_PASSWORD == "change-me-admin":
+        raise RuntimeError("ADMIN_PASSWORD must be set in production")
+    if SESSION_SECRET == "dev-session-secret":
+        raise RuntimeError("SESSION_SECRET must be set in production")
 
 app = FastAPI(title="Chorister TimeTable")
 app.add_middleware(
@@ -51,33 +74,33 @@ class LoginBody(BaseModel):
 
 
 class ChoristerCreate(BaseModel):
-    name: str
+    name: str = Field(..., max_length=255)
 
 
 class RosterEntryCreate(BaseModel):
     service_date: str
     hymn_chorister_id: Optional[int] = None
-    hymn_song_title: str = ""
-    hymn_musical_key: str = ""
+    hymn_song_title: str = Field("", max_length=255)
+    hymn_musical_key: str = Field("", max_length=64)
     praise_worship_chorister_id: Optional[int] = None
-    praise_worship_musical_key: str = ""
-    praise_worship_loop_bitrate: str = ""
+    praise_worship_musical_key: str = Field("", max_length=64)
+    praise_worship_loop_bitrate: str = Field("", max_length=64)
     thanksgiving_chorister_id: Optional[int] = None
-    thanksgiving_musical_key: str = ""
-    thanksgiving_loop_bitrate: str = ""
+    thanksgiving_musical_key: str = Field("", max_length=64)
+    thanksgiving_loop_bitrate: str = Field("", max_length=64)
 
 
 class RosterEntryUpdate(BaseModel):
     service_date: Optional[str] = None
     hymn_chorister_id: Optional[int] = None
-    hymn_song_title: Optional[str] = None
-    hymn_musical_key: Optional[str] = None
+    hymn_song_title: Optional[str] = Field(None, max_length=255)
+    hymn_musical_key: Optional[str] = Field(None, max_length=64)
     praise_worship_chorister_id: Optional[int] = None
-    praise_worship_musical_key: Optional[str] = None
-    praise_worship_loop_bitrate: Optional[str] = None
+    praise_worship_musical_key: Optional[str] = Field(None, max_length=64)
+    praise_worship_loop_bitrate: Optional[str] = Field(None, max_length=64)
     thanksgiving_chorister_id: Optional[int] = None
-    thanksgiving_musical_key: Optional[str] = None
-    thanksgiving_loop_bitrate: Optional[str] = None
+    thanksgiving_musical_key: Optional[str] = Field(None, max_length=64)
+    thanksgiving_loop_bitrate: Optional[str] = Field(None, max_length=64)
 
 
 def parse_service_date(value: str) -> date:
@@ -188,6 +211,22 @@ def api_delete_roster_entry(
     _admin: None = Depends(require_admin),
 ):
     db.delete_roster_entry(session, entry_id)
+
+
+@app.get("/api/analytics")
+def api_analytics(
+    from_month: str = Query(..., alias="from"),
+    to_month: str = Query(..., alias="to"),
+    session: Session = Depends(get_session),
+):
+    try:
+        date_from = date.fromisoformat(f"{from_month}-01")
+        date_to_parsed = date.fromisoformat(f"{to_month}-01")
+        last_day = calendar.monthrange(date_to_parsed.year, date_to_parsed.month)[1]
+        date_to = date(date_to_parsed.year, date_to_parsed.month, last_day)
+    except ValueError as exc:
+        raise HTTPException(400, "Invalid month format. Use YYYY-MM.") from exc
+    return db.get_chorister_stats(session, date_from, date_to)
 
 
 if PUBLIC_DIR.exists():

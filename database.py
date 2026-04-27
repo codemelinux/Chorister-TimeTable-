@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, String, create_engine, event, func, select
-from sqlalchemy.orm import Session, declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import Session, declarative_base, relationship, selectinload, sessionmaker
 
 Base = declarative_base()
 
@@ -105,6 +105,11 @@ def list_roster_entries(session: Session, month_start, month_end):
     rows = session.execute(
         select(RosterEntry)
         .where(RosterEntry.service_date >= month_start, RosterEntry.service_date <= month_end)
+        .options(
+            selectinload(RosterEntry.hymn_chorister),
+            selectinload(RosterEntry.praise_worship_chorister),
+            selectinload(RosterEntry.thanksgiving_chorister),
+        )
         .order_by(RosterEntry.service_date)
     ).scalars().all()
     return [serialize_roster_entry(row) for row in rows]
@@ -139,6 +144,28 @@ def delete_roster_entry(session: Session, entry_id: int):
     if row:
         session.delete(row)
         session.commit()
+
+
+def get_chorister_stats(session: Session, date_from, date_to) -> list:
+    rows = session.execute(
+        select(RosterEntry)
+        .where(RosterEntry.service_date >= date_from, RosterEntry.service_date <= date_to)
+        .options(
+            selectinload(RosterEntry.hymn_chorister),
+            selectinload(RosterEntry.praise_worship_chorister),
+            selectinload(RosterEntry.thanksgiving_chorister),
+        )
+    ).scalars().all()
+
+    counts: dict = {}
+    for row in rows:
+        for chorister in [row.hymn_chorister, row.praise_worship_chorister, row.thanksgiving_chorister]:
+            if chorister:
+                if chorister.id not in counts:
+                    counts[chorister.id] = {"chorister_id": chorister.id, "name": chorister.name, "count": 0}
+                counts[chorister.id]["count"] += 1
+
+    return sorted(counts.values(), key=lambda x: x["count"], reverse=True)
 
 
 def serialize_chorister(row: Chorister) -> dict:

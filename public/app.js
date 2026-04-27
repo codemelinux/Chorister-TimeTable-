@@ -22,6 +22,66 @@ async function api(method, path, body) {
   return res.json();
 }
 
+// --- UI helpers ---
+
+function showToast(message, type = "success") {
+  const container = document.getElementById("toastContainer");
+  const id = `toast-${Date.now()}`;
+  const iconMap = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill", warning: "bi-exclamation-triangle-fill" };
+  const icon = iconMap[type] || "bi-info-circle-fill";
+  const el = document.createElement("div");
+  el.id = id;
+  el.className = `toast align-items-center text-bg-${type} border-0`;
+  el.setAttribute("role", "alert");
+  el.setAttribute("aria-live", "assertive");
+  el.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center gap-2">
+        <i class="bi ${icon}"></i> ${escHtml(message)}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>`;
+  container.appendChild(el);
+  const toast = new bootstrap.Toast(el, { delay: 4000 });
+  toast.show();
+  el.addEventListener("hidden.bs.toast", () => el.remove());
+}
+
+function setLoading(btn, loading) {
+  if (loading) {
+    btn.dataset.originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${btn.textContent.trim()}`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.originalHtml || btn.innerHTML;
+  }
+}
+
+function confirmAction(message, confirmLabel = "Delete") {
+  return new Promise((resolve) => {
+    document.getElementById("confirmMessage").textContent = message;
+    document.getElementById("confirmOk").textContent = confirmLabel;
+    const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
+    const okBtn = document.getElementById("confirmOk");
+    const cancelBtn = document.getElementById("confirmCancel");
+
+    function cleanup() {
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      modal.hide();
+    }
+    function onOk() { cleanup(); resolve(true); }
+    function onCancel() { cleanup(); resolve(false); }
+
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    modal.show();
+  });
+}
+
+// --- Auth ---
+
 function setAdminMode(authenticated) {
   isAdmin = authenticated;
   document.getElementById("authStatus").textContent = authenticated ? "Admin mode" : "Public view";
@@ -39,14 +99,19 @@ async function loadSession() {
 
 async function login() {
   const passwordInput = document.getElementById("adminPassword");
+  const btn = document.getElementById("btnSubmitLogin");
+  setLoading(btn, true);
   try {
     await api("POST", "/api/auth/login", { password: passwordInput.value });
     passwordInput.value = "";
     bootstrap.Modal.getInstance(document.getElementById("loginModal")).hide();
     await loadSession();
     await loadRoster();
+    showToast("Logged in as admin.", "success");
   } catch (error) {
-    alert(error.message);
+    showToast(error.message, "danger");
+  } finally {
+    setLoading(btn, false);
   }
 }
 
@@ -54,7 +119,10 @@ async function logout() {
   await api("POST", "/api/auth/logout", {});
   await loadSession();
   await loadRoster();
+  showToast("Logged out.", "success");
 }
+
+// --- Choristers ---
 
 async function loadChoristers() {
   choristers = await api("GET", "/api/choristers");
@@ -82,7 +150,7 @@ function renderChoristersList() {
       const button = document.createElement("button");
       button.className = "btn btn-sm btn-outline-danger";
       button.innerHTML = '<i class="bi bi-trash"></i>';
-      button.addEventListener("click", () => removeChorister(chorister.id));
+      button.addEventListener("click", () => removeChorister(chorister.id, button));
       item.appendChild(button);
     }
 
@@ -102,28 +170,42 @@ function populateChoristerSelects() {
 
 async function addChorister() {
   const input = document.getElementById("newChoristerName");
+  const btn = document.getElementById("btnAddChorister");
   const name = input.value.trim();
-  if (!name) return;
+  if (!name) {
+    showToast("Chorister name cannot be empty.", "warning");
+    return;
+  }
+  setLoading(btn, true);
   try {
     await api("POST", "/api/choristers", { name });
     input.value = "";
     await loadChoristers();
     await loadRoster();
+    showToast(`"${name}" added to choristers.`, "success");
   } catch (error) {
     handleMutationError(error);
+  } finally {
+    setLoading(btn, false);
   }
 }
 
-async function removeChorister(id) {
-  if (!confirm("Remove this chorister from the roster list?")) return;
+async function removeChorister(id, btn) {
+  const confirmed = await confirmAction("Remove this chorister from the roster list?", "Remove");
+  if (!confirmed) return;
+  setLoading(btn, true);
   try {
     await api("DELETE", `/api/choristers/${id}`);
     await loadChoristers();
     await loadRoster();
+    showToast("Chorister removed.", "success");
   } catch (error) {
     handleMutationError(error);
+    setLoading(btn, false);
   }
 }
+
+// --- Month navigation ---
 
 function setMonthPickerValue() {
   const month = String(selectedMonth.getMonth() + 1).padStart(2, "0");
@@ -144,7 +226,10 @@ async function loadRoster() {
   const month = selectedMonth.getMonth() + 1;
   rosterEntries = await api("GET", `/api/roster?year=${year}&month=${month}`);
   renderRosterTable();
+  renderMonthlyStats();
 }
+
+// --- Roster table ---
 
 function renderRosterTable() {
   const tbody = document.getElementById("rosterTableBody");
@@ -181,7 +266,7 @@ function renderRosterTable() {
       const deleteButton = document.createElement("button");
       deleteButton.className = "btn btn-sm btn-outline-danger";
       deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
-      deleteButton.addEventListener("click", () => deleteRosterEntry(entry.id));
+      deleteButton.addEventListener("click", () => deleteRosterEntry(entry.id, deleteButton));
 
       actionsCell.appendChild(editButton);
       actionsCell.appendChild(deleteButton);
@@ -218,6 +303,8 @@ function formatFunction(name, musicalKey, loopBitrate) {
   if (details.length) parts.push(`<span class="function-meta">(${details.join("; ")})</span>`);
   return parts.length ? parts.join(" ") : '<span class="text-muted">Unassigned</span>';
 }
+
+// --- Roster modal ---
 
 function openRosterModal(entry = null) {
   if (!isAdmin) return;
@@ -257,10 +344,12 @@ async function saveRosterEntry() {
   };
 
   if (!payload.service_date) {
-    alert("Service date is required.");
+    showToast("Service date is required.", "warning");
     return;
   }
 
+  const btn = document.getElementById("btnSaveRoster");
+  setLoading(btn, true);
   try {
     if (id) {
       await api("PUT", `/api/roster/${id}`, payload);
@@ -269,18 +358,25 @@ async function saveRosterEntry() {
     }
     bootstrap.Modal.getInstance(document.getElementById("rosterModal")).hide();
     await loadRoster();
+    showToast("Roster entry saved.", "success");
   } catch (error) {
     handleMutationError(error);
+  } finally {
+    setLoading(btn, false);
   }
 }
 
-async function deleteRosterEntry(id) {
-  if (!confirm("Delete this service date from the monthly roster?")) return;
+async function deleteRosterEntry(id, btn) {
+  const confirmed = await confirmAction("Delete this service date from the monthly roster?");
+  if (!confirmed) return;
+  setLoading(btn, true);
   try {
     await api("DELETE", `/api/roster/${id}`);
     await loadRoster();
+    showToast("Service date deleted.", "success");
   } catch (error) {
     handleMutationError(error);
+    setLoading(btn, false);
   }
 }
 
@@ -300,11 +396,75 @@ function handleMutationError(error) {
     setAdminMode(false);
     renderRosterTable();
     renderChoristersList();
-    alert("Your admin session has expired. Please log in again.");
+    showToast("Session expired. Please log in again.", "warning");
+    new bootstrap.Modal(document.getElementById("loginModal")).show();
     return;
   }
-  alert(error.message);
+  showToast(error.message, "danger");
 }
+
+// --- Analytics ---
+
+function renderStatsList(stats, container) {
+  if (!stats || stats.length === 0) {
+    container.innerHTML = '<p class="text-muted small mb-0">No data for this period.</p>';
+    return;
+  }
+  const maxCount = stats[0].count;
+  container.innerHTML = stats.map((s, i) => `
+    <div class="stat-row ${i === 0 ? "stat-top" : ""}">
+      <span class="stat-name">${escHtml(s.name)}</span>
+      <span class="stat-badge">${s.count} ${s.count === 1 ? "slot" : "slots"}</span>
+      <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round((s.count / maxCount) * 100)}%"></div></div>
+    </div>`).join("");
+}
+
+function renderMonthlyStats() {
+  const container = document.getElementById("analyticsMonthOutput");
+  const counts = {};
+  rosterEntries.forEach((entry) => {
+    [
+      [entry.hymn_chorister_id, entry.hymn_chorister_name],
+      [entry.praise_worship_chorister_id, entry.praise_worship_chorister_name],
+      [entry.thanksgiving_chorister_id, entry.thanksgiving_chorister_name],
+    ].forEach(([id, name]) => {
+      if (id && name) {
+        if (!counts[id]) counts[id] = { chorister_id: id, name, count: 0 };
+        counts[id].count += 1;
+      }
+    });
+  });
+  const stats = Object.values(counts).sort((a, b) => b.count - a.count);
+  renderStatsList(stats, container);
+}
+
+async function loadRangeStats() {
+  const from = document.getElementById("analyticsFrom").value;
+  const to = document.getElementById("analyticsTo").value;
+  const container = document.getElementById("analyticsRangeOutput");
+  if (!from || !to) {
+    showToast("Select both From and To months.", "warning");
+    return;
+  }
+  if (from > to) {
+    showToast("From month must be before To month.", "warning");
+    return;
+  }
+  const btn = document.getElementById("btnShowStats");
+  setLoading(btn, true);
+  container.innerHTML = '<p class="text-muted small">Loading…</p>';
+  try {
+    const stats = await api("GET", `/api/analytics?from=${from}&to=${to}`);
+    renderStatsList(stats, container);
+  } catch (error) {
+    showToast(error.message, "danger");
+    container.innerHTML = "";
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+// --- Utilities ---
 
 function formatDate(iso) {
   const [year, month, day] = iso.split("-").map(Number);
@@ -323,11 +483,18 @@ function escHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+// --- Init ---
+
 document.addEventListener("DOMContentLoaded", async () => {
   selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
   await loadSession();
   await loadChoristers();
   await loadRoster();
+
+  // Auto-focus password field when login modal opens
+  document.getElementById("loginModal").addEventListener("shown.bs.modal", () => {
+    document.getElementById("adminPassword").focus();
+  });
 
   document.getElementById("btnLogin").addEventListener("click", () => {
     new bootstrap.Modal(document.getElementById("loginModal")).show();
@@ -350,4 +517,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("monthPicker").addEventListener("change", onMonthChange);
   document.getElementById("btnPrevMonth").addEventListener("click", () => shiftMonth(-1));
   document.getElementById("btnNextMonth").addEventListener("click", () => shiftMonth(1));
+  document.getElementById("btnShowStats").addEventListener("click", loadRangeStats);
 });
