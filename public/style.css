@@ -1,4 +1,15 @@
 /* Developed by Benedict U. */
+/*
+ * Chorister TimeTable — Main Stylesheet
+ *
+ * Design system overview:
+ *   - Dark forest green background (#1c3a27) with white card surfaces
+ *   - Gold navbar accent (#c8a84b), earthy green primary (#4a7c59)
+ *   - Category colours: Hymn=gold, Praise Worship=green, Thanksgiving=coral
+ *   - Typography: Nunito (body), Pacifico (brand/modal titles)
+ *   - All colour tokens are CSS custom properties defined in :root
+ */
+
 :root {
   --bg: #1c3a27;
   --card-bg: #ffffff;
@@ -54,6 +65,41 @@ body {
 }
 
 /* ---- Navbar ---- */
+
+/* Hamburger menu button */
+.navbar-menu-btn {
+  border-color: rgba(255,255,255,0.35);
+  padding: 0.25rem 0.55rem;
+  line-height: 1;
+}
+.navbar-menu-btn:hover, .navbar-menu-btn:focus {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.6);
+}
+
+/* Dropdown panel */
+.navbar-dropdown-menu {
+  min-width: 200px;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  padding: 0.4rem 0;
+  margin-top: 0.4rem;
+}
+.navbar-dropdown-menu .dropdown-item {
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin: 0 0.3rem;
+  width: auto;
+  transition: background 0.12s;
+}
+.navbar-dropdown-menu .dropdown-item:hover { background: var(--col-badge-bg); color: var(--accent); }
+.navbar-dropdown-menu .dropdown-item.text-danger:hover { background: #fdf0ee; color: var(--thanks-color); }
+.navbar-dropdown-menu .dropdown-item.text-warning:hover { background: #fdf8e8; color: var(--hymn-color); }
+.navbar-dropdown-menu .dropdown-divider { margin: 0.3rem 0.8rem; }
+
 .app-navbar {
   background: var(--nav-bg);
   border-bottom: 4px solid var(--nav-border);
@@ -547,6 +593,93 @@ main.container-fluid {
   text-decoration: none;
   display: block;
   margin-top: 0.3rem;
+}
+
+/* ---- All Songs Catalogue section (inside View Lyrics modal) ---- */
+.all-songs-section {
+  border-top: 2px dotted var(--row-divider);
+  padding-top: 1.25rem;
+}
+
+.all-songs-section__header {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--label-muted);
+}
+
+.all-songs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.65rem; }
+
+.all-songs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+
+/* Category filter buttons */
+.all-songs-filter-btn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--col-badge-border);
+  background: transparent;
+  color: var(--label-muted);
+  transition: all 0.15s;
+}
+.all-songs-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+.all-songs-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cat-hymn-btn.active    { background: var(--hymn-color);    border-color: var(--hymn-color); }
+.cat-praise-btn.active  { background: var(--praise-color);  border-color: var(--praise-color); }
+.cat-thanks-btn.active  { background: var(--thanks-color);  border-color: var(--thanks-color); }
+
+.all-song-card {
+  background: #f7faf4;
+  border: 1px solid var(--col-badge-border);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.all-song-card:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+  border-color: var(--accent);
+}
+
+.all-song-card__title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--title-color);
+  margin-bottom: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.all-song-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .all-songs-grid { grid-template-columns: 1fr; }
+}
+
+.lyrics-viewer-body {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  color: var(--text-main);
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
 }
 
 .lyrics-block {

@@ -1,13 +1,26 @@
 // Developed by Benedict U.
-let choristers = [];
-let rosterEntries = [];
-let songs = [];
-let songStats = [];
+// Frontend application script for Chorister TimeTable.
+// Communicates with the FastAPI backend via fetch() (same-origin, cookie-based auth).
+// All user-supplied strings rendered into innerHTML are passed through escHtml()
+// to prevent XSS. Dynamic content set via textContent needs no escaping.
+
+// ---------------------------------------------------------------------------
+// Global state
+// ---------------------------------------------------------------------------
+
+let choristers = [];       // All choristers from /api/choristers
+let rosterEntries = [];    // Current month's roster from /api/roster
+let songs = [];            // All songs from /api/songs
+let songStats = [];        // Song usage counts from /api/songs/stats
 let sortSongsByMostSung = false;
 let selectedMonth = new Date();
 let isAdmin = false;
 let isChorister = false;
-let choristerInfo = null; // {chorister_id, name}
+let choristerInfo = null;  // {chorister_id, name} when a chorister is logged in
+
+// ---------------------------------------------------------------------------
+// API helper
+// ---------------------------------------------------------------------------
 
 async function api(method, path, body) {
   const opts = {
@@ -27,7 +40,9 @@ async function api(method, path, body) {
   return res.json();
 }
 
-// --- UI helpers ---
+// ---------------------------------------------------------------------------
+// UI helpers — toast notifications, loading state, confirm dialog, XSS escape
+// ---------------------------------------------------------------------------
 
 function showToast(message, type = "success") {
   const container = document.getElementById("toastContainer");
@@ -83,7 +98,9 @@ function confirmAction(message, confirmLabel = "Delete") {
   });
 }
 
-// --- Auth ---
+// ---------------------------------------------------------------------------
+// Auth — admin session + chorister session management
+// ---------------------------------------------------------------------------
 
 function setAdminMode(authenticated) {
   isAdmin = authenticated;
@@ -93,6 +110,10 @@ function setAdminMode(authenticated) {
   document.getElementById("btnLogin").classList.toggle("d-none", authenticated);
   document.getElementById("btnLogout").classList.toggle("d-none", !authenticated);
   document.getElementById("actionsHeader").classList.toggle("d-none", !authenticated);
+  const adminDivider = document.getElementById("adminDivider");
+  if (adminDivider) adminDivider.classList.toggle("d-none", !authenticated);
+  const syncAllSection = document.getElementById("syncAllSection");
+  if (syncAllSection) syncAllSection.classList.toggle("d-none", !authenticated);
   updateSongFormVisibility();
 }
 
@@ -199,7 +220,9 @@ async function choristerLogout() {
   showToast("Signed out.", "success");
 }
 
-// --- Choristers ---
+// ---------------------------------------------------------------------------
+// Choristers — list, add, delete, PIN management
+// ---------------------------------------------------------------------------
 
 async function loadChoristers() {
   choristers = await api("GET", "/api/choristers");
@@ -350,7 +373,9 @@ async function removeChorister(id, btn) {
   }
 }
 
-// --- Songs ---
+// ---------------------------------------------------------------------------
+// Songs — library CRUD, song dropdowns, Drive sync buttons
+// ---------------------------------------------------------------------------
 
 async function loadSongs() {
   songs = await api("GET", "/api/songs");
@@ -358,13 +383,66 @@ async function loadSongs() {
 }
 
 function populateSongSelects() {
-  const makeOptions = (filter) =>
-    ['<option value="">-- Select song --</option>']
-      .concat(songs.filter((s) => filter.includes(s.category)).map((s) => `<option value="${s.id}">${escHtml(s.title)}</option>`))
-      .join("");
-  document.getElementById("hymnSongSelect").innerHTML = makeOptions(["hymn", "general"]);
-  document.getElementById("praiseWorshipSongSelect").innerHTML = makeOptions(["praise_worship", "general"]);
-  document.getElementById("thanksgivingSongSelect").innerHTML = makeOptions(["thanksgiving", "general"]);
+  // Called on initial load — no chorister selected yet, show all songs by category
+  refreshSongDropdown("hymnSongSelect", ["hymn", "general"], null);
+  refreshSongDropdown("praiseWorshipSongSelect", ["praise_worship", "general"], null);
+  refreshSongDropdown("thanksgivingSongSelect", ["thanksgiving", "general"], null);
+}
+
+function refreshSongDropdown(selectId, categoryFilter, choristerId) {
+  const el = document.getElementById(selectId);
+  const currentVal = el.value;
+
+  // Songs visible to this chorister slot:
+  // - correct category
+  // - AND (no submitter = admin song, available to all) OR (submitted by the assigned chorister)
+  const visible = songs.filter((s) => {
+    if (!categoryFilter.includes(s.category)) return false;
+    if (!choristerId) return true; // no chorister selected — show all in category
+    return s.submitted_by_chorister_id === choristerId; // strict: only that chorister's songs
+  });
+
+  // Sort by most sung first so popular songs appear at the top
+  visible.sort((a, b) => {
+    const countA = songStats.find((st) => st.song_id === a.id)?.count || 0;
+    const countB = songStats.find((st) => st.song_id === b.id)?.count || 0;
+    return countB - countA || a.title.localeCompare(b.title);
+  });
+
+  el.innerHTML = ['<option value="">-- Select song --</option>']
+    .concat(visible.map((s) => {
+      const stat = songStats.find((st) => st.song_id === s.id);
+      const count = stat ? stat.count : 0;
+      const label = count > 0 ? `${s.title}  (${count}×)` : s.title;
+      return `<option value="${s.id}">${escHtml(label)}</option>`;
+    }))
+    .join("");
+
+  // Restore previous selection only if it's still in the visible list
+  if (currentVal && visible.find((s) => String(s.id) === currentVal)) {
+    el.value = currentVal;
+  } else if (currentVal) {
+    // Previously selected song is not allowed for this chorister — clear it
+    el.value = "";
+    // Also hide lyrics preview
+    const previewMap = {
+      hymnSongSelect: "hymnSongLyrics",
+      praiseWorshipSongSelect: "praiseWorshipSongLyrics",
+      thanksgivingSongSelect: "thanksgivingSongLyrics",
+    };
+    const previewId = previewMap[selectId];
+    if (previewId) {
+      const preview = document.getElementById(previewId);
+      if (preview) { preview.textContent = ""; preview.style.display = "none"; }
+    }
+  }
+}
+
+function bindChoristerSongFilter(choristerSelectId, songSelectId, categoryFilter) {
+  document.getElementById(choristerSelectId).addEventListener("change", (e) => {
+    const choristerId = parseInt(e.target.value, 10) || null;
+    refreshSongDropdown(songSelectId, categoryFilter, choristerId);
+  });
 }
 
 function bindSongSelectPreview(selectId, previewId) {
@@ -391,6 +469,67 @@ async function openSongsModal() {
   }
   renderSongsList();
   new bootstrap.Modal(document.getElementById("songsModal")).show();
+}
+
+function openLyricsViewer(song) {
+  const categoryLabels = { hymn: "Hymn", praise_worship: "Praise Worship", thanksgiving: "Thanksgiving", general: "General" };
+  const categoryClasses = { hymn: "cat-hymn", praise_worship: "cat-praise", thanksgiving: "cat-thanks", general: "cat-general" };
+
+  document.getElementById("lyricsViewerTitle").textContent = song.title;
+
+  const catBadge = document.getElementById("lyricsViewerCategory");
+  catBadge.textContent = categoryLabels[song.category] || song.category;
+  catBadge.className = `badge song-cat-badge ${categoryClasses[song.category] || ""}`;
+
+  document.getElementById("lyricsViewerBody").textContent = song.lyrics || "(No lyrics stored)";
+
+  const linksEl = document.getElementById("lyricsViewerLinks");
+  linksEl.innerHTML = "";
+  if (song.hyperlink) {
+    const a = document.createElement("a");
+    a.href = song.hyperlink; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.className = "btn btn-sm btn-outline-secondary";
+    a.innerHTML = '<i class="bi bi-link-45deg me-1"></i>External link';
+    linksEl.appendChild(a);
+  }
+  if (song.google_doc_url) {
+    const a = document.createElement("a");
+    a.href = song.google_doc_url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.className = "btn btn-sm btn-outline-success";
+    a.innerHTML = '<i class="bi bi-file-earmark-text me-1"></i>View in Google Docs';
+    linksEl.appendChild(a);
+  }
+
+  new bootstrap.Modal(document.getElementById("lyricsViewerModal")).show();
+}
+
+async function syncSongToDrive(id, btn) {
+  setLoading(btn, true);
+  try {
+    const updated = await api("POST", `/api/songs/${id}/sync-to-drive`);
+    const idx = songs.findIndex((s) => s.id === id);
+    if (idx !== -1) songs[idx] = updated;
+    renderSongsList();
+    showToast("Synced to Google Drive.", "success");
+  } catch (error) {
+    handleMutationError(error);
+    setLoading(btn, false);
+  }
+}
+
+async function syncAllToDrive(btn) {
+  setLoading(btn, true);
+  try {
+    const result = await api("POST", "/api/songs/sync-all-to-drive");
+    await loadSongs();
+    renderSongsList();
+    const msg = `Synced ${result.synced} song(s) to Drive.${result.failed ? ` ${result.failed} failed.` : ""}`;
+    showToast(msg, result.failed ? "warning" : "success");
+  } catch (error) {
+    handleMutationError(error);
+  } finally {
+    setLoading(btn, false);
+  }
 }
 
 function renderSongsList() {
@@ -498,17 +637,8 @@ function renderSongsList() {
       lyricsToggle.className = "btn btn-link btn-sm p-0 text-muted";
       lyricsToggle.style.fontSize = "0.8rem";
       lyricsToggle.textContent = "Show lyrics";
-      const lyricsDiv = document.createElement("div");
-      lyricsDiv.className = "text-muted small mt-1";
-      lyricsDiv.style.cssText = "white-space:pre-wrap;display:none;";
-      lyricsDiv.textContent = s.lyrics;
-      lyricsToggle.addEventListener("click", () => {
-        const shown = lyricsDiv.style.display !== "none";
-        lyricsDiv.style.display = shown ? "none" : "block";
-        lyricsToggle.textContent = shown ? "Show lyrics" : "Hide lyrics";
-      });
+      lyricsToggle.addEventListener("click", () => openLyricsViewer(s));
       info.appendChild(lyricsToggle);
-      info.appendChild(lyricsDiv);
     }
 
     top.appendChild(info);
@@ -527,6 +657,16 @@ function renderSongsList() {
         delBtn.innerHTML = '<i class="bi bi-trash"></i>';
         delBtn.addEventListener("click", () => deleteSong(s.id, delBtn));
         actions.appendChild(delBtn);
+
+        // Show cloud-upload button only for songs missing a Google Doc
+        if (!s.google_doc_url) {
+          const syncBtn = document.createElement("button");
+          syncBtn.className = "btn btn-sm btn-outline-secondary";
+          syncBtn.title = "Sync lyrics to Google Drive";
+          syncBtn.innerHTML = '<i class="bi bi-cloud-upload"></i>';
+          syncBtn.addEventListener("click", () => syncSongToDrive(s.id, syncBtn));
+          actions.appendChild(syncBtn);
+        }
       }
       top.appendChild(actions);
     }
@@ -604,19 +744,102 @@ async function deleteSong(id, btn) {
   }
 }
 
-// --- Lyrics Modal ---
+// ---------------------------------------------------------------------------
+// Lyrics modal — monthly catalogue + all-songs library with search/filter
+// ---------------------------------------------------------------------------
 
 async function openLyricsModal() {
   // Pre-set month picker to current month
-  const picker = document.getElementById("lyricsMontPicker");
+  const picker = document.getElementById("lyricsMonthPicker");
   const m = String(selectedMonth.getMonth() + 1).padStart(2, "0");
   picker.value = `${selectedMonth.getFullYear()}-${m}`;
+
+  // Reset search and filter to defaults each time modal opens
+  const searchEl = document.getElementById("allSongsSearch");
+  if (searchEl) searchEl.value = "";
+  document.querySelectorAll(".all-songs-filter-btn").forEach((btn) => btn.classList.remove("active"));
+  const allBtn = document.querySelector(".all-songs-filter-btn[data-cat='all']");
+  if (allBtn) allBtn.classList.add("active");
+
+  renderAllSongsCatalogue();
   new bootstrap.Modal(document.getElementById("lyricsModal")).show();
   await loadLyricsByMonth();
 }
 
+function renderAllSongsCatalogue() {
+  const container = document.getElementById("allSongsCatalogue");
+  if (!songs || songs.length === 0) {
+    container.innerHTML = '<p class="text-muted small">No songs in the library yet.</p>';
+    return;
+  }
+
+  const categoryLabels = { hymn: "Hymn", praise_worship: "Praise Worship", thanksgiving: "Thanksgiving", general: "General" };
+  const categoryClasses = { hymn: "cat-hymn", praise_worship: "cat-praise", thanksgiving: "cat-thanks", general: "cat-general" };
+
+  // Read active filter + search query
+  const activeCat = document.querySelector(".all-songs-filter-btn.active")?.dataset.cat || "all";
+  const query = (document.getElementById("allSongsSearch")?.value || "").toLowerCase().trim();
+
+  let sorted = [...songs].sort((a, b) => a.title.localeCompare(b.title));
+
+  if (activeCat !== "all") sorted = sorted.filter((s) => s.category === activeCat);
+  if (query) sorted = sorted.filter((s) => s.title.toLowerCase().includes(query) ||
+    (s.submitted_by_chorister_name && s.submitted_by_chorister_name.toLowerCase().includes(query)));
+
+  container.innerHTML = "";
+  if (sorted.length === 0) {
+    container.innerHTML = '<p class="text-muted small mt-1">No songs match your search.</p>';
+    return;
+  }
+
+  sorted.forEach((s) => {
+    const card = document.createElement("div");
+    card.className = "all-song-card d-flex align-items-center gap-2 flex-wrap";
+
+    const title = document.createElement("span");
+    title.className = "all-song-card__title flex-grow-1";
+    title.textContent = s.title;
+    card.appendChild(title);
+
+    const catBadge = document.createElement("span");
+    catBadge.className = `badge song-cat-badge flex-shrink-0 ${categoryClasses[s.category] || ""}`;
+    catBadge.textContent = categoryLabels[s.category] || s.category;
+    card.appendChild(catBadge);
+
+    if (s.submitted_by_chorister_name) {
+      const chorBadge = document.createElement("span");
+      chorBadge.className = "badge bg-light text-secondary border flex-shrink-0";
+      chorBadge.style.fontSize = "0.7rem";
+      chorBadge.innerHTML = `<i class="bi bi-person-fill me-1"></i>${escHtml(s.submitted_by_chorister_name)}`;
+      card.appendChild(chorBadge);
+    }
+
+    if (s.lyrics) {
+      const showBtn = document.createElement("button");
+      showBtn.className = "btn btn-sm btn-outline-secondary flex-shrink-0";
+      showBtn.style.fontSize = "0.72rem";
+      showBtn.innerHTML = '<i class="bi bi-eye me-1"></i>Show lyrics';
+      showBtn.addEventListener("click", () => openLyricsViewer(s));
+      card.appendChild(showBtn);
+    }
+
+    if (s.google_doc_url) {
+      const docLink = document.createElement("a");
+      docLink.href = s.google_doc_url;
+      docLink.target = "_blank";
+      docLink.rel = "noopener noreferrer";
+      docLink.className = "btn btn-sm btn-outline-success flex-shrink-0";
+      docLink.style.fontSize = "0.72rem";
+      docLink.innerHTML = '<i class="bi bi-file-earmark-text me-1"></i>Google Docs';
+      card.appendChild(docLink);
+    }
+
+    container.appendChild(card);
+  });
+}
+
 async function loadLyricsByMonth() {
-  const picker = document.getElementById("lyricsMontPicker");
+  const picker = document.getElementById("lyricsMonthPicker");
   if (!picker.value) { showToast("Please select a month.", "warning"); return; }
   const [year, month] = picker.value.split("-").map(Number);
   const btn = document.getElementById("btnLoadLyrics");
@@ -710,7 +933,9 @@ function renderLyricsColumn(containerId, songs) {
   });
 }
 
-// --- Month navigation ---
+// ---------------------------------------------------------------------------
+// Month navigation — picker, prev/next controls, roster reload
+// ---------------------------------------------------------------------------
 
 function setMonthPickerValue() {
   const month = String(selectedMonth.getMonth() + 1).padStart(2, "0");
@@ -731,7 +956,9 @@ async function loadRoster() {
   renderMonthlyStats();
 }
 
-// --- Roster table ---
+// ---------------------------------------------------------------------------
+// Roster table — render service dates with chorister/song assignments
+// ---------------------------------------------------------------------------
 
 function renderRosterTable() {
   const tbody = document.getElementById("rosterTableBody");
@@ -768,7 +995,24 @@ function renderRosterTable() {
       notesTr.className = "roster-notes-row";
       const notesTd = document.createElement("td");
       notesTd.colSpan = isAdmin ? 5 : 4;
-      notesTd.innerHTML = `<i class="bi bi-sticky me-1 text-muted"></i><em class="text-muted small">${escHtml(entry.notes)}</em>`;
+
+      const noteContent = document.createElement("span");
+      noteContent.innerHTML = `<i class="bi bi-sticky me-1 text-muted"></i><em class="text-muted small">${escHtml(entry.notes)}</em>`;
+      notesTd.appendChild(noteContent);
+
+      if (isAdmin) {
+        const clearBtn = document.createElement("button");
+        clearBtn.className = "btn btn-link btn-sm p-0 ms-2 text-danger";
+        clearBtn.style.fontSize = "0.75rem";
+        clearBtn.title = "Remove note";
+        clearBtn.innerHTML = '<i class="bi bi-x-circle"></i>';
+        clearBtn.addEventListener("click", async () => {
+          await api("PUT", `/api/roster/${entry.id}`, { notes: null });
+          await loadRoster();
+        });
+        notesTd.appendChild(clearBtn);
+      }
+
       notesTr.appendChild(notesTd);
       tbody.appendChild(notesTr);
     }
@@ -804,26 +1048,46 @@ function formatFunction(name, musicalKey, loopBitrate, songTitle = null) {
   return parts.length ? parts.join(" ") : '<span class="text-muted">Unassigned</span>';
 }
 
-// --- Roster modal ---
+// ---------------------------------------------------------------------------
+// Roster modal — add/edit service dates, chorister/song assignment
+// ---------------------------------------------------------------------------
 
-function openRosterModal(entry = null) {
+async function openRosterModal(entry = null) {
   if (!isAdmin) return;
+  // Refresh stats so use-counts in dropdowns are current
+  try { songStats = await api("GET", "/api/songs/stats"); } catch (_) {}
   document.getElementById("rosterModalTitle").textContent = entry ? "Edit Service Date" : "Add Service Date";
   document.getElementById("rosterEntryId").value = entry ? entry.id : "";
   document.getElementById("serviceDate").value = entry ? entry.service_date : monthAlignedDate();
-  document.getElementById("hymnChorister").value = entry?.hymn_chorister_id || "";
+
+  const hymnChorId = entry?.hymn_chorister_id || null;
+  const pwChorId = entry?.praise_worship_chorister_id || null;
+  const thanksChorId = entry?.thanksgiving_chorister_id || null;
+
+  document.getElementById("hymnChorister").value = hymnChorId || "";
   document.getElementById("hymnSongTitle").value = entry?.hymn_song_title || "";
-  document.getElementById("hymnSongSelect").value = entry?.hymn_song_id || "";
   document.getElementById("hymnMusicalKey").value = entry?.hymn_musical_key || "";
-  document.getElementById("praiseWorshipChorister").value = entry?.praise_worship_chorister_id || "";
-  document.getElementById("praiseWorshipSongSelect").value = entry?.praise_worship_song_id || "";
+
+  document.getElementById("praiseWorshipChorister").value = pwChorId || "";
   document.getElementById("praiseWorshipMusicalKey").value = entry?.praise_worship_musical_key || "";
   document.getElementById("praiseWorshipLoopBitrate").value = entry?.praise_worship_loop_bitrate || "";
-  document.getElementById("thanksgivingChorister").value = entry?.thanksgiving_chorister_id || "";
-  document.getElementById("thanksgivingSongSelect").value = entry?.thanksgiving_song_id || "";
+
+  document.getElementById("thanksgivingChorister").value = thanksChorId || "";
   document.getElementById("thanksgivingMusicalKey").value = entry?.thanksgiving_musical_key || "";
   document.getElementById("thanksgivingLoopBitrate").value = entry?.thanksgiving_loop_bitrate || "";
+
   document.getElementById("serviceNotes").value = entry?.notes || "";
+
+  // Filter song dropdowns to only songs submitted by the assigned chorister (or admin songs)
+  refreshSongDropdown("hymnSongSelect", ["hymn", "general"], hymnChorId);
+  refreshSongDropdown("praiseWorshipSongSelect", ["praise_worship", "general"], pwChorId);
+  refreshSongDropdown("thanksgivingSongSelect", ["thanksgiving", "general"], thanksChorId);
+
+  // Restore saved song selection after filtering
+  document.getElementById("hymnSongSelect").value = entry?.hymn_song_id || "";
+  document.getElementById("praiseWorshipSongSelect").value = entry?.praise_worship_song_id || "";
+  document.getElementById("thanksgivingSongSelect").value = entry?.thanksgiving_song_id || "";
+
   ["hymnSongLyrics", "praiseWorshipSongLyrics", "thanksgivingSongLyrics"].forEach((id) => {
     const el = document.getElementById(id);
     el.textContent = ""; el.style.display = "none";
@@ -910,7 +1174,9 @@ function handleMutationError(error) {
   showToast(error.message, "danger");
 }
 
-// --- Analytics ---
+// ---------------------------------------------------------------------------
+// Analytics — chorister stats, color category cards, date-range stats
+// ---------------------------------------------------------------------------
 
 function renderStatsList(stats, container) {
   if (!stats || stats.length === 0) {
@@ -993,7 +1259,9 @@ async function loadRangeStats() {
   }
 }
 
-// --- Utilities ---
+// ---------------------------------------------------------------------------
+// Utilities — date formatting, HTML escaping
+// ---------------------------------------------------------------------------
 
 function formatDate(iso) {
   const [year, month, day] = iso.split("-").map(Number);
@@ -1005,7 +1273,9 @@ function escHtml(str) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// --- Init ---
+// ---------------------------------------------------------------------------
+// Initialisation — wire all event listeners after DOM is ready
+// ---------------------------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", async () => {
   selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
@@ -1059,6 +1329,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Songs library
   document.getElementById("btnSongsLibrary").addEventListener("click", openSongsModal);
+  document.getElementById("btnSyncAllToDrive").addEventListener("click", (e) => syncAllToDrive(e.currentTarget));
   document.getElementById("btnSaveSong").addEventListener("click", saveSong);
   document.getElementById("btnCancelSongEdit").addEventListener("click", resetSongForm);
   document.getElementById("songSearchInput").addEventListener("input", renderSongsList);
@@ -1071,11 +1342,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btnViewLyrics").addEventListener("click", openLyricsModal);
   document.getElementById("btnLoadLyrics").addEventListener("click", loadLyricsByMonth);
 
+  // All Songs search + category filter
+  document.getElementById("allSongsSearch").addEventListener("input", renderAllSongsCatalogue);
+  document.getElementById("allSongsCatFilter").addEventListener("click", (e) => {
+    const btn = e.target.closest(".all-songs-filter-btn");
+    if (!btn) return;
+    document.querySelectorAll(".all-songs-filter-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderAllSongsCatalogue();
+  });
+
   // Print
   document.getElementById("btnPrint").addEventListener("click", () => window.print());
 
   // Analytics
   document.getElementById("btnShowStats").addEventListener("click", loadRangeStats);
+
+  // Chorister → song dropdown filters (live re-filter when chorister changes)
+  bindChoristerSongFilter("hymnChorister", "hymnSongSelect", ["hymn", "general"]);
+  bindChoristerSongFilter("praiseWorshipChorister", "praiseWorshipSongSelect", ["praise_worship", "general"]);
+  bindChoristerSongFilter("thanksgivingChorister", "thanksgivingSongSelect", ["thanksgiving", "general"]);
 
   // Song select lyrics preview
   bindSongSelectPreview("hymnSongSelect", "hymnSongLyrics");

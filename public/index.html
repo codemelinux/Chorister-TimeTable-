@@ -31,45 +31,76 @@
       </span>
       <div class="navbar-subtitle">Monthly choir roster planning</div>
     </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+    <div class="d-flex align-items-center gap-2">
+      <!-- Status pills — always visible -->
       <span class="auth-pill" id="authStatus">Public view</span>
       <span class="chorister-pill d-none" id="choristerStatus"></span>
 
-      <!-- Always-visible public buttons -->
-      <button class="btn btn-outline-light btn-sm" id="btnViewLyrics">
-        <i class="bi bi-book me-1"></i>View Lyrics
-      </button>
+      <!-- Hamburger dropdown menu -->
+      <div class="dropdown">
+        <button class="btn btn-outline-light btn-sm dropdown-toggle navbar-menu-btn"
+                id="navMenuBtn" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-list fs-5"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end navbar-dropdown-menu" aria-labelledby="navMenuBtn">
 
-      <!-- Admin-only buttons -->
-      <button class="btn btn-light btn-sm d-none" id="btnAddRoster">
-        <i class="bi bi-plus-lg me-1"></i>Add Service Date
-      </button>
-      <button class="btn btn-outline-light btn-sm d-none" id="btnManageChoristers">
-        <i class="bi bi-people me-1"></i>Choristers
-      </button>
+          <!-- Public -->
+          <li>
+            <button class="dropdown-item" id="btnViewLyrics">
+              <i class="bi bi-book me-2"></i>View Lyrics
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item" id="btnSongsLibrary">
+              <i class="bi bi-music-note-list me-2"></i>Songs Library
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item" id="btnPrint">
+              <i class="bi bi-printer me-2"></i>Print
+            </button>
+          </li>
 
-      <!-- Songs library (always visible) -->
-      <button class="btn btn-outline-light btn-sm" id="btnSongsLibrary">
-        <i class="bi bi-music-note-list me-1"></i>Songs Library
-      </button>
+          <li><hr class="dropdown-divider" /></li>
 
-      <button class="btn btn-outline-light btn-sm" id="btnPrint">
-        <i class="bi bi-printer me-1"></i>Print
-      </button>
+          <!-- Admin-only -->
+          <li>
+            <button class="dropdown-item d-none" id="btnAddRoster">
+              <i class="bi bi-plus-lg me-2"></i>Add Service Date
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item d-none" id="btnManageChoristers">
+              <i class="bi bi-people me-2"></i>Choristers
+            </button>
+          </li>
 
-      <!-- Auth buttons -->
-      <button class="btn btn-outline-light btn-sm" id="btnChoristerLogin">
-        <i class="bi bi-person-badge me-1"></i>Chorister Login
-      </button>
-      <button class="btn btn-outline-light btn-sm" id="btnLogin">
-        <i class="bi bi-shield-lock me-1"></i>Admin Login
-      </button>
-      <button class="btn btn-light btn-sm d-none" id="btnLogout">
-        <i class="bi bi-box-arrow-right me-1"></i>Logout
-      </button>
-      <button class="btn btn-outline-warning btn-sm d-none" id="btnChoristerLogout">
-        <i class="bi bi-box-arrow-right me-1"></i>Sign Out
-      </button>
+          <li><hr class="dropdown-divider admin-divider d-none" id="adminDivider" /></li>
+
+          <!-- Auth -->
+          <li>
+            <button class="dropdown-item" id="btnChoristerLogin">
+              <i class="bi bi-person-badge me-2"></i>Chorister Login
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item" id="btnLogin">
+              <i class="bi bi-shield-lock me-2"></i>Admin Login
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item text-danger d-none" id="btnLogout">
+              <i class="bi bi-box-arrow-right me-2"></i>Admin Logout
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item text-warning d-none" id="btnChoristerLogout">
+              <i class="bi bi-box-arrow-right me-2"></i>Chorister Sign Out
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
   </nav>
 
@@ -414,6 +445,13 @@
             <hr />
           </div>
 
+          <!-- Admin-only: Sync all missing songs to Drive -->
+          <div id="syncAllSection" class="d-none mb-3">
+            <button class="btn btn-sm btn-outline-success w-100" id="btnSyncAllToDrive">
+              <i class="bi bi-cloud-upload me-1"></i>Sync All Missing Docs to Google Drive
+            </button>
+          </div>
+
           <!-- Search + sort controls -->
           <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
             <input type="search" class="form-control form-control-sm flex-grow-1" id="songSearchInput" placeholder="Search by title or lyrics..." />
@@ -441,7 +479,7 @@
           <!-- Month picker -->
           <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
             <label class="form-label mb-0 fw-semibold">Month:</label>
-            <input type="month" class="form-control form-control-sm" id="lyricsMontPicker" style="max-width:180px;" />
+            <input type="month" class="form-control form-control-sm" id="lyricsMonthPicker" style="max-width:180px;" />
             <button class="btn btn-sm btn-outline-secondary" id="btnLoadLyrics">
               <i class="bi bi-search me-1"></i>Load
             </button>
@@ -462,6 +500,49 @@
               <div id="lyricsThanksgiving"><p class="text-muted small">Select a month and click Load.</p></div>
             </div>
           </div>
+
+          <!-- All songs library section -->
+          <div class="all-songs-section mt-4">
+            <div class="all-songs-section__header">
+              <i class="bi bi-music-note-list me-2"></i>All Songs in Library
+            </div>
+            <!-- Search + category filter -->
+            <div class="d-flex gap-2 mt-3 mb-2 flex-wrap align-items-center">
+              <input type="search" class="form-control form-control-sm flex-grow-1"
+                id="allSongsSearch" placeholder="Search songs..." />
+              <div class="d-flex gap-1 flex-shrink-0" id="allSongsCatFilter">
+                <button class="btn btn-sm all-songs-filter-btn active" data-cat="all">All</button>
+                <button class="btn btn-sm all-songs-filter-btn cat-hymn-btn" data-cat="hymn">🎵 Hymn</button>
+                <button class="btn btn-sm all-songs-filter-btn cat-praise-btn" data-cat="praise_worship">🙌 Praise</button>
+                <button class="btn btn-sm all-songs-filter-btn cat-thanks-btn" data-cat="thanksgiving">🙏 Thanksgiving</button>
+              </div>
+            </div>
+            <div id="allSongsCatalogue" class="all-songs-list">
+              <p class="text-muted small">No songs in the library yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Song Lyrics Viewer modal -->
+  <div class="modal fade" id="lyricsViewerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title" id="lyricsViewerTitle">Song Lyrics</h5>
+            <span id="lyricsViewerCategory" class="badge mt-1"></span>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <pre id="lyricsViewerBody" class="lyrics-viewer-body"></pre>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <div id="lyricsViewerLinks" class="d-flex gap-2"></div>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
