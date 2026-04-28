@@ -394,17 +394,19 @@ def api_sync_all_to_drive(
     ).scalars().all()
 
     synced = failed = 0
+    errors = []
     for song in songs_without_doc:
-        doc_url, doc_id = google_drive.push_song_to_drive(
-            song.title, song.category, song.lyrics or ""
-        )
-        if doc_url:
+        try:
+            doc_url, doc_id = google_drive.push_song_to_drive(
+                song.title, song.category, song.lyrics or ""
+            )
             db.update_song(session, song.id, {"google_doc_url": doc_url, "google_doc_id": doc_id})
             synced += 1
-        else:
+        except Exception as exc:
             failed += 1
+            errors.append(str(exc))
 
-    return {"synced": synced, "failed": failed, "total": len(songs_without_doc)}
+    return {"synced": synced, "failed": failed, "total": len(songs_without_doc), "errors": errors}
 
 
 @app.post("/api/songs/{song_id}/sync-to-drive")
@@ -419,11 +421,12 @@ def api_sync_song_to_drive(
     song = db.get_song_obj(session, song_id)
     if not song:
         raise HTTPException(404, "Song not found")
-    doc_url, doc_id = google_drive.push_song_to_drive(
-        song.title, song.category, song.lyrics or "", song.google_doc_id
-    )
-    if not doc_url:
-        raise HTTPException(502, "Failed to sync to Google Drive")
+    try:
+        doc_url, doc_id = google_drive.push_song_to_drive(
+            song.title, song.category, song.lyrics or "", song.google_doc_id
+        )
+    except Exception as exc:
+        raise HTTPException(502, f"Google Drive sync failed: {exc}") from exc
     return db.update_song(session, song_id, {"google_doc_url": doc_url, "google_doc_id": doc_id})
 
 

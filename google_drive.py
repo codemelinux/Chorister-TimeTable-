@@ -214,7 +214,8 @@ def push_song_to_drive(
 
     except Exception as exc:
         print(f"[google_drive] Error syncing song '{title}': {exc}")
-        return None, None
+        # Re-raise so callers can capture the message for API responses.
+        raise
 
 
 def delete_doc_from_drive(doc_id: str) -> bool:

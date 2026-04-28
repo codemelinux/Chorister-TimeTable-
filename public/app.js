@@ -523,7 +523,8 @@ async function syncAllToDrive(btn) {
     const result = await api("POST", "/api/songs/sync-all-to-drive");
     await loadSongs();
     renderSongsList();
-    const msg = `Synced ${result.synced} song(s) to Drive.${result.failed ? ` ${result.failed} failed.` : ""}`;
+    const errDetail = result.errors && result.errors.length ? ` Error: ${result.errors[0]}` : "";
+    const msg = `Synced ${result.synced} song(s) to Drive.${result.failed ? ` ${result.failed} failed.${errDetail}` : ""}`;
     showToast(msg, result.failed ? "warning" : "success");
   } catch (error) {
     handleMutationError(error);
