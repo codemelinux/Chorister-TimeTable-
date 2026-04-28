@@ -15,6 +15,17 @@
   --text-main: #1f2a1f;
   --text-soft: #6b7a6b;
   --panel-border: #d9d2c3;
+
+  /* Category colours */
+  --hymn-color: #c8a84b;
+  --hymn-light: #fdf8e8;
+  --hymn-mid: #f5e9b8;
+  --praise-color: #4a7c59;
+  --praise-light: #edf4e8;
+  --praise-mid: #c5dfc9;
+  --thanks-color: #e87b6e;
+  --thanks-light: #fdf0ee;
+  --thanks-mid: #f5c9c5;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -76,13 +87,36 @@ body {
   padding: 0.25rem 0.7rem;
 }
 
+/* Chorister status pill — amber tinted */
+.chorister-pill {
+  background: rgba(200, 168, 75, 0.25);
+  border: 1px solid rgba(200, 168, 75, 0.55);
+  border-radius: 999px;
+  color: #f5d980;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  white-space: nowrap;
+}
+
+/* Portal badge in chorister list */
+.portal-badge {
+  background: var(--col-badge-bg);
+  color: var(--col-badge-text);
+  border: 1px solid var(--col-badge-border);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+}
+
 /* ---- Main layout ---- */
 main.container-fluid {
   position: relative;
   z-index: 1;
 }
 
-/* ---- Chore-chart card ---- */
+/* ---- Page-shell card ---- */
 .page-shell {
   background: var(--card-bg);
   border-radius: var(--card-radius);
@@ -91,7 +125,7 @@ main.container-fluid {
   border: none;
 }
 
-/* ---- Toolbar / header area ---- */
+/* ---- Toolbar ---- */
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -140,15 +174,13 @@ main.container-fluid {
   border-spacing: 0;
 }
 
-/* Section label column header (SERVICE DATES) */
 .th-section-label {
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--label-muted);
-  background: transparent !important;
   color: var(--label-muted) !important;
+  background: transparent !important;
   border: none !important;
   padding: 0.85rem 0.75rem 0.85rem 0;
   vertical-align: middle;
@@ -163,7 +195,6 @@ main.container-fluid {
   border-bottom: 2px solid var(--panel-border);
 }
 
-/* Oval column-header badges (like day circles in chore chart) */
 .col-badge {
   display: inline-block;
   background: var(--col-badge-bg);
@@ -178,7 +209,6 @@ main.container-fluid {
   white-space: nowrap;
 }
 
-/* Table body rows — dotted separator like chore chart rows */
 .roster-table td {
   border: none;
   border-bottom: 2px dotted var(--row-divider);
@@ -187,11 +217,8 @@ main.container-fluid {
   background: transparent;
 }
 
-.roster-table tbody tr:last-child td {
-  border-bottom: none;
-}
+.roster-table tbody tr:last-child td { border-bottom: none; }
 
-/* Date cell acts like the chore "name" line */
 .date-cell {
   min-width: 150px;
   white-space: nowrap;
@@ -201,12 +228,9 @@ main.container-fluid {
   padding-left: 0;
 }
 
-/* Function cells (hymn / praise / thanksgiving) centered like day columns */
 .roster-table td:nth-child(2),
 .roster-table td:nth-child(3),
-.roster-table td:nth-child(4) {
-  text-align: center;
-}
+.roster-table td:nth-child(4) { text-align: center; }
 
 .member-name {
   font-weight: 700;
@@ -221,7 +245,6 @@ main.container-fluid {
   margin-top: 0.15rem;
 }
 
-/* Unassigned pill */
 .text-muted {
   color: var(--label-muted) !important;
   font-size: 0.82rem;
@@ -275,13 +298,9 @@ main.container-fluid {
   transition: transform 0.2s;
 }
 
-.analytics-panel[open] > summary::after {
-  transform: rotate(180deg);
-}
+.analytics-panel[open] > summary::after { transform: rotate(180deg); }
 
-.analytics-body {
-  padding: 0 1.25rem 1.25rem;
-}
+.analytics-body { padding: 0 1.25rem 1.5rem; }
 
 .analytics-section-title {
   font-size: 0.75rem;
@@ -339,6 +358,211 @@ main.container-fluid {
   border-radius: 3px;
 }
 
+/* ---- Color-coded category analytics cards ---- */
+.category-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.category-card {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+}
+
+.category-card--hymn {
+  border-color: var(--hymn-color);
+  background: var(--hymn-light);
+}
+
+.category-card--praise {
+  border-color: var(--praise-color);
+  background: var(--praise-light);
+}
+
+.category-card--thanksgiving {
+  border-color: var(--thanks-color);
+  background: var(--thanks-light);
+}
+
+.category-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.category-card--hymn .category-card__header {
+  background: var(--hymn-color);
+  color: #fff;
+}
+
+.category-card--praise .category-card__header {
+  background: var(--praise-color);
+  color: #fff;
+}
+
+.category-card--thanksgiving .category-card__header {
+  background: var(--thanks-color);
+  color: #fff;
+}
+
+.category-card__emoji { font-size: 1rem; }
+
+.category-card__body { padding: 0.75rem 1rem; }
+
+/* Per-card song stat rows */
+.cat-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.cat-stat-row.cat-stat-top .cat-stat-name { font-weight: 800; }
+
+.cat-stat-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-main);
+}
+
+.cat-stat-bar-wrap {
+  width: 55px;
+  height: 5px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cat-stat-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.cat-stat-count {
+  font-size: 0.72rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+  font-weight: 700;
+  min-width: 22px;
+  text-align: right;
+}
+
+/* ---- Song category badges (in songs library list) ---- */
+.song-cat-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+}
+
+.cat-hymn { background: var(--hymn-mid); color: #7a5c00; }
+.cat-praise { background: var(--praise-mid); color: #1a4a2a; }
+.cat-thanks { background: var(--thanks-mid); color: #8a2a20; }
+.cat-general { background: #e9ecef; color: #495057; }
+
+/* ---- Lyrics modal ---- */
+.lyrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.lyrics-column {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.lyrics-column--hymn { border-color: var(--hymn-color); background: var(--hymn-light); }
+.lyrics-column--praise { border-color: var(--praise-color); background: var(--praise-light); }
+.lyrics-column--thanksgiving { border-color: var(--thanks-color); background: var(--thanks-light); }
+
+.lyrics-column__header {
+  padding: 0.6rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+}
+
+.lyrics-column--hymn .lyrics-column__header { background: var(--hymn-color); }
+.lyrics-column--praise .lyrics-column__header { background: var(--praise-color); }
+.lyrics-column--thanksgiving .lyrics-column__header { background: var(--thanks-color); }
+
+.lyrics-column > div:last-child { padding: 0.75rem; }
+
+.lyrics-song-card {
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid rgba(0,0,0,0.07);
+  backdrop-filter: blur(2px);
+}
+
+.lyrics-song-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--title-color);
+  margin-bottom: 0.15rem;
+}
+
+.lyrics-song-sub {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  margin-bottom: 0.3rem;
+}
+
+.lyrics-link {
+  font-size: 0.75rem;
+  text-decoration: none;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+  color: var(--text-main);
+}
+
+.lyrics-link--gdoc { background: rgba(52, 168, 83, 0.12); color: #1a5c2a; }
+
+.lyrics-toggle {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  text-decoration: none;
+  display: block;
+  margin-top: 0.3rem;
+}
+
+.lyrics-block {
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text-soft);
+  background: rgba(255,255,255,0.5);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  margin-top: 0.4rem;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
 /* ---- Modals ---- */
 .modal-content {
   border-radius: 16px;
@@ -346,13 +570,8 @@ main.container-fluid {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
-.modal-header {
-  border-bottom: 2px dotted var(--row-divider);
-}
-
-.modal-footer {
-  border-top: 2px dotted var(--row-divider);
-}
+.modal-header { border-bottom: 2px dotted var(--row-divider); }
+.modal-footer { border-top: 2px dotted var(--row-divider); }
 
 .modal-title {
   font-family: 'Pacifico', cursive;
@@ -361,51 +580,40 @@ main.container-fluid {
   font-size: 1.25rem;
 }
 
-/* Primary buttons — earthy green */
-.btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.btn-primary:hover,
-.btn-primary:focus {
-  background: #3a6347;
-  border-color: #3a6347;
-}
+/* Primary buttons */
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover, .btn-primary:focus { background: #3a6347; border-color: #3a6347; }
 
 /* Toast container */
-#toastContainer {
-  z-index: 1100;
-}
+#toastContainer { z-index: 1100; }
 
 /* ---- Responsive ---- */
+@media (max-width: 900px) {
+  .category-analytics-grid { grid-template-columns: 1fr; }
+  .lyrics-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 768px) {
   .toolbar {
     flex-direction: column;
     align-items: stretch;
     padding: 1.25rem 1rem 0.75rem;
   }
-
-  .toolbar-controls {
-    justify-content: space-between;
-  }
-
-  .toolbar-controls .form-control {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .page-title {
-    font-size: 1.55rem;
-  }
-
-  .auth-pill {
-    order: -1;
-  }
-
+  .toolbar-controls { justify-content: space-between; }
+  .toolbar-controls .form-control { min-width: 0; flex: 1; }
+  .page-title { font-size: 1.55rem; }
+  .auth-pill { order: -1; }
   .roster-table td:nth-child(2),
   .roster-table td:nth-child(3),
-  .roster-table td:nth-child(4) {
-    text-align: left;
-  }
+  .roster-table td:nth-child(4) { text-align: left; }
+}
+
+/* ---- Print ---- */
+@media print {
+  .app-navbar, .modal, .btn, #analyticsPanel, #bg-art,
+  #btnPrevMonth, #btnNextMonth, #monthPicker { display: none !important; }
+  body { background: white !important; }
+  .page-shell { box-shadow: none !important; background: white !important; }
+  .roster-table { font-size: 11pt; }
+  .roster-notes-row td { padding-top: 0 !important; border-top: none !important; }
 }
