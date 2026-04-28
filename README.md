@@ -2,11 +2,10 @@
 
 Chorister TimeTable is a web-based monthly choir roster planner for assigning choristers to `Hymn`, `Praise Worship`, and `Thanksgiving` service functions.
 
-It is built for a simple first release:
-- public visitors can view the monthly roster
-- admins can log in with a shared password
-- admins can manage choristers and service-date roster entries
-- the app is structured for Vercel deployment with a static frontend and Python API routes
+- Public visitors can view the monthly roster
+- Admins can log in with a shared password
+- Admins can manage choristers and service-date roster entries
+- The app supports deployment on Vercel, Render, and Railway
 
 ## Features
 
@@ -19,6 +18,7 @@ It is built for a simple first release:
 - Shared admin authentication using cookie sessions
 - Public read-only mode
 - Mobile-friendly layout with responsive controls and scrollable roster table
+- Chorister analytics endpoint for assignment statistics across a date range
 
 ## Stack
 
@@ -27,7 +27,7 @@ It is built for a simple first release:
 - FastAPI
 - SQLAlchemy
 - SessionMiddleware for admin sessions
-- PostgreSQL-ready via `psycopg`
+- PostgreSQL via `psycopg[binary]`
 
 ### Frontend
 - Static HTML, CSS, and vanilla JavaScript
@@ -35,9 +35,9 @@ It is built for a simple first release:
 - Bootstrap Icons
 
 ### Deployment
-- Vercel static frontend from `public/`
-- Vercel Python API entrypoint at `api/index.py`
-- Vercel Postgres via environment-backed `DATABASE_URL` or `POSTGRES_URL`
+- Vercel: static frontend from `public/`, Python API entrypoint at `api/index.py`
+- Render: web service using `uvicorn` (`RENDER=true` detected automatically)
+- Railway: `Procfile`-based deployment (`RAILWAY_ENVIRONMENT=production` detected automatically)
 
 ## Project Structure
 
@@ -51,6 +51,7 @@ Chorister TimeTable/
 │   └── style.css         # Responsive styling
 ├── main.py               # FastAPI app, routes, auth, local dev entrypoint
 ├── database.py           # SQLAlchemy models and database helpers
+├── Procfile              # Railway deployment entrypoint
 ├── requirements.txt      # Python dependencies
 ├── .env.example          # Required environment variables
 └── scripts/              # Local setup/start helpers
@@ -58,7 +59,7 @@ Chorister TimeTable/
 
 ## Environment Variables
 
-Create a local `.env` or configure these in Vercel:
+Create a local `.env` or configure these in your hosting provider:
 
 ```env
 ADMIN_PASSWORD=change-me-admin
@@ -74,6 +75,13 @@ Notes:
 
 If no database URL is provided locally, the app falls back to a local SQLite file for development convenience.
 
+Production mode is detected automatically when any of the following are set:
+- `VERCEL_ENV=production`
+- `RENDER=true`
+- `RAILWAY_ENVIRONMENT=production`
+
+In production mode the app refuses to start if `ADMIN_PASSWORD` or `SESSION_SECRET` are still set to their default values.
+
 ## API Overview
 
 ### Auth
@@ -84,6 +92,7 @@ If no database URL is provided locally, the app falls back to a local SQLite fil
 ### Public Data
 - `GET /api/choristers`
 - `GET /api/roster?year=YYYY&month=M`
+- `GET /api/analytics?from=YYYY-MM&to=YYYY-MM`
 
 ### Admin-only Data Mutation
 - `POST /api/choristers`
@@ -134,12 +143,20 @@ Then open:
 http://127.0.0.1:8000
 ```
 
-## Vercel Deployment Notes
+## Deployment
 
-- Put the frontend in `public/`
-- Keep the FastAPI app export available through `api/index.py`
+### Vercel
+- Frontend is served from `public/`
+- API entrypoint is `api/index.py`
 - Set `ADMIN_PASSWORD`, `SESSION_SECRET`, and your Postgres connection string in Vercel environment settings
-- For production, use Vercel Postgres rather than local SQLite
+
+### Render
+- Deploy as a web service running `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- Set `RENDER=true` (or Render sets it automatically) plus the required environment variables
+
+### Railway
+- The `Procfile` defines the start command: `web: uvicorn main:app --host 0.0.0.0 --port $PORT`
+- Set `RAILWAY_ENVIRONMENT=production` plus the required environment variables in the Railway dashboard
 
 ## Current Product Behavior
 
@@ -147,6 +164,7 @@ http://127.0.0.1:8000
 - Logged-in admins can create, edit, and delete roster entries
 - Logged-in admins can add and remove choristers
 - Duplicate service dates are rejected
+- Analytics endpoint returns per-chorister assignment counts for a given month range
 
 ---
 
