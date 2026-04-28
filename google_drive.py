@@ -1,4 +1,5 @@
 # Developed by Benedict U.
+# Google Drive sync using OAuth 2.0 (personal Gmail account)
 import json
 import os
 
@@ -12,26 +13,47 @@ CATEGORY_FOLDER_NAMES = {
     "general": "General",
 }
 
+SCOPES = [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/documents",
+]
+
+
+def _build_credentials():
+    """
+    Build OAuth credentials from environment variables.
+    Requires GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN.
+    Returns None if any variable is missing.
+    """
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
+
+    if not all([client_id, client_secret, refresh_token]):
+        return None
+
+    from google.oauth2.credentials import Credentials
+    return Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=SCOPES,
+    )
+
 
 def _get_services():
     global _drive_service, _docs_service
     if _drive_service is not None:
         return _drive_service, _docs_service
 
-    sa_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-    if not sa_json:
+    creds = _build_credentials()
+    if creds is None:
         return None, None
 
     try:
-        from google.oauth2 import service_account
         from googleapiclient.discovery import build
-
-        info = json.loads(sa_json)
-        scopes = [
-            "https://www.googleapis.com/auth/drive",
-            "https://www.googleapis.com/auth/documents",
-        ]
-        creds = service_account.Credentials.from_service_account_info(info, scopes=scopes)
         _drive_service = build("drive", "v3", credentials=creds)
         _docs_service = build("docs", "v1", credentials=creds)
     except Exception as exc:
@@ -62,10 +84,11 @@ def _get_or_create_folder(drive, parent_id: str, name: str) -> str:
     return folder["id"]
 
 
-def _make_doc_content(title: str, category: str, lyrics: str) -> list:
+def _make_doc_requests(title: str, category: str, lyrics: str) -> list:
     cat_label = CATEGORY_FOLDER_NAMES.get(category, category.title())
+    body_text = f"{title}\n{cat_label}\n\n{lyrics}"
     return [
-        {"insertText": {"location": {"index": 1}, "text": f"{title}\n{cat_label}\n\n{lyrics}"}},
+        {"insertText": {"location": {"index": 1}, "text": body_text}},
         {
             "updateParagraphStyle": {
                 "range": {"startIndex": 1, "endIndex": len(title) + 1},
@@ -76,7 +99,12 @@ def _make_doc_content(title: str, category: str, lyrics: str) -> list:
     ]
 
 
-def push_song_to_drive(title: str, category: str, lyrics: str, doc_id: str | None = None) -> tuple[str | None, str | None]:
+def push_song_to_drive(
+    title: str,
+    category: str,
+    lyrics: str,
+    doc_id: str | None = None,
+) -> tuple[str | None, str | None]:
     """
     Create or update a Google Doc for a song's lyrics.
     Returns (doc_url, doc_id). Returns (None, None) if Drive is not configured.
@@ -88,23 +116,21 @@ def push_song_to_drive(title: str, category: str, lyrics: str, doc_id: str | Non
     root_folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "root")
 
     try:
-        # Ensure category subfolder exists
         cat_folder_name = CATEGORY_FOLDER_NAMES.get(category, "General")
         cat_folder_id = _get_or_create_folder(drive, root_folder_id, cat_folder_name)
 
         if doc_id:
-            # Update existing doc: clear content then rewrite
             doc = docs.documents().get(documentId=doc_id).execute()
             end_index = doc["body"]["content"][-1]["endIndex"] - 1
             requests = []
             if end_index > 1:
-                requests.append({"deleteContentRange": {"range": {"startIndex": 1, "endIndex": end_index}}})
-            requests += _make_doc_content(title, category, lyrics)
+                requests.append(
+                    {"deleteContentRange": {"range": {"startIndex": 1, "endIndex": end_index}}}
+                )
+            requests += _make_doc_requests(title, category, lyrics)
             docs.documents().batchUpdate(documentId=doc_id, body={"requests": requests}).execute()
-            doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
-            return doc_url, doc_id
+            return f"https://docs.google.com/document/d/{doc_id}/edit", doc_id
 
-        # Create new Google Doc inside the category folder
         file_meta = {
             "name": title,
             "mimeType": "application/vnd.google-apps.document",
@@ -113,16 +139,14 @@ def push_song_to_drive(title: str, category: str, lyrics: str, doc_id: str | Non
         new_file = drive.files().create(body=file_meta, fields="id").execute()
         new_doc_id = new_file["id"]
 
-        # Make it readable by anyone with the link
         drive.permissions().create(
             fileId=new_doc_id,
             body={"type": "anyone", "role": "reader"},
         ).execute()
 
-        # Write lyrics content
         docs.documents().batchUpdate(
             documentId=new_doc_id,
-            body={"requests": _make_doc_content(title, category, lyrics)},
+            body={"requests": _make_doc_requests(title, category, lyrics)},
         ).execute()
 
         doc_url = f"https://docs.google.com/document/d/{new_doc_id}/edit"
@@ -131,3 +155,12 @@ def push_song_to_drive(title: str, category: str, lyrics: str, doc_id: str | Non
     except Exception as exc:
         print(f"[google_drive] Error syncing song '{title}': {exc}")
         return None, None
+
+
+def is_configured() -> bool:
+    """Return True if all required OAuth env vars are set."""
+    return all([
+        os.getenv("GOOGLE_CLIENT_ID"),
+        os.getenv("GOOGLE_CLIENT_SECRET"),
+        os.getenv("GOOGLE_REFRESH_TOKEN"),
+    ])
