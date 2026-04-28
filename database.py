@@ -10,7 +10,7 @@ from datetime import date as date_type
 import bcrypt
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, ForeignKey, Integer,
-    String, Text, create_engine, event, func, or_, select,
+    String, Text, create_engine, event, func, or_, select, text,
 )
 from sqlalchemy.orm import Session, declarative_base, relationship, selectinload, sessionmaker
 
@@ -127,8 +127,58 @@ class RosterEntry(Base):
 # ---------------------------------------------------------------------------
 
 def init_db():
-    """Create all tables that don't yet exist (idempotent; does not drop/alter)."""
+    """Create all tables that don't yet exist, then apply column migrations."""
     Base.metadata.create_all(bind=engine)
+    _run_column_migrations()
+
+
+def _run_column_migrations():
+    """
+    Add new columns to existing tables if they don't already exist.
+
+    This runs on every startup and is fully idempotent:
+    - PostgreSQL uses ADD COLUMN IF NOT EXISTS (native support).
+    - SQLite catches the 'duplicate column' error and continues.
+
+    Add new entries here whenever a column is added to a model.
+    """
+    is_postgres = not DATABASE_URL.startswith("sqlite")
+
+    # Each tuple: (table, column_name, column_definition)
+    migrations = [
+        # choristers — portal access (added v2)
+        ("choristers", "pin_hash",           "TEXT"),
+        ("choristers", "has_portal_access",  "BOOLEAN DEFAULT FALSE NOT NULL"),
+        # songs — extended metadata (added v2)
+        ("songs", "hyperlink",               "TEXT"),
+        ("songs", "submitted_by_chorister_id", "INTEGER"),
+        ("songs", "google_doc_id",           "TEXT"),
+        ("songs", "google_doc_url",          "TEXT"),
+        # roster_entries — song linking + notes (added v2)
+        ("roster_entries", "hymn_song_id",              "INTEGER"),
+        ("roster_entries", "praise_worship_song_id",    "INTEGER"),
+        ("roster_entries", "thanksgiving_song_id",      "INTEGER"),
+        ("roster_entries", "notes",                     "TEXT"),
+    ]
+
+    with engine.connect() as conn:
+        for table, column, definition in migrations:
+            if is_postgres:
+                sql = f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {definition}"
+                try:
+                    conn.execute(text(sql))
+                except Exception as exc:
+                    print(f"[migration] {table}.{column}: {exc}")
+            else:
+                # SQLite does not support IF NOT EXISTS on ALTER TABLE;
+                # catch the 'duplicate column name' error and move on.
+                try:
+                    conn.execute(text(
+                        f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
+                    ))
+                except Exception:
+                    pass  # column already exists
+        conn.commit()
 
 
 @contextmanager
