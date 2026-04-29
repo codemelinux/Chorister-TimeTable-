@@ -395,11 +395,14 @@ function refreshSongDropdown(selectId, categoryFilter, choristerId) {
 
   // Songs visible to this chorister slot:
   // - correct category
-  // - AND (no submitter = admin song, available to all) OR (submitted by the assigned chorister)
+  // - AND (no chorister selected → all) OR (submitted by this chorister OR assigned to this chorister by admin)
   const visible = songs.filter((s) => {
     if (!categoryFilter.includes(s.category)) return false;
     if (!choristerId) return true; // no chorister selected — show all in category
-    return s.submitted_by_chorister_id === choristerId; // strict: only that chorister's songs
+    const isSubmitter = s.submitted_by_chorister_id === choristerId;
+    const isAssigned = Array.isArray(s.assigned_choristers) &&
+      s.assigned_choristers.some((a) => a.chorister_id === choristerId);
+    return isSubmitter || isAssigned;
   });
 
   // Sort by most sung first so popular songs appear at the top
@@ -673,6 +676,63 @@ function renderSongsList() {
     }
 
     item.appendChild(top);
+
+    // Admin-only: assignment controls (assign/unassign song to choristers)
+    if (isAdmin) {
+      const assigned = s.assigned_choristers || [];
+      const assignSection = document.createElement("div");
+      assignSection.className = "mt-2 pt-2 border-top d-flex flex-wrap gap-1 align-items-center";
+
+      const assignLabel = document.createElement("span");
+      assignLabel.className = "text-muted small me-1";
+      assignLabel.textContent = "Assigned to:";
+      assignSection.appendChild(assignLabel);
+
+      if (assigned.length > 0) {
+        assigned.forEach((a) => {
+          const badge = document.createElement("span");
+          badge.className = "badge bg-info-subtle text-info-emphasis d-inline-flex align-items-center gap-1";
+          const nameSpan = document.createElement("span");
+          nameSpan.textContent = a.chorister_name;
+          badge.appendChild(nameSpan);
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn-close ms-1";
+          removeBtn.style.cssText = "font-size:0.5rem;filter:none;opacity:0.6;";
+          removeBtn.title = "Remove assignment";
+          removeBtn.addEventListener("click", () => unassignSong(s.id, a.chorister_id));
+          badge.appendChild(removeBtn);
+          assignSection.appendChild(badge);
+        });
+      } else {
+        const none = document.createElement("span");
+        none.className = "text-muted small fst-italic me-1";
+        none.textContent = "none";
+        assignSection.appendChild(none);
+      }
+
+      // Dropdown of unassigned choristers
+      const assignSelect = document.createElement("select");
+      assignSelect.className = "form-select form-select-sm d-inline w-auto";
+      assignSelect.style.maxWidth = "170px";
+      const unassigned = choristers.filter((c) => !assigned.some((a) => a.chorister_id === c.id));
+      assignSelect.innerHTML = '<option value="">+ Assign chorister</option>' +
+        unassigned.map((c) => `<option value="${c.id}">${escHtml(c.name)}</option>`).join("");
+      assignSection.appendChild(assignSelect);
+
+      const assignBtn = document.createElement("button");
+      assignBtn.className = "btn btn-sm btn-outline-info flex-shrink-0";
+      assignBtn.title = "Assign selected chorister to this song";
+      assignBtn.innerHTML = '<i class="bi bi-person-plus"></i>';
+      assignBtn.addEventListener("click", () => {
+        const choristerId = parseInt(assignSelect.value, 10) || null;
+        assignSong(s.id, choristerId, assignBtn);
+      });
+      assignSection.appendChild(assignBtn);
+
+      item.appendChild(assignSection);
+    }
+
     list.appendChild(item);
   });
 }
@@ -742,6 +802,38 @@ async function deleteSong(id, btn) {
   } catch (error) {
     handleMutationError(error);
     setLoading(btn, false);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Song assignments — admin assigns library songs to specific choristers
+// ---------------------------------------------------------------------------
+
+async function assignSong(songId, choristerId, btn) {
+  if (!choristerId) { showToast("Select a chorister to assign.", "warning"); return; }
+  setLoading(btn, true);
+  try {
+    await api("POST", `/api/songs/${songId}/assign`, { chorister_id: choristerId });
+    await loadSongs();
+    songStats = await api("GET", "/api/songs/stats");
+    renderSongsList();
+    showToast("Song assigned to chorister.", "success");
+  } catch (error) {
+    handleMutationError(error);
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+async function unassignSong(songId, choristerId) {
+  try {
+    await api("DELETE", `/api/songs/${songId}/assign/${choristerId}`);
+    await loadSongs();
+    songStats = await api("GET", "/api/songs/stats");
+    renderSongsList();
+    showToast("Assignment removed.", "success");
+  } catch (error) {
+    handleMutationError(error);
   }
 }
 

@@ -51,7 +51,7 @@ Chorister TimeTable/
 │   └── style.css         # Responsive styling
 ├── main.py               # FastAPI app, routes, auth, local dev entrypoint
 ├── database.py           # SQLAlchemy models and database helpers
-├── Procfile              # Railway deployment entrypoint
+├── Profile              # Railway deployment entrypoint
 ├── requirements.txt      # Python dependencies
 ├── .env.example          # Required environment variables
 └── scripts/              # Local setup/start helpers

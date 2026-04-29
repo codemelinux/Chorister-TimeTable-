@@ -183,6 +183,10 @@ class SongUpdate(BaseModel):
         return v
 
 
+class SongAssignBody(BaseModel):
+    chorister_id: int
+
+
 class RosterEntryCreate(BaseModel):
     service_date: str
     hymn_chorister_id: Optional[int] = None
@@ -501,6 +505,34 @@ def api_update_song(
             updated["google_doc_url"] = doc_url
 
     return updated
+
+
+@app.post("/api/songs/{song_id}/assign", status_code=201)
+def api_assign_song(
+    song_id: int,
+    body: SongAssignBody,
+    session: Session = Depends(get_session),
+    _admin: None = Depends(require_admin),
+):
+    """Assign a library song to a chorister so it appears in their roster song dropdown."""
+    if not session.get(db.Song, song_id):
+        raise HTTPException(404, "Song not found")
+    if not session.get(db.Chorister, body.chorister_id):
+        raise HTTPException(404, "Chorister not found")
+    if not db.assign_song_to_chorister(session, song_id, body.chorister_id):
+        raise HTTPException(409, "Song already assigned to this chorister")
+    return {"song_id": song_id, "assignments": db.get_song_assignments(session, song_id)}
+
+
+@app.delete("/api/songs/{song_id}/assign/{chorister_id}", status_code=204)
+def api_unassign_song(
+    song_id: int,
+    chorister_id: int,
+    session: Session = Depends(get_session),
+    _admin: None = Depends(require_admin),
+):
+    """Remove a song assignment from a chorister."""
+    db.unassign_song_from_chorister(session, song_id, chorister_id)
 
 
 @app.delete("/api/songs/{song_id}", status_code=204)

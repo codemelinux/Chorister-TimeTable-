@@ -10,7 +10,7 @@ from datetime import date as date_type
 import bcrypt
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, ForeignKey, Integer,
-    String, Text, create_engine, event, func, or_, select, text,
+    String, Text, UniqueConstraint, create_engine, event, func, or_, select, text,
 )
 from sqlalchemy.orm import Session, declarative_base, relationship, selectinload, sessionmaker
 
@@ -81,6 +81,21 @@ class Song(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     submitted_by = relationship("Chorister", foreign_keys=[submitted_by_chorister_id])
+
+
+class SongAssignment(Base):
+    """Admin-created link that assigns a library song to a chorister for roster purposes."""
+    __tablename__ = "song_assignments"
+
+    id = Column(Integer, primary_key=True)
+    song_id = Column(Integer, ForeignKey("songs.id", ondelete="CASCADE"), nullable=False)
+    chorister_id = Column(Integer, ForeignKey("choristers.id", ondelete="CASCADE"), nullable=False)
+    assigned_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    song = relationship("Song", foreign_keys=[song_id])
+    chorister = relationship("Chorister", foreign_keys=[chorister_id])
+
+    __table_args__ = (UniqueConstraint("song_id", "chorister_id", name="uq_song_assignment"),)
 
 
 class RosterEntry(Base):
@@ -321,7 +336,19 @@ def list_songs(session: Session) -> list:
     rows = session.execute(
         select(Song).options(selectinload(Song.submitted_by)).order_by(Song.title)
     ).scalars().all()
-    return [serialize_song(row) for row in rows]
+
+    # Batch-load all assignments to avoid N+1 queries.
+    assignment_rows = session.execute(
+        select(SongAssignment).options(selectinload(SongAssignment.chorister))
+    ).scalars().all()
+    assignments_by_song: dict[int, list] = {}
+    for a in assignment_rows:
+        assignments_by_song.setdefault(a.song_id, []).append({
+            "chorister_id": a.chorister_id,
+            "chorister_name": a.chorister.name if a.chorister else None,
+        })
+
+    return [serialize_song(row, assignments_by_song.get(row.id, [])) for row in rows]
 
 
 def get_song(session: Session, song_id: int) -> dict | None:
@@ -355,6 +382,51 @@ def update_song(session: Session, song_id: int, data: dict) -> dict | None:
 
 def delete_song(session: Session, song_id: int):
     row = session.get(Song, song_id)
+    if row:
+        session.delete(row)
+        session.commit()
+
+
+# ---------------------------------------------------------------------------
+# Song assignment CRUD
+# ---------------------------------------------------------------------------
+
+def get_song_assignments(session: Session, song_id: int) -> list[dict]:
+    """Return all choristers assigned to a song."""
+    rows = session.execute(
+        select(SongAssignment)
+        .where(SongAssignment.song_id == song_id)
+        .options(selectinload(SongAssignment.chorister))
+    ).scalars().all()
+    return [
+        {"chorister_id": r.chorister_id, "chorister_name": r.chorister.name if r.chorister else None}
+        for r in rows
+    ]
+
+
+def assign_song_to_chorister(session: Session, song_id: int, chorister_id: int) -> bool:
+    """Create an assignment. Returns False if the assignment already exists."""
+    existing = session.execute(
+        select(SongAssignment).where(
+            SongAssignment.song_id == song_id,
+            SongAssignment.chorister_id == chorister_id,
+        )
+    ).scalar_one_or_none()
+    if existing:
+        return False
+    session.add(SongAssignment(song_id=song_id, chorister_id=chorister_id))
+    session.commit()
+    return True
+
+
+def unassign_song_from_chorister(session: Session, song_id: int, chorister_id: int):
+    """Remove an assignment if it exists."""
+    row = session.execute(
+        select(SongAssignment).where(
+            SongAssignment.song_id == song_id,
+            SongAssignment.chorister_id == chorister_id,
+        )
+    ).scalar_one_or_none()
     if row:
         session.delete(row)
         session.commit()
@@ -524,7 +596,7 @@ def serialize_chorister(row: Chorister) -> dict:
     }
 
 
-def serialize_song(row: Song) -> dict:
+def serialize_song(row: Song, assigned_choristers: list | None = None) -> dict:
     return {
         "id": row.id,
         "title": row.title,
@@ -534,6 +606,7 @@ def serialize_song(row: Song) -> dict:
         "google_doc_url": row.google_doc_url or "",
         "submitted_by_chorister_id": row.submitted_by_chorister_id,
         "submitted_by_chorister_name": row.submitted_by.name if row.submitted_by else None,
+        "assigned_choristers": assigned_choristers or [],
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
 
