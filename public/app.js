@@ -9,20 +9,24 @@
 // ---------------------------------------------------------------------------
 
 function setTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
+  if (theme === "dark") {
+    document.body.classList.add("dark-theme");
+  } else {
+    document.body.classList.remove("dark-theme");
+  }
   localStorage.setItem("chorister-theme", theme);
   const icon = document.getElementById("themeIcon");
   if (icon) icon.className = theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-fill";
 }
 
 function toggleTheme() {
-  setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  setTheme(document.body.classList.contains("dark-theme") ? "light" : "dark");
 }
 
-// Apply saved preference immediately (before DOM ready) to avoid flash
+// Apply saved preference as early as possible to avoid flash
 (function () {
   const saved = localStorage.getItem("chorister-theme");
-  if (saved) document.documentElement.setAttribute("data-theme", saved);
+  if (saved === "dark") document.documentElement.classList.add("dark-theme");
 })();
 
 // ---------------------------------------------------------------------------
@@ -1960,8 +1964,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Dark / light theme toggle
   document.getElementById("btnThemeToggle").addEventListener("click", toggleTheme);
-  // Sync icon with current theme on page load
-  setTheme(document.documentElement.getAttribute("data-theme") || "light");
+  // Sync icon to match whatever the early IIFE applied
+  setTheme(localStorage.getItem("chorister-theme") || "light");
 
   // Analytics
   document.getElementById("btnShowStats").addEventListener("click", loadRangeStats);
