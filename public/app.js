@@ -1583,13 +1583,13 @@ function renderRangeChart(stats, container) {
   ).join('');
 
   const legend = `
-    <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:1.1rem;padding-bottom:.8rem;border-bottom:2px solid #f0ece6">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid #f0ece6">
       ${cats.map(c => `
-        <div style="display:flex;align-items:center;gap:.45rem">
-          <span style="width:20px;height:10px;border-radius:3px;background:linear-gradient(90deg,${c.color},${c.grad});display:inline-block"></span>
-          <span style="font-size:.78rem;font-weight:800;letter-spacing:.03em;color:#3a4a3a;font-family:'Nunito',sans-serif">${c.label}</span>
+        <div style="display:flex;align-items:center;gap:.3rem">
+          <span style="width:14px;height:8px;border-radius:2px;background:linear-gradient(90deg,${c.color},${c.grad});display:inline-block"></span>
+          <span style="font-size:.7rem;font-weight:700;color:#3a4a3a;font-family:'Nunito',sans-serif">${c.label}</span>
         </div>`).join('')}
-      <span style="margin-left:auto;font-size:.72rem;color:#aaa;font-weight:600;font-family:'Nunito',sans-serif">Count →</span>
+      <span style="margin-left:auto;font-size:.65rem;color:#aaa;font-weight:600;font-family:'Nunito',sans-serif">Count →</span>
     </div>`;
 
   const rows = stats.map((s, ri) => {
@@ -1597,59 +1597,51 @@ function renderRangeChart(stats, container) {
     const total = s.total ?? cats.reduce((a, c) => a + (s[c.key] || 0), 0);
 
     const nameBadge = isTop
-      ? `<div style="font-size:.58rem;font-weight:900;letter-spacing:.1em;color:#c8a84b;text-transform:uppercase;line-height:1;margin-bottom:3px;display:flex;align-items:center;gap:3px"><span>★</span> Leader</div>`
-      : `<div style="font-size:.65rem;font-weight:700;color:#ccc;line-height:1;margin-bottom:3px">#${ri + 1}</div>`;
+      ? `<div style="font-size:.55rem;font-weight:900;letter-spacing:.08em;color:#c8a84b;text-transform:uppercase;line-height:1;margin-bottom:1px">★ Top</div>`
+      : `<div style="font-size:.6rem;font-weight:700;color:#ccc;line-height:1;margin-bottom:1px">#${ri + 1}</div>`;
 
     const nameEl = `
-      <div style="width:112px;flex-shrink:0;padding-right:.6rem;border-right:2px solid ${isTop ? '#c5dfc9' : '#eee'};margin-right:.1rem">
+      <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid ${isTop ? '#c5dfc9' : '#eee'}">
         ${nameBadge}
-        <div style="font-size:.84rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;font-family:'Nunito',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
+        <div style="font-size:.78rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;font-family:'Nunito',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
       </div>`;
 
     const bars = cats.map((c, ci) => {
       const count = s[c.key] || 0;
       const pct = Math.round((count / maxVal) * 100);
-      const delay = (ri * cats.length + ci) * 60;
+      const delay = (ri * cats.length + ci) * 40;
       const anim = `${uid}_${ri}_${ci}`;
       return `
-        <div style="display:flex;align-items:center;gap:.45rem;margin-bottom:${ci < cats.length - 1 ? '5px' : '0'}">
-          <div style="flex:1;height:17px;background:${c.track};border-radius:0 5px 5px 0;border:1px solid #e8e2d8;position:relative;overflow:hidden">
-            <div style="height:100%;background:linear-gradient(90deg,${c.color},${c.grad});border-radius:0 5px 5px 0;animation:${anim} .7s cubic-bezier(.22,1,.36,1) ${delay}ms both;min-width:${count > 0 ? '4px' : '0'}"></div>
+        <div style="display:flex;align-items:center;gap:.3rem;margin-bottom:${ci < cats.length - 1 ? '2px' : '0'}">
+          <div style="flex:1;height:10px;background:${c.track};border-radius:0 4px 4px 0;border:1px solid #e8e2d8;position:relative;overflow:hidden">
+            <div style="height:100%;background:linear-gradient(90deg,${c.color},${c.grad});border-radius:0 4px 4px 0;animation:${anim} .55s cubic-bezier(.22,1,.36,1) ${delay}ms both;min-width:${count > 0 ? '3px' : '0'}"></div>
           </div>
-          <span style="min-width:18px;font-size:.75rem;font-weight:${count > 0 ? 800 : 400};color:${count > 0 ? c.color : '#ccc'};font-family:'Nunito',sans-serif;text-align:left">${count > 0 ? count : '—'}</span>
+          <span style="min-width:14px;font-size:.68rem;font-weight:${count > 0 ? 800 : 400};color:${count > 0 ? c.color : '#ddd'};font-family:'Nunito',sans-serif">${count > 0 ? count : '—'}</span>
         </div>`;
     }).join('');
 
-    const rowBg = isTop
-      ? 'linear-gradient(135deg,#f2fbec 0%,#e6f5dc 100%)'
-      : ri % 2 === 0 ? '#fff' : '#fafaf8';
-    const rowBorder = isTop ? '1px solid #c5dfc9' : '1px solid transparent';
-    const rowShadow = isTop ? '0 3px 12px rgba(74,124,89,.13)' : 'none';
+    const rowBg = isTop ? 'linear-gradient(135deg,#f2fbec,#e6f5dc)' : ri % 2 === 0 ? '#fff' : '#fafaf8';
 
     return `
-      <div style="display:flex;align-items:center;gap:.6rem;padding:.65rem .8rem;border-radius:10px;margin-bottom:5px;background:${rowBg};border:${rowBorder};box-shadow:${rowShadow}">
+      <div style="display:flex;align-items:center;gap:.4rem;padding:.25rem .45rem;border-radius:6px;margin-bottom:2px;background:${rowBg};border:1px solid ${isTop ? '#c5dfc9' : 'transparent'}">
         ${nameEl}
-        <div style="flex:1;padding:0 .2rem">${bars}</div>
-        <div style="flex-shrink:0;text-align:center;margin-left:.3rem">
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.82rem;font-weight:900;font-family:'Nunito',sans-serif;${isTop ? 'box-shadow:0 0 0 3px #c8a84b80' : ''}">${total}</span>
+        <div style="flex:1;padding:0 .1rem">${bars}</div>
+        <div style="flex-shrink:0;margin-left:.15rem">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.68rem;font-weight:900;font-family:'Nunito',sans-serif;${isTop ? 'box-shadow:0 0 0 2px #c8a84b80' : ''}">${total}</span>
         </div>
       </div>`;
   }).join('');
 
   const axisBar = `
-    <div style="display:flex;align-items:flex-start;gap:.6rem;margin-top:.4rem;padding:0 .8rem">
-      <div style="width:112px;flex-shrink:0;margin-right:.1rem;border-right:2px solid #eee;padding-right:.6rem"></div>
-      <div style="flex:1;padding:0 .2rem;position:relative;border-top:2px solid #d8d0c4;height:18px">
-        ${ticks.map(v => {
-          const pct = Math.round((v / maxVal) * 100);
-          return `<span style="position:absolute;left:calc(${pct}% + 18px + .45rem);transform:translateX(-50%);font-size:.65rem;color:#aaa;font-weight:700;top:4px;font-family:'Nunito',sans-serif">${v}</span>
-                  <span style="position:absolute;left:calc(${pct}% + 18px + .45rem);transform:translateX(-50%);top:-4px;width:1px;height:4px;background:#d8d0c4;display:block"></span>`;
-        }).join('')}
+    <div style="display:flex;align-items:flex-start;gap:.4rem;margin-top:.2rem;padding:0 .45rem">
+      <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid #eee"></div>
+      <div style="flex:1;position:relative;border-top:1.5px solid #d8d0c4;height:14px">
+        ${ticks.map(v => `<span style="position:absolute;left:${Math.round((v/maxVal)*100)}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px;font-family:'Nunito',sans-serif">${v}</span>`).join('')}
       </div>
-      <div style="width:32px;flex-shrink:0;margin-left:.3rem"></div>
+      <div style="width:22px;flex-shrink:0;margin-left:.15rem"></div>
     </div>`;
 
-  container.innerHTML = `<style>${keyframes}</style><div style="border:1.5px solid #d4cfc7;border-radius:12px;padding:.9rem 1rem 0;background:#fff">${legend}<div>${rows}</div>${axisBar}</div>`;
+  container.innerHTML = `<style>${keyframes}</style><div style="border:1.5px solid #d4cfc7;border-radius:10px;padding:.55rem .65rem .35rem;background:#fff">${legend}<div>${rows}</div>${axisBar}</div>`;
 }
 
 async function loadRangeStats() {
