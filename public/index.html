@@ -190,6 +190,29 @@
             <div id="homeLyricsThanksgiving"><p class="text-muted small">Select a month and click Load.</p></div>
           </div>
         </div>
+
+        <div class="all-songs-section home-all-songs-section mt-4">
+          <div class="all-songs-section__header">
+            <i class="bi bi-music-note-list me-2"></i>All Songs in Library
+          </div>
+          <div class="d-flex gap-2 mt-3 mb-2 flex-wrap align-items-center">
+            <input
+              type="search"
+              class="form-control form-control-sm flex-grow-1"
+              id="homeAllSongsSearch"
+              placeholder="Search songs..."
+            />
+            <div class="d-flex gap-1 flex-shrink-0" id="homeAllSongsCatFilter">
+              <button class="btn btn-sm all-songs-filter-btn active" data-cat="all">All</button>
+              <button class="btn btn-sm all-songs-filter-btn cat-hymn-btn" data-cat="hymn"><i class="bi bi-music-note-beamed me-1"></i>Hymn</button>
+              <button class="btn btn-sm all-songs-filter-btn cat-praise-btn" data-cat="praise_worship"><i class="bi bi-hearts me-1"></i>Praise</button>
+              <button class="btn btn-sm all-songs-filter-btn cat-thanks-btn" data-cat="thanksgiving"><i class="bi bi-person-arms-up me-1"></i>Thanksgiving</button>
+            </div>
+          </div>
+          <div id="homeAllSongsCatalogue" class="all-songs-list">
+            <p class="text-muted small">No songs in the library yet.</p>
+          </div>
+        </div>
       </div>
     </section>
   </main>

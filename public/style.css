@@ -207,6 +207,10 @@ main.container-fluid {
   min-height: 96px;
 }
 
+.home-all-songs-section {
+  margin-top: 1.5rem !important;
+}
+
 /* ---- Toolbar ---- */
 .toolbar {
   display: flex;

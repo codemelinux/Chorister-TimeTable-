@@ -55,13 +55,16 @@ function openLyricsViewer(song) {
 async function openLyricsModal() {
   syncLyricsMonthToSelectedMonth("lyricsMonthPicker");
 
-  const searchEl = document.getElementById("allSongsSearch");
-  if (searchEl) searchEl.value = "";
-  document.querySelectorAll(".all-songs-filter-btn").forEach((btn) => btn.classList.remove("active"));
-  const allBtn = document.querySelector(".all-songs-filter-btn[data-cat='all']");
-  if (allBtn) allBtn.classList.add("active");
+  resetAllSongsCatalogueControls({
+    searchId: "allSongsSearch",
+    filterContainerId: "allSongsCatFilter",
+  });
 
-  renderAllSongsCatalogue();
+  renderAllSongsCatalogue({
+    containerId: "allSongsCatalogue",
+    searchId: "allSongsSearch",
+    filterContainerId: "allSongsCatFilter",
+  });
   new bootstrap.Modal(document.getElementById("lyricsModal")).show();
   await loadLyricsByMonth();
 }
@@ -97,8 +100,26 @@ function renderMonthlyLyricsColumns(columnIds, monthSongs) {
   renderLyricsColumn(columnIds.thanksgiving, categories.thanksgiving);
 }
 
-function renderAllSongsCatalogue() {
-  const container = document.getElementById("allSongsCatalogue");
+function resetAllSongsCatalogueControls({ searchId, filterContainerId }) {
+  const searchEl = document.getElementById(searchId);
+  if (searchEl) searchEl.value = "";
+
+  const filterContainer = document.getElementById(filterContainerId);
+  if (!filterContainer) return;
+
+  filterContainer.querySelectorAll(".all-songs-filter-btn").forEach((btn) => btn.classList.remove("active"));
+  const allBtn = filterContainer.querySelector(".all-songs-filter-btn[data-cat='all']");
+  if (allBtn) allBtn.classList.add("active");
+}
+
+function renderAllSongsCatalogue({
+  containerId = "allSongsCatalogue",
+  searchId = "allSongsSearch",
+  filterContainerId = "allSongsCatFilter",
+} = {}) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
   if (!songs || songs.length === 0) {
     container.innerHTML = '<p class="text-muted small">No songs in the library yet.</p>';
     return;
@@ -117,8 +138,9 @@ function renderAllSongsCatalogue() {
     general: "cat-general",
   };
 
-  const activeCat = document.querySelector(".all-songs-filter-btn.active")?.dataset.cat || "all";
-  const query = (document.getElementById("allSongsSearch")?.value || "").toLowerCase().trim();
+  const filterContainer = document.getElementById(filterContainerId);
+  const activeCat = filterContainer?.querySelector(".all-songs-filter-btn.active")?.dataset.cat || "all";
+  const query = (document.getElementById(searchId)?.value || "").toLowerCase().trim();
 
   let sorted = [...songs].sort((a, b) => a.title.localeCompare(b.title));
   if (activeCat !== "all") sorted = sorted.filter((s) => s.category === activeCat);
@@ -248,6 +270,11 @@ async function syncHomeLyricsMonthToSelectedMonth() {
   if (!picker) return;
 
   syncLyricsMonthToSelectedMonth("homeLyricsMonthPicker");
+  renderAllSongsCatalogue({
+    containerId: "homeAllSongsCatalogue",
+    searchId: "homeAllSongsSearch",
+    filterContainerId: "homeAllSongsCatFilter",
+  });
   await loadHomeLyricsByMonth();
 }
 
@@ -326,12 +353,41 @@ function registerLyricsModalEventHandlers() {
   document.getElementById("btnLoadLyrics").addEventListener("click", loadLyricsByMonth);
   document.getElementById("btnLoadHomeLyrics")?.addEventListener("click", loadHomeLyricsByMonth);
 
-  document.getElementById("allSongsSearch").addEventListener("input", renderAllSongsCatalogue);
+  document.getElementById("allSongsSearch").addEventListener("input", () => {
+    renderAllSongsCatalogue({
+      containerId: "allSongsCatalogue",
+      searchId: "allSongsSearch",
+      filterContainerId: "allSongsCatFilter",
+    });
+  });
   document.getElementById("allSongsCatFilter").addEventListener("click", (e) => {
     const btn = e.target.closest(".all-songs-filter-btn");
     if (!btn) return;
-    document.querySelectorAll(".all-songs-filter-btn").forEach((b) => b.classList.remove("active"));
+    e.currentTarget.querySelectorAll(".all-songs-filter-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-    renderAllSongsCatalogue();
+    renderAllSongsCatalogue({
+      containerId: "allSongsCatalogue",
+      searchId: "allSongsSearch",
+      filterContainerId: "allSongsCatFilter",
+    });
+  });
+
+  document.getElementById("homeAllSongsSearch")?.addEventListener("input", () => {
+    renderAllSongsCatalogue({
+      containerId: "homeAllSongsCatalogue",
+      searchId: "homeAllSongsSearch",
+      filterContainerId: "homeAllSongsCatFilter",
+    });
+  });
+  document.getElementById("homeAllSongsCatFilter")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".all-songs-filter-btn");
+    if (!btn) return;
+    e.currentTarget.querySelectorAll(".all-songs-filter-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderAllSongsCatalogue({
+      containerId: "homeAllSongsCatalogue",
+      searchId: "homeAllSongsSearch",
+      filterContainerId: "homeAllSongsCatFilter",
+    });
   });
 }
