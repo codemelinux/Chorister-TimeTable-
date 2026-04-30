@@ -990,6 +990,172 @@ main.container-fluid {
 .my-rating-comment { font-size: 0.85rem; color: var(--text-main); margin-top: 0.35rem; }
 .my-rating-role { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); }
 
+/* ---- Theme toggle button ---- */
+.theme-toggle-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 999px;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+.theme-toggle-btn:hover {
+  background: rgba(255,255,255,0.22);
+  transform: rotate(20deg);
+}
+
+/* ---- Dark theme ---- */
+[data-theme="dark"] {
+  --bg: #0e1c13;
+  --card-bg: #162219;
+  --nav-bg: #091510;
+  --nav-border: #c8a84b;
+  --title-color: #cfe8d5;
+  --label-muted: #6a8a72;
+  --row-divider: #243d2c;
+  --accent: #5aad78;
+  --col-badge-bg: #1e3328;
+  --col-badge-border: #2d4a38;
+  --col-badge-text: #7ec89a;
+  --text-main: #b8d4bf;
+  --text-soft: #7a9a82;
+  --panel-border: #243d2c;
+  --hymn-light: #2a2412;
+  --hymn-mid: #3a3018;
+  --praise-light: #182a1e;
+  --praise-mid: #1e3426;
+  --thanks-light: #2a1a18;
+  --thanks-mid: #38221e;
+}
+
+/* Card & page shell */
+[data-theme="dark"] .page-shell {
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+/* Toolbar & page title */
+[data-theme="dark"] .chart-subtitle { color: #6a8a72; }
+
+/* Roster table */
+[data-theme="dark"] .roster-table th,
+[data-theme="dark"] .roster-table td { border-color: #243d2c; }
+[data-theme="dark"] .roster-table tbody tr:hover td { background: #1e3328; }
+[data-theme="dark"] .th-section-label { color: #6a8a72; }
+[data-theme="dark"] .col-badge { background: var(--col-badge-bg); color: var(--col-badge-text); border-color: var(--col-badge-border); }
+[data-theme="dark"] .roster-notes-row td { background: #192c1f; }
+[data-theme="dark"] .date-cell { color: var(--text-main); }
+
+/* Analytics */
+[data-theme="dark"] .analytics-panel { border-top-color: #243d2c; }
+[data-theme="dark"] .analytics-col--right { border-left-color: #243d2c; }
+[data-theme="dark"] .analytics-section-title { border-bottom-color: #243d2c; }
+[data-theme="dark"] .stat-row { background: #1e3328; border-color: #2d4a38; }
+[data-theme="dark"] .stat-row.stat-top { background: #1a3a25; border-color: var(--accent); }
+
+/* Function cards (roster modal interior) */
+[data-theme="dark"] .function-card { background: #1a2e1f; border-color: #2d4a38; }
+
+/* Category analytics cards */
+[data-theme="dark"] .category-card { background: #162219; border-color: #243d2c; }
+[data-theme="dark"] .category-card--hymn   { border-top-color: var(--hymn-color); }
+[data-theme="dark"] .category-card--praise { border-top-color: var(--praise-color); }
+[data-theme="dark"] .category-card--thanks { border-top-color: var(--thanks-color); }
+[data-theme="dark"] .category-card__label { color: var(--text-main); }
+[data-theme="dark"] .cat-stat-row { background: #1a2e1f; }
+[data-theme="dark"] .cat-stat-row.cat-stat-top { background: #1e3328; }
+[data-theme="dark"] .cat-stat-name { color: var(--text-main); }
+[data-theme="dark"] .cat-stat-count { color: var(--text-soft); }
+
+/* Bootstrap form controls */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background: #1a2e1f;
+  border-color: #2d4a38;
+  color: var(--text-main);
+}
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background: #1e3328;
+  border-color: var(--accent);
+  color: var(--text-main);
+  box-shadow: 0 0 0 3px rgba(90,173,120,.2);
+}
+[data-theme="dark"] .form-control::placeholder { color: #4a6a52; }
+[data-theme="dark"] .form-label { color: var(--text-soft); }
+[data-theme="dark"] .form-check-label { color: var(--text-main); }
+
+/* Bootstrap buttons */
+[data-theme="dark"] .btn-outline-secondary {
+  color: #8aaa90;
+  border-color: #2d4a38;
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background: #1e3328;
+  color: var(--text-main);
+}
+[data-theme="dark"] .btn-outline-primary {
+  color: #6aad84;
+  border-color: #2d5a3a;
+}
+[data-theme="dark"] .btn-outline-danger { border-color: #5a2820; }
+[data-theme="dark"] .btn-link { color: var(--accent); }
+
+/* Dropdown menu */
+[data-theme="dark"] .navbar-dropdown-menu {
+  background: #162219;
+  border: 1px solid #243d2c;
+}
+[data-theme="dark"] .navbar-dropdown-menu .dropdown-item { color: var(--text-main); }
+[data-theme="dark"] .navbar-dropdown-menu .dropdown-item:hover { background: #1e3328; color: var(--accent); }
+[data-theme="dark"] .navbar-dropdown-menu .dropdown-divider { border-color: #243d2c; }
+
+/* Modals */
+[data-theme="dark"] .modal-content {
+  background: #162219;
+  border: 1px solid #243d2c;
+  color: var(--text-main);
+}
+[data-theme="dark"] .modal-header {
+  border-bottom-color: #243d2c;
+  background: #1a2e1f;
+}
+[data-theme="dark"] .modal-footer { border-top-color: #243d2c; }
+[data-theme="dark"] .modal-title { color: var(--title-color); }
+[data-theme="dark"] .btn-close { filter: invert(1) brightness(0.7); }
+
+/* Tables inside modals / bootstrap defaults */
+[data-theme="dark"] .table { color: var(--text-main); }
+[data-theme="dark"] .table thead tr { background: #1a2e1f; }
+[data-theme="dark"] .table-light { background: #1a2e1f !important; color: var(--text-soft) !important; }
+[data-theme="dark"] .table-hover tbody tr:hover { background: #1e3328; }
+[data-theme="dark"] .table td, [data-theme="dark"] .table th { border-color: #243d2c; }
+
+/* Lyrics & songs */
+[data-theme="dark"] .lyrics-block { background: rgba(255,255,255,0.06); }
+[data-theme="dark"] .song-item { border-bottom-color: #243d2c; }
+[data-theme="dark"] .song-item:hover { background: #1a2e1f; }
+[data-theme="dark"] .song-title { color: var(--text-main); }
+
+/* Rating cards */
+[data-theme="dark"] .my-rating-card { background: #1a2e1f; border-color: #2d4a38; }
+
+/* Misc */
+[data-theme="dark"] .text-muted { color: #5a7a62 !important; }
+[data-theme="dark"] .border { border-color: #243d2c !important; }
+[data-theme="dark"] .bg-white { background: #162219 !important; }
+[data-theme="dark"] .prayer-roster-table td,
+[data-theme="dark"] .prayer-roster-table th { border-color: #243d2c; }
+[data-theme="dark"] .stats-breakdown-table tbody tr:hover { background: #1e3328; }
+[data-theme="dark"] .stats-row--top td { background: #1a3a25 !important; }
+[data-theme="dark"] .stats-row--top:hover td { background: #1e3a28 !important; }
+
 /* ---- Print ---- */
 @media print {
   .app-navbar, .modal, .btn, #analyticsPanel, #bg-art,

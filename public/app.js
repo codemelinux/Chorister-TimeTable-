@@ -5,6 +5,27 @@
 // to prevent XSS. Dynamic content set via textContent needs no escaping.
 
 // ---------------------------------------------------------------------------
+// Dark / light theme
+// ---------------------------------------------------------------------------
+
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("chorister-theme", theme);
+  const icon = document.getElementById("themeIcon");
+  if (icon) icon.className = theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-fill";
+}
+
+function toggleTheme() {
+  setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+}
+
+// Apply saved preference immediately (before DOM ready) to avoid flash
+(function () {
+  const saved = localStorage.getItem("chorister-theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+})();
+
+// ---------------------------------------------------------------------------
 // Global state
 // ---------------------------------------------------------------------------
 
@@ -1936,6 +1957,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btnSaveRating").addEventListener("click", saveRating);
   document.getElementById("btnClearRating").addEventListener("click", clearRating);
   document.getElementById("btnMyRatings").addEventListener("click", openMyRatings);
+
+  // Dark / light theme toggle
+  document.getElementById("btnThemeToggle").addEventListener("click", toggleTheme);
+  // Sync icon with current theme on page load
+  setTheme(document.documentElement.getAttribute("data-theme") || "light");
 
   // Analytics
   document.getElementById("btnShowStats").addEventListener("click", loadRangeStats);
