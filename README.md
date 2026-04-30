@@ -243,13 +243,6 @@ web: uvicorn main:app --host 0.0.0.0 --port $PORT
 
 - The app detects Railway production via `RAILWAY_ENVIRONMENT=production`.
 
-## Known Observations From The Current Codebase
-
-- The README previously described the project mainly as a monthly roster planner, but the codebase now includes songs, prayer scheduling, chorister portal access, Google Drive sync, and ratings.
-- Startup migrations currently add newer columns, but they do not create separate migration files or use Alembic.
-- There is no automated test suite in the repository at the moment.
-- Local `.env` loading is implemented manually in `main.py` instead of using `python-dotenv`.
-
 ## Author
 
 Developed by Benedict U.

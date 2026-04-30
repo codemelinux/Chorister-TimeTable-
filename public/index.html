@@ -122,11 +122,29 @@
     </div>
   </nav>
 
-  <main class="container-fluid py-4 px-3 px-lg-4">
-    <section class="page-shell">
+  <main class="site-main">
+    <div class="site-body">
+      <section class="hero-shell">
+        <div class="hero-shell__copy">
+          <span class="hero-shell__eyebrow">Choir Planning Hub</span>
+          <h1 class="hero-shell__title">Everything the team needs for this month in one place.</h1>
+          <p class="hero-shell__text">
+            Review the current roster, browse the monthly lyrics catalogue, and explore the full song library from a single responsive home page.
+          </p>
+        </div>
+        <div class="hero-shell__highlights">
+          <span class="hero-highlight"><i class="bi bi-calendar-event me-2"></i>Monthly roster</span>
+          <span class="hero-highlight"><i class="bi bi-book me-2"></i>Lyrics catalogue</span>
+          <span class="hero-highlight"><i class="bi bi-music-note-list me-2"></i>Song library</span>
+        </div>
+      </section>
+
+      <div class="content-stack">
+        <section class="page-shell">
       <div class="toolbar">
         <div>
-          <h1 class="page-title mb-1" id="monthTitle">Monthly Roster</h1>
+          <span class="section-kicker">Home Schedule</span>
+          <h2 class="page-title mb-1" id="monthTitle">Monthly Roster</h2>
           <p class="chart-subtitle mb-0">Hymn &middot; Praise Worship &middot; Thanksgiving assignments</p>
         </div>
         <div class="toolbar-controls">
@@ -157,9 +175,10 @@
 
     </section>
 
-    <section class="page-shell home-library-shell mt-4">
+    <section class="page-shell home-library-shell">
       <div class="home-library-header">
         <div>
+          <span class="section-kicker">Home Library</span>
           <h2 class="home-library-title mb-1">
             <i class="bi bi-book me-2"></i>Monthly Lyrics Catalogue
           </h2>
@@ -215,6 +234,8 @@
         </div>
       </div>
     </section>
+      </div>
+    </div>
   </main>
 
   <!-- Toast container -->
@@ -655,11 +676,20 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body analytics-body" style="overflow-y:auto">
+          <div class="analytics-layout">
+            <section class="analytics-hero">
+              <div class="analytics-hero__copy">
+                <span class="analytics-hero__eyebrow">Analytics Dashboard</span>
+                <h6 class="analytics-hero__title">Track monthly participation, compare date ranges, and review song usage trends.</h6>
+                <p class="analytics-hero__text mb-0">Use the month view for the current roster snapshot, then switch to range mode when you need broader choir activity trends.</p>
+              </div>
+            </section>
 
           <!-- Chorister stats + date range -->
-          <div class="row g-0 analytics-two-col mb-4">
-            <div class="col-md-5 analytics-col">
-              <div class="analytics-month-bar">
+          <div class="row g-0 analytics-two-col">
+            <div class="col-xl-5 col-lg-6 analytics-col">
+              <div class="analytics-pane">
+                <div class="analytics-month-bar">
                 <div class="analytics-month-bar__copy">
                   <h6 class="analytics-section-title analytics-section-title--plain">
                     <i class="bi bi-person-check me-1"></i>This month &mdash; Choristers
@@ -677,29 +707,37 @@
                 </div>
               </div>
               <div id="analyticsMonthOutput"><p class="text-muted small">Loading…</p></div>
-            </div>
-            <div class="col-md-7 analytics-col analytics-col--right">
-              <h6 class="analytics-section-title">Date range</h6>
-              <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
-                <div>
-                  <label class="form-label mb-1 small">From</label>
-                  <input type="month" class="form-control form-control-sm" id="analyticsFrom" />
-                </div>
-                <div>
-                  <label class="form-label mb-1 small">To</label>
-                  <input type="month" class="form-control form-control-sm" id="analyticsTo" />
-                </div>
-                <button class="btn btn-sm btn-outline-secondary" id="btnShowStats">
-                  <i class="bi bi-search me-1"></i>Show Stats
-                </button>
               </div>
-              <div id="analyticsRangeOutput"></div>
+            </div>
+            <div class="col-xl-7 col-lg-6 analytics-col analytics-col--right">
+              <div class="analytics-pane analytics-pane--range">
+                <h6 class="analytics-section-title">Date range</h6>
+                <p class="analytics-pane__subtitle">Compare participation across any two months and generate a broader stats summary.</p>
+                <div class="analytics-range-controls">
+                  <div class="analytics-range-field">
+                    <label class="form-label mb-1 small">From</label>
+                    <input type="month" class="form-control form-control-sm" id="analyticsFrom" />
+                  </div>
+                  <div class="analytics-range-field">
+                    <label class="form-label mb-1 small">To</label>
+                    <input type="month" class="form-control form-control-sm" id="analyticsTo" />
+                  </div>
+                  <button class="btn btn-sm btn-outline-secondary analytics-range-btn" id="btnShowStats">
+                    <i class="bi bi-search me-1"></i>Show Stats
+                  </button>
+                </div>
+                <div id="analyticsRangeOutput"></div>
+              </div>
             </div>
           </div>
 
           <!-- Most Sung Songs -->
-          <h6 class="analytics-section-title">Most Sung Songs</h6>
-          <div class="category-analytics-grid" id="categoryAnalyticsGrid">
+          <section class="analytics-song-section">
+            <div class="analytics-song-section__header">
+              <h6 class="analytics-section-title mb-0">Most Sung Songs</h6>
+              <p class="analytics-pane__subtitle mb-0">A quick category breakdown of the songs used most often across the selected period.</p>
+            </div>
+            <div class="category-analytics-grid" id="categoryAnalyticsGrid">
             <div class="category-card category-card--hymn">
               <div class="category-card__header">
                 <span class="category-card__emoji">🎵</span>
@@ -727,8 +765,9 @@
                 <p class="text-muted small mb-0">No data yet.</p>
               </div>
             </div>
+            </div>
+          </section>
           </div>
-
         </div><!-- /.modal-body -->
         <div class="modal-footer">
           <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
