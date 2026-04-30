@@ -1565,22 +1565,11 @@ function renderRangeChart(stats, container) {
 
   let activeFilter = 'all';
 
-  function buildRows(filter) {
+  function buildChart(filter) {
     const activeCats = filter === 'all' ? cats : cats.filter(c => c.key === filter);
-    // Percentage scale: top performer = 100%, everyone else relative
     const catMax = filter === 'all'
       ? Math.max(...stats.map(s => cats.reduce((a,c) => a + (s[c.key]||0), 0)), 1)
       : Math.max(...stats.map(s => s[activeCats[0].key] || 0), 1);
-    const ticks = [0, 25, 50, 75, 100];
-
-    const uid = `rc${Date.now()}${Math.random().toString(36).slice(2)}`;
-    const kf = stats.map((s, ri) => {
-      const raw = filter === 'all'
-        ? cats.reduce((a,c) => a + (s[c.key]||0), 0)
-        : s[activeCats[0].key] || 0;
-      const pct = Math.round((raw / catMax) * 100);
-      return `@keyframes ${uid}_${ri}{from{width:0}to{width:${pct}%}}`;
-    }).join('');
 
     const rows = stats.map((s, ri) => {
       const isTop = ri === 0;
@@ -1588,9 +1577,10 @@ function renderRangeChart(stats, container) {
         ? cats.reduce((a,c) => a + (s[c.key]||0), 0)
         : s[activeCats[0].key] || 0;
       const barPct = Math.round((raw / catMax) * 100);
-      const delay = ri * 40;
 
-      // Build stacked segments inside the bar (proportional within raw total)
+      // Inner bar: set width directly so it always renders correctly
+      const innerStyle = `height:100%;width:${barPct}%;display:flex;overflow:hidden;border-radius:0 3px 3px 0;transition:width .4s ease`;
+
       const segments = filter === 'all'
         ? cats.map(c => {
             const count = s[c.key] || 0;
@@ -1604,7 +1594,6 @@ function renderRangeChart(stats, container) {
       const nameBadge = isTop
         ? `<div style="font-size:.55rem;font-weight:900;letter-spacing:.08em;color:#c8a84b;text-transform:uppercase;line-height:1;margin-bottom:1px">★ Top</div>`
         : `<div style="font-size:.6rem;font-weight:700;color:#ccc;line-height:1;margin-bottom:1px">#${ri + 1}</div>`;
-
       const rowBg = isTop ? 'linear-gradient(135deg,#f2fbec,#e6f5dc)' : ri % 2 === 0 ? '#fff' : '#fafaf8';
 
       return `
@@ -1614,9 +1603,7 @@ function renderRangeChart(stats, container) {
             <div style="font-size:.78rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
           </div>
           <div style="flex:1;height:12px;background:#f0ece6;border-radius:0 4px 4px 0;border:1px solid #e8e2d8;overflow:hidden">
-            <div style="height:100%;display:flex;animation:${uid}_${ri} .55s cubic-bezier(.22,1,.36,1) ${delay}ms both">
-              ${raw > 0 ? segments : ''}
-            </div>
+            <div style="${innerStyle}">${raw > 0 ? segments : ''}</div>
           </div>
           <span style="min-width:28px;font-size:.72rem;font-weight:800;color:${isTop ? '#1c3a27' : '#555'};text-align:right;flex-shrink:0">${raw > 0 ? barPct + '%' : '—'}</span>
           <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.68rem;font-weight:900;flex-shrink:0;${isTop ? 'box-shadow:0 0 0 2px #c8a84b80' : ''}">
@@ -1629,13 +1616,12 @@ function renderRangeChart(stats, container) {
       <div style="display:flex;align-items:flex-start;gap:.4rem;margin-top:.2rem;padding:0 .45rem">
         <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid #eee"></div>
         <div style="flex:1;position:relative;border-top:1.5px solid #d8d0c4;height:14px">
-          ${ticks.map(v => `<span style="position:absolute;left:${v}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px">${v}%</span>`).join('')}
+          ${[0,25,50,75,100].map(v => `<span style="position:absolute;left:${v}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px">${v}%</span>`).join('')}
         </div>
-        <span style="width:22px;flex-shrink:0"></span>
-        <span style="width:22px;flex-shrink:0"></span>
+        <span style="width:22px;flex-shrink:0"></span><span style="width:22px;flex-shrink:0"></span>
       </div>`;
 
-    return `<style>${kf}</style><div class="rc-rows">${rows}</div>${axis}`;
+    return `<div>${rows}</div>${axis}`;
   }
 
   // Toggle button styles
@@ -1643,37 +1629,36 @@ function renderRangeChart(stats, container) {
     `display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;cursor:pointer;border:1.5px solid;transition:all .15s;` +
     (active ? 'background:#1c3a27;color:#fff;border-color:#1c3a27;' : 'background:#fff;color:#555;border-color:#ddd;');
 
-  const toggleButtons = `
-    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.55rem;padding-bottom:.45rem;border-bottom:1px solid #f0ece6" id="rc-toggles-${container.id || 'x'}">
-      <button data-f="all"   style="${togBtnStyle(true)}"><span style="width:10px;height:10px;border-radius:2px;background:linear-gradient(90deg,#c8a84b,#e87b6e);display:inline-block"></span>All</button>
-      <button data-f="hymn_count"           style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#c8a84b;display:inline-block"></span>Hymn</button>
-      <button data-f="praise_worship_count" style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#4a7c59;display:inline-block"></span>Praise</button>
-      <button data-f="thanksgiving_count"   style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#e87b6e;display:inline-block"></span>Thanks</button>
-      <span style="margin-left:auto;font-size:.65rem;color:#aaa;font-weight:600;align-self:center">Count →</span>
-    </div>`;
-
   const wrap = document.createElement('div');
   wrap.style.cssText = 'border:1.5px solid #d4cfc7;border-radius:10px;padding:.55rem .65rem .35rem;background:#fff;max-width:680px';
-  wrap.innerHTML = toggleButtons + buildRows('all');
+
+  const toggleBar = document.createElement('div');
+  toggleBar.style.cssText = 'display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.55rem;padding-bottom:.45rem;border-bottom:1px solid #f0ece6';
+  toggleBar.innerHTML = `
+    <button data-f="all"   style="${togBtnStyle(true)}"><span style="width:10px;height:10px;border-radius:2px;background:linear-gradient(90deg,#c8a84b,#e87b6e);display:inline-block"></span>All</button>
+    <button data-f="hymn_count"           style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#c8a84b;display:inline-block"></span>Hymn</button>
+    <button data-f="praise_worship_count" style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#4a7c59;display:inline-block"></span>Praise</button>
+    <button data-f="thanksgiving_count"   style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#e87b6e;display:inline-block"></span>Thanks</button>
+    <span style="margin-left:auto;font-size:.65rem;color:#aaa;font-weight:600;align-self:center">Count →</span>`;
+
+  const chartArea = document.createElement('div');
+  chartArea.innerHTML = buildChart('all');
+
+  wrap.appendChild(toggleBar);
+  wrap.appendChild(chartArea);
   container.innerHTML = '';
   container.appendChild(wrap);
 
-  wrap.querySelectorAll('[data-f]').forEach(btn => {
+  toggleBar.querySelectorAll('[data-f]').forEach(btn => {
     btn.addEventListener('click', () => {
       activeFilter = btn.dataset.f;
-      wrap.querySelectorAll('[data-f]').forEach(b => b.style.cssText = togBtnStyle(false) + b.style.cssText.replace(/background:[^;]+;color:[^;]+;border-color:[^;]+;/, ''));
-      wrap.querySelectorAll('[data-f]').forEach(b => {
+      toggleBar.querySelectorAll('[data-f]').forEach(b => {
         const on = b.dataset.f === activeFilter;
         b.style.background = on ? '#1c3a27' : '#fff';
         b.style.color = on ? '#fff' : '#555';
         b.style.borderColor = on ? '#1c3a27' : '#ddd';
       });
-      const existing = wrap.querySelector('.rc-rows');
-      const existingAxis = wrap.querySelector('.rc-rows + div');
-      const newContent = document.createElement('div');
-      newContent.innerHTML = buildRows(activeFilter);
-      if (existing) existing.replaceWith(newContent.querySelector('.rc-rows'));
-      if (existingAxis) existingAxis.replaceWith(newContent.lastElementChild);
+      chartArea.innerHTML = buildChart(activeFilter);
     });
   });
 }
