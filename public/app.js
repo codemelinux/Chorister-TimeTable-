@@ -1531,48 +1531,99 @@ function renderRangeChart(stats, container) {
     container.innerHTML = '<p class="text-muted small mb-0">No data for this period.</p>';
     return;
   }
-  const maxTotal = Math.max(...stats.map(s => s.total ?? ((s.hymn_count || 0) + (s.praise_worship_count || 0) + (s.thanksgiving_count || 0))));
+
+  const cats = [
+    { key: 'hymn_count',           label: 'Hymn',           color: '#c8a84b', grad: '#e8c96a', track: '#fdf5d8', text: '#5a3e00' },
+    { key: 'praise_worship_count', label: 'Praise Worship', color: '#4a7c59', grad: '#6aad84', track: '#dff0e5', text: '#fff'    },
+    { key: 'thanksgiving_count',   label: 'Thanksgiving',   color: '#e87b6e', grad: '#f4a89e', track: '#fde8e5', text: '#fff'    },
+  ];
+
+  // Normalise bars to global max so each category bar is directly comparable
+  const maxVal = Math.max(...stats.flatMap(s => cats.map(c => s[c.key] || 0)), 1);
+
+  // X-axis ticks
+  const tickStep = maxVal <= 5 ? 1 : Math.ceil(maxVal / 5);
+  const ticks = [];
+  for (let v = 0; v <= maxVal; v += tickStep) ticks.push(v);
+  if (ticks[ticks.length - 1] < maxVal) ticks.push(maxVal);
+
+  const uid = `rc${Date.now()}`;
+
+  const keyframes = stats.flatMap((s, ri) =>
+    cats.map((c, ci) => {
+      const pct = Math.round(((s[c.key] || 0) / maxVal) * 100);
+      return `@keyframes ${uid}_${ri}_${ci}{from{width:0}to{width:${pct}%}}`;
+    })
+  ).join('');
 
   const legend = `
-    <div style="display:flex;gap:1.1rem;margin-bottom:.9rem;flex-wrap:wrap">
-      <span style="display:flex;align-items:center;gap:.35rem;font-size:.75rem;font-weight:700;color:#8a6c1a"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#c8a84b"></span>Hymn</span>
-      <span style="display:flex;align-items:center;gap:.35rem;font-size:.75rem;font-weight:700;color:#2a5a38"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#4a7c59"></span>Praise Worship</span>
-      <span style="display:flex;align-items:center;gap:.35rem;font-size:.75rem;font-weight:700;color:#b84a3a"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#e87b6e"></span>Thanksgiving</span>
+    <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:1.1rem;padding-bottom:.8rem;border-bottom:2px solid #f0ece6">
+      ${cats.map(c => `
+        <div style="display:flex;align-items:center;gap:.45rem">
+          <span style="width:20px;height:10px;border-radius:3px;background:linear-gradient(90deg,${c.color},${c.grad});display:inline-block"></span>
+          <span style="font-size:.78rem;font-weight:800;letter-spacing:.03em;color:#3a4a3a;font-family:'Nunito',sans-serif">${c.label}</span>
+        </div>`).join('')}
+      <span style="margin-left:auto;font-size:.72rem;color:#aaa;font-weight:600;font-family:'Nunito',sans-serif">Count →</span>
     </div>`;
 
-  const rows = stats.map((s, i) => {
-    const h = s.hymn_count || 0;
-    const p = s.praise_worship_count || 0;
-    const t = s.thanksgiving_count || 0;
-    const total = s.total ?? (h + p + t);
-    const barPct = Math.round((total / maxTotal) * 100);
-    const hPct = total > 0 ? Math.round((h / total) * 100) : 0;
-    const pPct = total > 0 ? Math.round((p / total) * 100) : 0;
-    const tPct = total > 0 ? 100 - hPct - pPct : 0;
-    const isTop = i === 0;
+  const rows = stats.map((s, ri) => {
+    const isTop = ri === 0;
+    const total = s.total ?? cats.reduce((a, c) => a + (s[c.key] || 0), 0);
 
-    const rank = isTop
-      ? `<i class="bi bi-star-fill" style="color:#c8a84b;font-size:.78rem;flex-shrink:0"></i>`
-      : `<span style="color:#bbb;font-size:.72rem;font-weight:700;min-width:14px;text-align:right;flex-shrink:0">${i + 1}</span>`;
+    const nameBadge = isTop
+      ? `<div style="font-size:.58rem;font-weight:900;letter-spacing:.1em;color:#c8a84b;text-transform:uppercase;line-height:1;margin-bottom:3px;display:flex;align-items:center;gap:3px"><span>★</span> Leader</div>`
+      : `<div style="font-size:.65rem;font-weight:700;color:#ccc;line-height:1;margin-bottom:3px">#${ri + 1}</div>`;
 
-    const seg = (pct, bg, label, count) => pct > 0
-      ? `<div title="${label}: ${count}" style="width:${pct}%;background:${bg};height:100%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:${bg === '#c8a84b' ? '#5a3e00' : '#fff'};overflow:hidden;min-width:2px">${pct >= 18 ? count : ''}</div>`
-      : '';
+    const nameEl = `
+      <div style="width:112px;flex-shrink:0;padding-right:.6rem;border-right:2px solid ${isTop ? '#c5dfc9' : '#eee'};margin-right:.1rem">
+        ${nameBadge}
+        <div style="font-size:.84rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;font-family:'Nunito',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
+      </div>`;
+
+    const bars = cats.map((c, ci) => {
+      const count = s[c.key] || 0;
+      const pct = Math.round((count / maxVal) * 100);
+      const delay = (ri * cats.length + ci) * 60;
+      const anim = `${uid}_${ri}_${ci}`;
+      return `
+        <div style="display:flex;align-items:center;gap:.45rem;margin-bottom:${ci < cats.length - 1 ? '5px' : '0'}">
+          <div style="flex:1;height:17px;background:${c.track};border-radius:0 5px 5px 0;position:relative;overflow:hidden">
+            <div style="height:100%;background:linear-gradient(90deg,${c.color},${c.grad});border-radius:0 5px 5px 0;animation:${anim} .7s cubic-bezier(.22,1,.36,1) ${delay}ms both;min-width:${count > 0 ? '4px' : '0'}"></div>
+          </div>
+          <span style="min-width:18px;font-size:.75rem;font-weight:${count > 0 ? 800 : 400};color:${count > 0 ? c.color : '#ccc'};font-family:'Nunito',sans-serif;text-align:left">${count > 0 ? count : '—'}</span>
+        </div>`;
+    }).join('');
+
+    const rowBg = isTop
+      ? 'linear-gradient(135deg,#f2fbec 0%,#e6f5dc 100%)'
+      : ri % 2 === 0 ? '#fff' : '#fafaf8';
+    const rowBorder = isTop ? '1px solid #c5dfc9' : '1px solid transparent';
+    const rowShadow = isTop ? '0 3px 12px rgba(74,124,89,.13)' : 'none';
 
     return `
-      <div style="display:flex;align-items:center;gap:.55rem;padding:.42rem 0;border-bottom:1px solid #eef0eb">
-        ${rank}
-        <div style="width:130px;flex-shrink:0;font-size:.85rem;font-weight:${isTop ? '700' : '600'};color:#1c3a27;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
-        <div style="flex:1;height:22px;background:#f0ece4;border-radius:5px;overflow:hidden;display:flex">
-          <div style="width:${barPct}%;height:100%;display:flex;overflow:hidden;border-radius:5px;transition:width .4s ease">
-            ${seg(hPct, '#c8a84b', 'Hymn', h)}${seg(pPct, '#4a7c59', 'Praise', p)}${seg(tPct, '#e87b6e', 'Thanks', t)}
-          </div>
+      <div style="display:flex;align-items:center;gap:.6rem;padding:.65rem .8rem;border-radius:10px;margin-bottom:5px;background:${rowBg};border:${rowBorder};box-shadow:${rowShadow}">
+        ${nameEl}
+        <div style="flex:1;padding:0 .2rem">${bars}</div>
+        <div style="flex-shrink:0;text-align:center;margin-left:.3rem">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.82rem;font-weight:900;font-family:'Nunito',sans-serif;${isTop ? 'box-shadow:0 0 0 3px #c8a84b80' : ''}">${total}</span>
         </div>
-        <span style="min-width:28px;text-align:center;font-size:.85rem;font-weight:800;color:#1c3a27;flex-shrink:0">${total}</span>
       </div>`;
   }).join('');
 
-  container.innerHTML = legend + `<div>${rows}</div>`;
+  const axisBar = `
+    <div style="display:flex;align-items:flex-start;gap:.6rem;margin-top:.4rem;padding:0 .8rem">
+      <div style="width:112px;flex-shrink:0;margin-right:.1rem;border-right:2px solid #eee;padding-right:.6rem"></div>
+      <div style="flex:1;padding:0 .2rem;position:relative;border-top:2px solid #d8d0c4;height:18px">
+        ${ticks.map(v => {
+          const pct = Math.round((v / maxVal) * 100);
+          return `<span style="position:absolute;left:calc(${pct}% + 18px + .45rem);transform:translateX(-50%);font-size:.65rem;color:#aaa;font-weight:700;top:4px;font-family:'Nunito',sans-serif">${v}</span>
+                  <span style="position:absolute;left:calc(${pct}% + 18px + .45rem);transform:translateX(-50%);top:-4px;width:1px;height:4px;background:#d8d0c4;display:block"></span>`;
+        }).join('')}
+      </div>
+      <div style="width:32px;flex-shrink:0;margin-left:.3rem"></div>
+    </div>`;
+
+  container.innerHTML = `<style>${keyframes}</style>${legend}<div>${rows}</div>${axisBar}`;
 }
 
 async function loadRangeStats() {
