@@ -66,21 +66,6 @@ body {
   gap: 1.5rem;
 }
 
-.hero-shell {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding: 1.2rem 1.25rem 1.5rem;
-  margin-bottom: 1.5rem;
-  color: #f5f3ea;
-}
-
-.hero-shell__copy {
-  max-width: 780px;
-}
-
-.hero-shell__eyebrow,
 .section-kicker {
   display: inline-flex;
   align-items: center;
@@ -89,48 +74,6 @@ body {
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-}
-
-.hero-shell__eyebrow {
-  color: #f0d88c;
-  margin-bottom: 0.75rem;
-}
-
-.hero-shell__title {
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  margin: 0 0 0.9rem;
-  max-width: 12ch;
-}
-
-.hero-shell__text {
-  margin: 0;
-  max-width: 62ch;
-  color: rgba(245, 243, 234, 0.82);
-  font-size: 1rem;
-  line-height: 1.7;
-}
-
-.hero-shell__highlights {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  max-width: 420px;
-}
-
-.hero-highlight {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.7rem 1rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.08);
-  color: #f9f6ee;
-  font-size: 0.88rem;
-  font-weight: 700;
-  backdrop-filter: blur(8px);
 }
 
 /* ---- Background ribbon decorations ---- */
@@ -476,33 +419,6 @@ body {
   gap: 1.35rem;
 }
 
-.analytics-hero {
-  padding: 0.9rem 0 0.15rem;
-}
-
-.analytics-hero__copy {
-  max-width: 920px;
-}
-
-.analytics-hero__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.7rem;
-}
-
-.analytics-hero__title {
-  font-size: clamp(1.45rem, 2vw, 2rem);
-  line-height: 1.15;
-  color: var(--title-color);
-  margin: 0 0 0.65rem;
-}
-
-.analytics-hero__text,
 .analytics-pane__subtitle {
   color: #5a6e5e;
   font-size: 0.88rem;
@@ -543,14 +459,6 @@ body {
 
   .analytics-body {
     padding: 0 0.85rem 1rem;
-  }
-
-  .analytics-hero {
-    padding-top: 0.55rem;
-  }
-
-  .analytics-hero__title {
-    font-size: 1.35rem;
   }
 
   .analytics-pane {
@@ -1158,31 +1066,11 @@ body {
 @media (max-width: 900px) {
   .category-analytics-grid { grid-template-columns: 1fr; }
   .lyrics-grid { grid-template-columns: 1fr; }
-  .hero-shell {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .hero-shell__highlights {
-    justify-content: flex-start;
-    max-width: none;
-  }
 }
 
 @media (max-width: 768px) {
   .site-main {
     padding: 1rem 0.7rem 2rem;
-  }
-  .hero-shell {
-    padding: 0.65rem 0.35rem 1.1rem;
-    margin-bottom: 1rem;
-    gap: 1rem;
-  }
-  .hero-shell__title {
-    font-size: 2rem;
-    max-width: none;
-  }
-  .hero-shell__text {
-    font-size: 0.92rem;
   }
   .content-stack {
     gap: 1rem;
@@ -1248,10 +1136,6 @@ body {
   }
   .navbar-subtitle {
     font-size: 0.75rem;
-  }
-  .hero-highlight {
-    width: 100%;
-    justify-content: center;
   }
   .toolbar-controls button {
     flex: 0 0 48px;
