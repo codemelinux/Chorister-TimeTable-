@@ -150,7 +150,10 @@ class SongCreate(BaseModel):
     @field_validator("hyperlink", mode="before")
     @classmethod
     def validate_hyperlink(cls, v):
-        return _validate_hyperlink(v)
+        v = _validate_hyperlink(v)
+        if v:
+            raise ValueError("New songs are stored in Google Docs only; external hyperlinks are not allowed")
+        return None
 
     @field_validator("category")
     @classmethod
@@ -170,7 +173,10 @@ class SongUpdate(BaseModel):
     @field_validator("hyperlink", mode="before")
     @classmethod
     def validate_hyperlink(cls, v):
-        return _validate_hyperlink(v)
+        v = _validate_hyperlink(v)
+        if v:
+            raise ValueError("Songs are stored in Google Docs only; external hyperlinks are not allowed")
+        return None
 
     @field_validator("category")
     @classmethod
@@ -452,31 +458,33 @@ def api_create_song(
     _auth: None = Depends(require_chorister_or_admin),
 ):
     """Create a new song. Chorister submissions are tagged with their ID."""
+    if not google_drive.is_configured():
+        raise HTTPException(503, "Google Drive must be configured before adding new songs")
+
     submitted_by = request.session.get("chorister_id")
 
-    song_data = {
-        "title": body.title.strip(),
-        "lyrics": body.lyrics.strip() if body.lyrics else "",
-        "category": body.category,
-        "hyperlink": body.hyperlink,
-        "submitted_by_chorister_id": submitted_by,
-    }
-    created = db.create_song(session, song_data)
+    title = body.title.strip()
+    lyrics = body.lyrics.strip() if body.lyrics else ""
 
     # Attempt Google Drive sync — failure is non-fatal (logged in google_drive.py).
-    if google_drive.is_configured():
-        try:
-            doc_url, doc_id = google_drive.push_song_to_drive(
-                song_data["title"], song_data["category"], song_data["lyrics"]
-            )
-        except Exception as exc:
-            print(f"[songs] Google Drive sync skipped for new song '{song_data['title']}': {exc}")
-            doc_url, doc_id = None, None
-        if doc_url:
-            db.update_song(session, created["id"], {"google_doc_url": doc_url, "google_doc_id": doc_id})
-            created["google_doc_url"] = doc_url
+    try:
+        doc_url, doc_id = google_drive.push_song_to_drive(title, body.category, lyrics)
+    except Exception as exc:
+        raise HTTPException(502, f"Google Drive sync failed: {exc}") from exc
 
-    return created
+    if not doc_url or not doc_id:
+        raise HTTPException(502, "Google Drive sync did not return a document link")
+
+    song_data = {
+        "title": title,
+        "lyrics": lyrics,
+        "category": body.category,
+        "hyperlink": None,
+        "google_doc_url": doc_url,
+        "google_doc_id": doc_id,
+        "submitted_by_chorister_id": submitted_by,
+    }
+    return db.create_song(session, song_data)
 
 
 @app.put("/api/songs/{song_id}")
@@ -509,19 +517,25 @@ def api_update_song(
 
     updated = db.update_song(session, song_id, data)
 
-    # Re-sync to Drive when content that affects the doc has changed.
-    if google_drive.is_configured() and ("lyrics" in data or "title" in data):
+    # Re-sync to Drive when content that affects the Google Doc has changed.
+    if "lyrics" in data or "title" in data or "category" in data:
+        if not google_drive.is_configured():
+            raise HTTPException(503, "Google Drive must be configured before updating songs")
         fresh = db.get_song_obj(session, song_id)
         try:
             doc_url, doc_id = google_drive.push_song_to_drive(
                 fresh.title, fresh.category, fresh.lyrics or "", fresh.google_doc_id
             )
         except Exception as exc:
-            print(f"[songs] Google Drive re-sync skipped for song '{fresh.title}': {exc}")
-            doc_url, doc_id = None, None
+            raise HTTPException(502, f"Google Drive sync failed: {exc}") from exc
         if doc_url:
-            db.update_song(session, song_id, {"google_doc_url": doc_url, "google_doc_id": doc_id})
+            db.update_song(session, song_id, {
+                "hyperlink": None,
+                "google_doc_url": doc_url,
+                "google_doc_id": doc_id,
+            })
             updated["google_doc_url"] = doc_url
+            updated["hyperlink"] = ""
 
     return updated
 

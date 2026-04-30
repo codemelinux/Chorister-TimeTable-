@@ -366,7 +366,6 @@ function openSongEditForm(song) {
   document.getElementById("songTitleInput").value = song.title;
   document.getElementById("songCategoryInput").value = song.category || "general";
   document.getElementById("songLyricsInput").value = song.lyrics || "";
-  document.getElementById("songHyperlinkInput").value = song.hyperlink || "";
   document.getElementById("songFormTitle").textContent = "Edit Song";
   document.getElementById("btnSaveSong").textContent = "Update Song";
   document.getElementById("songFormSection").scrollIntoView({ behavior: "smooth" });
@@ -377,7 +376,6 @@ function resetSongForm() {
   document.getElementById("songTitleInput").value = "";
   document.getElementById("songCategoryInput").value = "general";
   document.getElementById("songLyricsInput").value = "";
-  document.getElementById("songHyperlinkInput").value = "";
   document.getElementById("songFormTitle").textContent = "Add New Song";
   document.getElementById("btnSaveSong").textContent = "Save Song";
 }
@@ -387,7 +385,6 @@ async function saveSong() {
   const title = document.getElementById("songTitleInput").value.trim();
   const category = document.getElementById("songCategoryInput").value;
   const lyrics = document.getElementById("songLyricsInput").value.trim();
-  const hyperlink = document.getElementById("songHyperlinkInput").value.trim() || null;
   if (!title) {
     showToast("Song title is required.", "warning");
     return;
@@ -396,7 +393,7 @@ async function saveSong() {
   const btn = document.getElementById("btnSaveSong");
   setLoading(btn, true);
   try {
-    const payload = { title, category, lyrics, hyperlink };
+    const payload = { title, category, lyrics };
     if (id) {
       await api("PUT", `/api/songs/${id}`, payload);
     } else {
