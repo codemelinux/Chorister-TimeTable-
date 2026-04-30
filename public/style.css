@@ -348,13 +348,36 @@ main.container-fluid {
 
 .analytics-body { padding: 0 1.25rem 1.5rem; }
 
+.analytics-two-col {
+  align-items: flex-start;
+}
+
+.analytics-col {
+  padding: 0 1.25rem 1rem;
+}
+
+.analytics-col--right {
+  border-left: 2px dotted var(--row-divider);
+}
+
+@media (max-width: 767px) {
+  .analytics-col--right {
+    border-left: none;
+    border-top: 2px dotted var(--row-divider);
+    padding-top: 1rem;
+  }
+}
+
 .analytics-section-title {
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--label-muted);
+  margin-top: 0;
   margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--row-divider);
 }
 
 .stat-row {
