@@ -1432,29 +1432,35 @@ function renderStatsList(stats, container) {
     container.innerHTML = '<p class="text-muted small mb-0">No data for this period.</p>';
     return;
   }
-  const dash = '<span class="text-muted">—</span>';
-  const rows = stats.map(s => {
+  const dash = '<span class="stats-dash">—</span>';
+  const badge = (count, cls) => count > 0
+    ? `<span class="stats-count-badge stats-count-badge--${cls}">${count}</span>`
+    : dash;
+  const rows = stats.map((s, i) => {
     const h = s.hymn_count || 0;
     const p = s.praise_worship_count || 0;
     const t = s.thanksgiving_count || 0;
     const total = s.total ?? (h + p + t);
-    return `<tr>
-      <td>${escHtml(s.name)}</td>
-      <td class="text-center">${h > 0 ? h : dash}</td>
-      <td class="text-center">${p > 0 ? p : dash}</td>
-      <td class="text-center">${t > 0 ? t : dash}</td>
-      <td class="text-center fw-semibold">${total}</td>
+    return `<tr class="${i === 0 ? "stats-row--top" : ""}">
+      <td class="stats-name-cell">
+        ${i === 0 ? '<i class="bi bi-star-fill stats-top-star"></i>' : `<span class="stats-rank">${i + 1}</span>`}
+        ${escHtml(s.name)}
+      </td>
+      <td class="text-center">${badge(h, "hymn")}</td>
+      <td class="text-center">${badge(p, "praise")}</td>
+      <td class="text-center">${badge(t, "thanks")}</td>
+      <td class="text-center"><span class="stats-total-badge">${total}</span></td>
     </tr>`;
   }).join("");
   container.innerHTML = `
-    <table class="table table-sm table-hover mb-0">
-      <thead class="table-light">
+    <table class="table table-sm mb-0 stats-breakdown-table">
+      <thead>
         <tr>
-          <th>Chorister</th>
-          <th class="text-center">Hymn</th>
-          <th class="text-center">Praise</th>
-          <th class="text-center">Thanks</th>
-          <th class="text-center">Total</th>
+          <th class="stats-th-name">Chorister</th>
+          <th class="text-center stats-th stats-th--hymn"><span class="stats-col-dot stats-col-dot--hymn"></span>Hymn</th>
+          <th class="text-center stats-th stats-th--praise"><span class="stats-col-dot stats-col-dot--praise"></span>Praise</th>
+          <th class="text-center stats-th stats-th--thanks"><span class="stats-col-dot stats-col-dot--thanks"></span>Thanks</th>
+          <th class="text-center stats-th">Total</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

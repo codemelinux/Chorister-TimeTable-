@@ -404,6 +404,119 @@ main.container-fluid {
   border-radius: 3px;
 }
 
+/* ---- Chorister stats breakdown table ---- */
+.stats-breakdown-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.stats-breakdown-table thead tr {
+  background: var(--bg);
+}
+
+.stats-th-name,
+.stats-th {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--bg);
+  padding: 0.55rem 0.6rem;
+  border-bottom: none;
+}
+
+.stats-th--hymn   { color: var(--hymn-color); }
+.stats-th--praise { color: #7ec8a0; }
+.stats-th--thanks { color: #f5a89e; }
+
+.stats-col-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+.stats-col-dot--hymn   { background: var(--hymn-color); }
+.stats-col-dot--praise { background: var(--praise-color); }
+.stats-col-dot--thanks { background: var(--thanks-color); }
+
+.stats-breakdown-table tbody tr {
+  transition: background 0.1s;
+}
+.stats-breakdown-table tbody tr:hover { background: #f0f7ec; }
+
+.stats-breakdown-table tbody td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.stats-row--top td { background: #edf7e4; font-weight: 700; }
+.stats-row--top:hover td { background: #e0f0d6 !important; }
+
+.stats-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--title-color);
+}
+
+.stats-top-star {
+  color: var(--hymn-color);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.stats-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--col-badge-bg);
+  color: var(--label-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stats-count-badge {
+  display: inline-block;
+  min-width: 24px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+.stats-count-badge--hymn   { background: var(--hymn-light);  color: #8a6c1a; border: 1px solid var(--hymn-mid); }
+.stats-count-badge--praise { background: var(--praise-light); color: var(--accent); border: 1px solid var(--praise-mid); }
+.stats-count-badge--thanks { background: var(--thanks-light); color: #b84a3a; border: 1px solid var(--thanks-mid); }
+
+.stats-total-badge {
+  display: inline-block;
+  min-width: 28px;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.stats-dash {
+  color: #ccc;
+  font-size: 0.85rem;
+}
+
 /* ---- Color-coded category analytics cards ---- */
 .category-analytics-grid {
   display: grid;
