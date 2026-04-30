@@ -366,6 +366,20 @@ main.container-fluid {
     border-top: 2px dotted var(--row-divider);
     padding-top: 1rem;
   }
+
+  .analytics-month-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analytics-month-bar__controls {
+    width: 100%;
+  }
+
+  .analytics-month-bar__picker {
+    min-width: 0;
+    flex: 1;
+  }
 }
 
 .analytics-section-title {
@@ -378,6 +392,59 @@ main.container-fluid {
   margin-bottom: 0.75rem;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--row-divider);
+}
+
+.analytics-section-title--plain {
+  border-bottom: none;
+  margin-bottom: 0.25rem;
+  padding-bottom: 0;
+}
+
+.analytics-month-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(248,251,246,0.92));
+}
+
+.analytics-month-bar__copy {
+  min-width: 0;
+}
+
+.analytics-month-bar__subtitle {
+  color: #5a6e5e;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.analytics-month-bar__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.analytics-month-bar__nav-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analytics-month-bar__picker {
+  min-width: 195px;
+  height: 40px;
+  border-radius: 10px;
 }
 
 .stat-row {
@@ -1057,6 +1124,11 @@ body.dark-theme .date-cell { color: var(--text-main); }
 body.dark-theme .analytics-panel { border-top-color: #243d2c; }
 body.dark-theme .analytics-col--right { border-left-color: #243d2c; }
 body.dark-theme .analytics-section-title { border-bottom-color: #243d2c; }
+body.dark-theme .analytics-month-bar {
+  border-color: #243d2c;
+  background: linear-gradient(135deg, rgba(26,46,31,0.96), rgba(20,35,24,0.94));
+}
+body.dark-theme .analytics-month-bar__subtitle { color: #7a9a82; }
 body.dark-theme .stat-row { background: #1e3328; border-color: #2d4a38; }
 body.dark-theme .stat-row.stat-top { background: #1a3a25; border-color: var(--accent); }
 
