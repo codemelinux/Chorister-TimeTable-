@@ -464,12 +464,17 @@ def api_create_song(
     created = db.create_song(session, song_data)
 
     # Attempt Google Drive sync — failure is non-fatal (logged in google_drive.py).
-    doc_url, doc_id = google_drive.push_song_to_drive(
-        song_data["title"], song_data["category"], song_data["lyrics"]
-    )
-    if doc_url:
-        db.update_song(session, created["id"], {"google_doc_url": doc_url, "google_doc_id": doc_id})
-        created["google_doc_url"] = doc_url
+    if google_drive.is_configured():
+        try:
+            doc_url, doc_id = google_drive.push_song_to_drive(
+                song_data["title"], song_data["category"], song_data["lyrics"]
+            )
+        except Exception as exc:
+            print(f"[songs] Google Drive sync skipped for new song '{song_data['title']}': {exc}")
+            doc_url, doc_id = None, None
+        if doc_url:
+            db.update_song(session, created["id"], {"google_doc_url": doc_url, "google_doc_id": doc_id})
+            created["google_doc_url"] = doc_url
 
     return created
 
@@ -505,11 +510,15 @@ def api_update_song(
     updated = db.update_song(session, song_id, data)
 
     # Re-sync to Drive when content that affects the doc has changed.
-    if "lyrics" in data or "title" in data:
+    if google_drive.is_configured() and ("lyrics" in data or "title" in data):
         fresh = db.get_song_obj(session, song_id)
-        doc_url, doc_id = google_drive.push_song_to_drive(
-            fresh.title, fresh.category, fresh.lyrics or "", fresh.google_doc_id
-        )
+        try:
+            doc_url, doc_id = google_drive.push_song_to_drive(
+                fresh.title, fresh.category, fresh.lyrics or "", fresh.google_doc_id
+            )
+        except Exception as exc:
+            print(f"[songs] Google Drive re-sync skipped for song '{fresh.title}': {exc}")
+            doc_url, doc_id = None, None
         if doc_url:
             db.update_song(session, song_id, {"google_doc_url": doc_url, "google_doc_id": doc_id})
             updated["google_doc_url"] = doc_url
