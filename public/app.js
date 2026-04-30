@@ -44,6 +44,7 @@ let isChorister = false;
 let choristerInfo = null;  // {chorister_id, name} when a chorister is logged in
 let prayerEntries = [];           // Current month's prayer roster
 let prayerSelectedMonth = new Date();
+let analyticsMonth = new Date();  // Month shown in the Analytics modal chorister stats
 let ratings = {};  // key: `${entry_id}_${role}` → rating object (admin only)
 
 // ---------------------------------------------------------------------------
@@ -1501,6 +1502,43 @@ function renderStatsList(stats, container) {
     </div>`;
 }
 
+function setAnalyticsMonthPicker() {
+  const picker = document.getElementById("analyticsMonthPicker");
+  if (!picker) return;
+  const m = String(analyticsMonth.getMonth() + 1).padStart(2, "0");
+  picker.value = `${analyticsMonth.getFullYear()}-${m}`;
+}
+
+async function loadAnalyticsMonthStats() {
+  setAnalyticsMonthPicker();
+  const year  = analyticsMonth.getFullYear();
+  const month = analyticsMonth.getMonth() + 1;
+  const container = document.getElementById("analyticsMonthOutput");
+  if (!container) return;
+  container.innerHTML = '<p class="text-muted small">Loading…</p>';
+  try {
+    const entries = await api("GET", `/api/roster?year=${year}&month=${month}`);
+    const counts = {};
+    entries.forEach(entry => {
+      [
+        [entry.hymn_chorister_id, entry.hymn_chorister_name, "hymn"],
+        [entry.praise_worship_chorister_id, entry.praise_worship_chorister_name, "praise_worship"],
+        [entry.thanksgiving_chorister_id, entry.thanksgiving_chorister_name, "thanksgiving"],
+      ].forEach(([id, name, role]) => {
+        if (id && name) {
+          if (!counts[id]) counts[id] = { chorister_id: id, name, hymn_count: 0, praise_worship_count: 0, thanksgiving_count: 0, total: 0 };
+          counts[id][`${role}_count`] += 1;
+          counts[id].total += 1;
+        }
+      });
+    });
+    const stats = Object.values(counts).sort((a, b) => b.total - a.total);
+    renderStatsList(stats, container);
+  } catch (err) {
+    container.innerHTML = '<p class="text-muted small">Failed to load.</p>';
+  }
+}
+
 function renderMonthlyStats() {
   const container = document.getElementById("analyticsMonthOutput");
   const counts = {};
@@ -1961,9 +1999,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Analytics page
   document.getElementById("btnAnalytics").addEventListener("click", () => {
-    renderMonthlyStats();
+    analyticsMonth = new Date(selectedMonth);
+    loadAnalyticsMonthStats();
     renderCategoryAnalytics();
     new bootstrap.Modal(document.getElementById("analyticsModal")).show();
+  });
+  document.getElementById("btnAnalyticsPrevMonth").addEventListener("click", () => {
+    analyticsMonth = new Date(analyticsMonth.getFullYear(), analyticsMonth.getMonth() - 1, 1);
+    loadAnalyticsMonthStats();
+  });
+  document.getElementById("btnAnalyticsNextMonth").addEventListener("click", () => {
+    analyticsMonth = new Date(analyticsMonth.getFullYear(), analyticsMonth.getMonth() + 1, 1);
+    loadAnalyticsMonthStats();
+  });
+  document.getElementById("analyticsMonthPicker").addEventListener("change", (e) => {
+    const [y, m] = e.target.value.split("-").map(Number);
+    analyticsMonth = new Date(y, m - 1, 1);
+    loadAnalyticsMonthStats();
   });
 
   // Prayer Roster

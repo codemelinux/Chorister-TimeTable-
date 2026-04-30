@@ -600,7 +600,18 @@
           <!-- Chorister stats + date range -->
           <div class="row g-0 analytics-two-col mb-4">
             <div class="col-md-5 analytics-col">
-              <h6 class="analytics-section-title">This month — Choristers</h6>
+              <h6 class="analytics-section-title">
+                <i class="bi bi-person-check me-1"></i>This month — Choristers
+              </h6>
+              <div class="d-flex align-items-center gap-1 mb-3">
+                <button class="btn btn-outline-secondary btn-sm" id="btnAnalyticsPrevMonth" aria-label="Previous month">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <input type="month" class="form-control form-control-sm" id="analyticsMonthPicker" style="min-width:140px" />
+                <button class="btn btn-outline-secondary btn-sm" id="btnAnalyticsNextMonth" aria-label="Next month">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
               <div id="analyticsMonthOutput"><p class="text-muted small">Loading…</p></div>
             </div>
             <div class="col-md-7 analytics-col analytics-col--right">
