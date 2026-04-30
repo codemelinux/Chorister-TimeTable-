@@ -1501,84 +1501,6 @@ function renderStatsList(stats, container) {
     </div>`;
 }
 
-// ---------------------------------------------------------------------------
-// Chart 1 — Vertical stacked bar chart (monthly chorister assignments)
-// ---------------------------------------------------------------------------
-
-function renderVerticalBarChart(stats, container) {
-  if (!stats || stats.length === 0) {
-    container.innerHTML = '<p class="text-muted small mb-0">No data for this month.</p>';
-    return;
-  }
-
-  const CHART_H = 180;
-  const dataMax = Math.max(...stats.flatMap(s => [s.hymn_count || 0, s.praise_worship_count || 0, s.thanksgiving_count || 0]), 1);
-  const maxVal = Math.max(4, dataMax);
-  const uid = `vc${Date.now()}`;
-
-  // Y-axis ticks
-  const tickStep = maxVal <= 4 ? 1 : Math.ceil(maxVal / 4);
-  const ticks = [];
-  for (let v = 0; v <= maxVal; v += tickStep) ticks.push(v);
-
-  const legend = `
-    <div style="display:flex;gap:.9rem;flex-wrap:wrap;margin-bottom:.65rem">
-      ${[['#c8a84b','#e8c96a','Hymn'],['#4a7c59','#6aad84','Praise'],['#e87b6e','#f4a89e','Thanks']].map(([c,g,l]) =>
-        `<div style="display:flex;align-items:center;gap:.3rem">
-          <span style="width:12px;height:8px;border-radius:2px;background:linear-gradient(90deg,${c},${g});display:inline-block"></span>
-          <span style="font-size:.7rem;font-weight:700;color:#3a4a3a">${l}</span>
-        </div>`).join('')}
-    </div>`;
-
-  // Animated keyframes per bar segment
-  const segs = [
-    { key: 'thanksgiving_count', color: '#e87b6e', grad: '#f4a89e' },
-    { key: 'praise_worship_count', color: '#4a7c59', grad: '#6aad84' },
-    { key: 'hymn_count', color: '#c8a84b', grad: '#e8c96a' },
-  ];
-  const keyframes = stats.flatMap((s, ci) =>
-    segs.map((seg, si) => {
-      const h = Math.round(((s[seg.key] || 0) / maxVal) * CHART_H);
-      return `@keyframes ${uid}_${ci}_${si}{from{height:0}to{height:${h}px}}`;
-    })
-  ).join('');
-
-  const yAxisHtml = ticks.slice().reverse().map(v => {
-    const btm = Math.round((v / maxVal) * CHART_H);
-    return `<span style="position:absolute;bottom:${btm}px;right:4px;font-size:.6rem;color:#aaa;font-weight:700;line-height:1">${v}</span>
-            <span style="position:absolute;bottom:${btm}px;left:28px;right:0;height:1px;background:${v === 0 ? '#ccc' : '#f0ece6'};pointer-events:none"></span>`;
-  }).join('');
-
-  const cols = stats.map((s, ci) => {
-    const isTop = ci === 0;
-    const barSegs = segs.map((seg, si) => {
-      const h = Math.round(((s[seg.key] || 0) / maxVal) * CHART_H);
-      const delay = (ci * segs.length + si) * 35;
-      if (h === 0) return '';
-      return `<div style="height:${h}px;background:linear-gradient(180deg,${seg.grad},${seg.color});animation:${uid}_${ci}_${si} .5s cubic-bezier(.22,1,.36,1) ${delay}ms both;flex-shrink:0"></div>`;
-    }).join('');
-
-    return `
-      <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;padding:0 2px">
-        <span style="font-size:.62rem;font-weight:800;color:${isTop ? '#c8a84b' : '#1c3a27'};margin-bottom:3px">${s.total}</span>
-        <div style="width:min(32px,100%);height:${CHART_H}px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:4px 4px 0 0;overflow:hidden;background:#f7f5f0">
-          ${barSegs}
-        </div>
-        <div style="font-size:.62rem;font-weight:${isTop ? 800 : 600};color:${isTop ? '#1c3a27' : '#555'};margin-top:4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;width:100%" title="${escHtml(s.name)}">
-          ${isTop ? '★ ' : ''}${escHtml(s.name)}
-        </div>
-      </div>`;
-  }).join('');
-
-  container.innerHTML = `
-    <style>${keyframes}</style>
-    ${legend}
-    <div style="display:flex;align-items:flex-end;gap:0;position:relative">
-      <div style="width:32px;flex-shrink:0;position:relative;height:${CHART_H}px">${yAxisHtml}</div>
-      <div style="flex:1;display:flex;align-items:flex-end;gap:2px;border-left:2px solid #ccc;border-bottom:2px solid #ccc;padding:0 4px">${cols}</div>
-    </div>`;
-}
-
 function renderMonthlyStats() {
   const container = document.getElementById("analyticsMonthOutput");
   const counts = {};
@@ -1596,128 +1518,8 @@ function renderMonthlyStats() {
     });
   });
   const stats = Object.values(counts).sort((a, b) => b.total - a.total);
-  renderVerticalBarChart(stats, container);
+  renderStatsList(stats, container);
   renderCategoryAnalytics();
-}
-
-// ---------------------------------------------------------------------------
-// Chart 2 — Multi-month activity trend (one bar per month)
-// ---------------------------------------------------------------------------
-
-async function loadMonthTrend() {
-  const from = document.getElementById("analyticsFrom").value;
-  const to   = document.getElementById("analyticsTo").value;
-  const container = document.getElementById("analyticsTrendOutput");
-  if (!from || !to) { showToast("Select both From and To months.", "warning"); return; }
-  if (from > to)    { showToast("From month must be before To month.", "warning"); return; }
-
-  const btn = document.getElementById("btnShowStats");
-  setLoading(btn, true);
-  container.innerHTML = '<p class="text-muted small">Loading…</p>';
-
-  // Enumerate months in range
-  const months = [];
-  const [fy, fm] = from.split("-").map(Number);
-  const [ty, tm] = to.split("-").map(Number);
-  let y = fy, m = fm;
-  while (y < ty || (y === ty && m <= tm)) {
-    months.push(`${y}-${String(m).padStart(2, "0")}`);
-    m++; if (m > 12) { m = 1; y++; }
-  }
-
-  try {
-    const results = await Promise.all(
-      months.map(mo => api("GET", `/api/analytics?from=${mo}&to=${mo}`))
-    );
-    // Aggregate totals per month
-    const monthly = months.map((mo, i) => {
-      const data = results[i];
-      return {
-        label: new Date(`${mo}-01`).toLocaleDateString(undefined, { month: "short", year: "2-digit" }),
-        hymn:    data.reduce((a, s) => a + (s.hymn_count || 0), 0),
-        praise:  data.reduce((a, s) => a + (s.praise_worship_count || 0), 0),
-        thanks:  data.reduce((a, s) => a + (s.thanksgiving_count || 0), 0),
-        total:   data.reduce((a, s) => a + (s.total || 0), 0),
-      };
-    });
-    renderMonthTrend(monthly, container);
-  } catch (error) {
-    showToast(error.message, "danger");
-    container.innerHTML = "";
-  } finally {
-    setLoading(btn, false);
-  }
-}
-
-function renderMonthTrend(monthly, container) {
-  if (!monthly.length || monthly.every(m => m.total === 0)) {
-    container.innerHTML = '<p class="text-muted small mb-0">No data for this range.</p>';
-    return;
-  }
-
-  const CHART_H = 180;
-  const dataMax = Math.max(...monthly.map(m => m.total), 1);
-  const maxVal  = Math.max(dataMax + 1, 4);
-  const uid     = `mt${Date.now()}`;
-
-  const tickStep = maxVal <= 6 ? 1 : Math.ceil(maxVal / 5);
-  const ticks = [];
-  for (let v = 0; v <= maxVal; v += tickStep) ticks.push(v);
-
-  const legend = `
-    <div style="display:flex;gap:.9rem;flex-wrap:wrap;margin-bottom:.65rem">
-      ${[['#c8a84b','#e8c96a','Hymn'],['#4a7c59','#6aad84','Praise'],['#e87b6e','#f4a89e','Thanks']].map(([c,g,l]) =>
-        `<div style="display:flex;align-items:center;gap:.3rem">
-          <span style="width:12px;height:8px;border-radius:2px;background:linear-gradient(90deg,${c},${g});display:inline-block"></span>
-          <span style="font-size:.7rem;font-weight:700;color:#3a4a3a">${l}</span>
-        </div>`).join('')}
-    </div>`;
-
-  const segs = [
-    { key: 'thanks', color: '#e87b6e', grad: '#f4a89e' },
-    { key: 'praise', color: '#4a7c59', grad: '#6aad84' },
-    { key: 'hymn',   color: '#c8a84b', grad: '#e8c96a' },
-  ];
-
-  const keyframes = monthly.flatMap((m, ci) =>
-    segs.map((seg, si) => {
-      const h = Math.round((m[seg.key] / maxVal) * CHART_H);
-      return `@keyframes ${uid}_${ci}_${si}{from{height:0}to{height:${h}px}}`;
-    })
-  ).join('');
-
-  const yAxisHtml = ticks.slice().reverse().map(v => {
-    const btm = Math.round((v / maxVal) * CHART_H);
-    return `<span style="position:absolute;bottom:${btm}px;right:4px;font-size:.6rem;color:#aaa;font-weight:700;line-height:1">${v}</span>
-            <span style="position:absolute;bottom:${btm}px;left:28px;right:0;height:1px;background:${v === 0 ? '#ccc' : '#f0ece6'};pointer-events:none"></span>`;
-  }).join('');
-
-  const cols = monthly.map((m, ci) => {
-    const barSegs = segs.map((seg, si) => {
-      const h = Math.round((m[seg.key] / maxVal) * CHART_H);
-      const delay = (ci * segs.length + si) * 30;
-      if (h === 0) return '';
-      return `<div style="height:${h}px;background:linear-gradient(180deg,${seg.grad},${seg.color});animation:${uid}_${ci}_${si} .5s cubic-bezier(.22,1,.36,1) ${delay}ms both;flex-shrink:0"></div>`;
-    }).join('');
-
-    const isPeak = m.total === dataMax;
-    return `
-      <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;padding:0 2px">
-        <span style="font-size:.62rem;font-weight:800;color:${isPeak ? '#c8a84b' : '#1c3a27'};margin-bottom:3px">${m.total || ''}</span>
-        <div style="width:min(34px,100%);height:${CHART_H}px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:4px 4px 0 0;overflow:hidden;background:#f7f5f0">
-          ${barSegs}
-        </div>
-        <div style="font-size:.6rem;font-weight:600;color:#666;margin-top:4px;text-align:center;white-space:nowrap">${escHtml(m.label)}</div>
-      </div>`;
-  }).join('');
-
-  container.innerHTML = `
-    <style>${keyframes}</style>
-    ${legend}
-    <div style="display:flex;align-items:flex-end;gap:0;position:relative">
-      <div style="width:32px;flex-shrink:0;position:relative;height:${CHART_H}px">${yAxisHtml}</div>
-      <div style="flex:1;display:flex;align-items:flex-end;gap:2px;border-left:2px solid #ccc;border-bottom:2px solid #ccc;padding:0 4px">${cols}</div>
-    </div>`;
 }
 
 function renderCategoryAnalytics() {
@@ -2165,7 +1967,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setTheme(localStorage.getItem("chorister-theme") || "light");
 
   // Analytics
-  document.getElementById("btnShowStats").addEventListener("click", loadMonthTrend);
+  document.getElementById("btnShowStats").addEventListener("click", loadRangeStats);
 
   // Chorister → song dropdown filters (live re-filter when chorister changes)
   bindChoristerSongFilter("hymnChorister", "hymnSongSelect", ["hymn", "general"]);

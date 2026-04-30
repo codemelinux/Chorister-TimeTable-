@@ -597,20 +597,14 @@
         </div>
         <div class="modal-body analytics-body" style="overflow-y:auto">
 
-          <!-- Chart 1: Monthly chorister assignments -->
+          <!-- Chorister stats + date range -->
           <div class="row g-0 analytics-two-col mb-4">
-            <div class="col-md-6 analytics-col">
-              <h6 class="analytics-section-title">
-                <i class="bi bi-person-check me-1"></i>This month — Choristers
-              </h6>
+            <div class="col-md-5 analytics-col">
+              <h6 class="analytics-section-title">This month — Choristers</h6>
               <div id="analyticsMonthOutput"><p class="text-muted small">Loading…</p></div>
             </div>
-
-            <!-- Chart 2: Multi-month trend -->
-            <div class="col-md-6 analytics-col analytics-col--right">
-              <h6 class="analytics-section-title">
-                <i class="bi bi-graph-up me-1"></i>Chorister activity trend
-              </h6>
+            <div class="col-md-7 analytics-col analytics-col--right">
+              <h6 class="analytics-section-title">Date range</h6>
               <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
                 <div>
                   <label class="form-label mb-1 small">From</label>
@@ -621,10 +615,10 @@
                   <input type="month" class="form-control form-control-sm" id="analyticsTo" />
                 </div>
                 <button class="btn btn-sm btn-outline-secondary" id="btnShowStats">
-                  <i class="bi bi-search me-1"></i>Show Trend
+                  <i class="bi bi-search me-1"></i>Show Stats
                 </button>
               </div>
-              <div id="analyticsTrendOutput"></div>
+              <div id="analyticsRangeOutput"></div>
             </div>
           </div>
 
