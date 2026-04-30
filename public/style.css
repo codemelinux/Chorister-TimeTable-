@@ -741,6 +741,75 @@ main.container-fluid {
   .roster-table td:nth-child(4) { text-align: left; }
 }
 
+/* ================================================================
+   Prayer Roster
+   ================================================================ */
+
+.prayer-roster-table {
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.prayer-roster-table thead th {
+  background: transparent;
+  border: none;
+  padding: 0.85rem 0.75rem;
+  border-bottom: 2px solid var(--panel-border);
+  vertical-align: middle;
+}
+
+.prayer-roster-table td {
+  border: none;
+  border-bottom: 1px dashed var(--row-divider, #ddd);
+  padding: 0.85rem 0.75rem;
+  vertical-align: middle;
+}
+
+.prayer-roster-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* "Next Up" highlighted row */
+.prayer-next-up-row td {
+  background: linear-gradient(90deg, #fdf8e8 0%, #fff9f0 100%);
+  border-top: 2px solid var(--hymn-color) !important;
+  border-bottom: none !important;
+}
+
+.prayer-next-badge {
+  display: inline-block;
+  background: var(--hymn-color);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.prayer-next-name {
+  color: var(--hymn-color);
+  font-weight: 800;
+}
+
+/* Add/edit form card */
+.prayer-add-form {
+  background: #f7faf4;
+  border: 1px solid var(--col-badge-border, #c8a84b40);
+  border-radius: 12px;
+}
+
+.prayer-form-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--col-badge-text, #7a6020);
+  margin-bottom: 0.75rem;
+}
+
 /* ---- Print ---- */
 @media print {
   .app-navbar, .modal, .btn, #analyticsPanel, #bg-art,

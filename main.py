@@ -221,6 +221,16 @@ class RosterEntryUpdate(BaseModel):
     notes: Optional[str] = None  # None clears the note when explicitly sent as null
 
 
+class PrayerEntryCreate(BaseModel):
+    date: str
+    chorister_id: Optional[int] = None
+
+
+class PrayerEntryUpdate(BaseModel):
+    date: Optional[str] = None
+    chorister_id: Optional[int] = None
+
+
 def parse_service_date(value: str) -> date:
     """Parse ISO date string or raise 400."""
     try:
@@ -611,6 +621,70 @@ def api_delete_roster_entry(
     _admin: None = Depends(require_admin),
 ):
     db.delete_roster_entry(session, entry_id)
+
+
+# ---------------------------------------------------------------------------
+# Prayer Roster (public read; admin-only writes)
+# NOTE: /api/prayer-roster/next MUST be registered before /api/prayer-roster/{entry_id}
+# ---------------------------------------------------------------------------
+
+@app.get("/api/prayer-roster")
+def api_list_prayer_roster(year: int, month: int, session: Session = Depends(get_session)):
+    if not (1 <= month <= 12):
+        raise HTTPException(400, "month must be 1–12")
+    last_day = calendar.monthrange(year, month)[1]
+    month_start = date(year, month, 1)
+    month_end   = date(year, month, last_day)
+    return db.list_prayer_entries(session, month_start, month_end)
+
+
+@app.get("/api/prayer-roster/next")
+def api_next_prayer_entry(session: Session = Depends(get_session)):
+    """Return the next upcoming prayer assignment on or after today."""
+    return db.get_next_prayer_entry(session, date.today())
+
+
+@app.post("/api/prayer-roster", status_code=201)
+def api_create_prayer_entry(
+    body: PrayerEntryCreate,
+    session: Session = Depends(get_session),
+    _admin: None = Depends(require_admin),
+):
+    parsed_date = parse_service_date(body.date)
+    try:
+        return db.create_prayer_entry(session, {"date": parsed_date, "chorister_id": body.chorister_id})
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(400, "A prayer roster entry already exists for this date") from exc
+
+
+@app.put("/api/prayer-roster/{entry_id}")
+def api_update_prayer_entry(
+    entry_id: int,
+    body: PrayerEntryUpdate,
+    session: Session = Depends(get_session),
+    _admin: None = Depends(require_admin),
+):
+    data = body.model_dump(exclude_unset=True)
+    if "date" in data and data["date"] is not None:
+        data["date"] = parse_service_date(data["date"])
+    try:
+        result = db.update_prayer_entry(session, entry_id, data)
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(400, "A prayer roster entry already exists for this date") from exc
+    if not result:
+        raise HTTPException(404, "Prayer roster entry not found")
+    return result
+
+
+@app.delete("/api/prayer-roster/{entry_id}", status_code=204)
+def api_delete_prayer_entry(
+    entry_id: int,
+    session: Session = Depends(get_session),
+    _admin: None = Depends(require_admin),
+):
+    db.delete_prayer_entry(session, entry_id)
 
 
 # ---------------------------------------------------------------------------

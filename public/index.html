@@ -61,6 +61,11 @@
               <i class="bi bi-printer me-2"></i>Print
             </button>
           </li>
+          <li>
+            <button class="dropdown-item" id="btnPrayerRoster">
+              <i class="bi bi-person-arms-up me-2"></i>Prayer Roster
+            </button>
+          </li>
 
           <li><hr class="dropdown-divider" /></li>
 
@@ -545,6 +550,85 @@
           <div id="lyricsViewerLinks" class="d-flex gap-2"></div>
           <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prayer Roster modal -->
+  <div class="modal fade" id="prayerRosterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-person-arms-up me-2"></i>Prayer Roster
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- Month navigation -->
+          <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
+            <p class="mb-0 text-muted small fw-semibold">Leads for Saturday prayer</p>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-outline-secondary btn-sm" id="btnPrayerPrevMonth" aria-label="Previous month">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <input type="month" class="form-control form-control-sm" id="prayerMonthPicker" style="min-width:150px;" />
+              <button class="btn btn-outline-secondary btn-sm" id="btnPrayerNextMonth" aria-label="Next month">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Admin add/edit form (hidden until triggered) -->
+          <div id="prayerAddForm" class="mb-4 p-3 prayer-add-form d-none">
+            <p class="prayer-form-title">Add / Edit Prayer Date</p>
+            <input type="hidden" id="prayerEntryId" />
+            <div class="row g-2 align-items-end">
+              <div class="col-sm-5">
+                <label class="form-label mb-1 small">Date</label>
+                <input type="date" class="form-control form-control-sm" id="prayerDate" />
+              </div>
+              <div class="col-sm-5">
+                <label class="form-label mb-1 small">Leader</label>
+                <select class="form-select form-select-sm" id="prayerChoristerSelect">
+                  <option value="">— Unassigned —</option>
+                </select>
+              </div>
+              <div class="col-sm-2 d-flex gap-1">
+                <button class="btn btn-primary btn-sm flex-grow-1" id="btnSavePrayerEntry">Save</button>
+                <button class="btn btn-outline-secondary btn-sm" id="btnCancelPrayerEdit">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prayer roster table -->
+          <div class="table-responsive">
+            <table class="table align-middle prayer-roster-table">
+              <thead>
+                <tr>
+                  <th class="th-section-label">DATE</th>
+                  <th><span class="col-badge">Leader Name</span></th>
+                  <th class="text-end d-none" id="prayerActionsHeader">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="prayerRosterTableBody"></tbody>
+            </table>
+          </div>
+
+        </div><!-- /.modal-body -->
+
+        <div class="modal-footer justify-content-between">
+          <button class="btn btn-primary btn-sm d-none" id="btnAddPrayerEntry">
+            <i class="bi bi-plus-lg me-1"></i>Add Prayer Date
+          </button>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+
       </div>
     </div>
   </div>

@@ -137,6 +137,20 @@ class RosterEntry(Base):
     thanksgiving_song = relationship("Song", foreign_keys=[thanksgiving_song_id])
 
 
+class PrayerRosterEntry(Base):
+    """One prayer date with the chorister who leads prayer on that day."""
+    __tablename__ = "prayer_roster"
+
+    id           = Column(Integer, primary_key=True)
+    date         = Column(Date, nullable=False, unique=True, index=True)
+    chorister_id = Column(
+        Integer, ForeignKey("choristers.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at   = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    chorister = relationship("Chorister", foreign_keys=[chorister_id])
+
+
 # ---------------------------------------------------------------------------
 # DB initialisation + session factory
 # ---------------------------------------------------------------------------
@@ -611,6 +625,16 @@ def serialize_song(row: Song, assigned_choristers: list | None = None) -> dict:
     }
 
 
+def serialize_prayer_entry(row: PrayerRosterEntry) -> dict:
+    return {
+        "id":             row.id,
+        "date":           row.date.isoformat(),
+        "chorister_id":   row.chorister_id,
+        "chorister_name": row.chorister.name if row.chorister else None,
+        "created_at":     row.created_at.isoformat() if row.created_at else None,
+    }
+
+
 def serialize_roster_entry(row: RosterEntry) -> dict:
     return {
         "id": row.id,
@@ -641,3 +665,54 @@ def serialize_roster_entry(row: RosterEntry) -> dict:
         "notes": row.notes or "",
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
+
+
+# ---------------------------------------------------------------------------
+# Prayer Roster CRUD
+# ---------------------------------------------------------------------------
+
+def list_prayer_entries(session: Session, month_start: date_type, month_end: date_type) -> list:
+    rows = session.execute(
+        select(PrayerRosterEntry)
+        .where(PrayerRosterEntry.date >= month_start, PrayerRosterEntry.date <= month_end)
+        .options(selectinload(PrayerRosterEntry.chorister))
+        .order_by(PrayerRosterEntry.date)
+    ).scalars().all()
+    return [serialize_prayer_entry(row) for row in rows]
+
+
+def get_next_prayer_entry(session: Session, today: date_type) -> dict | None:
+    row = session.execute(
+        select(PrayerRosterEntry)
+        .where(PrayerRosterEntry.date >= today)
+        .options(selectinload(PrayerRosterEntry.chorister))
+        .order_by(PrayerRosterEntry.date)
+        .limit(1)
+    ).scalar_one_or_none()
+    return serialize_prayer_entry(row) if row else None
+
+
+def create_prayer_entry(session: Session, data: dict) -> dict:
+    row = PrayerRosterEntry(**data)
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return serialize_prayer_entry(row)
+
+
+def update_prayer_entry(session: Session, entry_id: int, data: dict) -> dict | None:
+    row = session.get(PrayerRosterEntry, entry_id)
+    if not row:
+        return None
+    for key, value in data.items():
+        setattr(row, key, value)
+    session.commit()
+    session.refresh(row)
+    return serialize_prayer_entry(row)
+
+
+def delete_prayer_entry(session: Session, entry_id: int):
+    row = session.get(PrayerRosterEntry, entry_id)
+    if row:
+        session.delete(row)
+        session.commit()
