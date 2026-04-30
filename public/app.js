@@ -1526,6 +1526,55 @@ function renderOneCategoryCard(containerId, countKey, barColor) {
   }).join("");
 }
 
+function renderRangeChart(stats, container) {
+  if (!stats || stats.length === 0) {
+    container.innerHTML = '<p class="text-muted small mb-0">No data for this period.</p>';
+    return;
+  }
+  const maxTotal = Math.max(...stats.map(s => s.total ?? ((s.hymn_count || 0) + (s.praise_worship_count || 0) + (s.thanksgiving_count || 0))));
+
+  const legend = `
+    <div style="display:flex;gap:1.1rem;margin-bottom:.9rem;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:.35rem;font-size:.75rem;font-weight:700;color:#8a6c1a"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#c8a84b"></span>Hymn</span>
+      <span style="display:flex;align-items:center;gap:.35rem;font-size:.75rem;font-weight:700;color:#2a5a38"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#4a7c59"></span>Praise Worship</span>
+      <span style="display:flex;align-items:center;gap:.35rem;font-size:.75rem;font-weight:700;color:#b84a3a"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#e87b6e"></span>Thanksgiving</span>
+    </div>`;
+
+  const rows = stats.map((s, i) => {
+    const h = s.hymn_count || 0;
+    const p = s.praise_worship_count || 0;
+    const t = s.thanksgiving_count || 0;
+    const total = s.total ?? (h + p + t);
+    const barPct = Math.round((total / maxTotal) * 100);
+    const hPct = total > 0 ? Math.round((h / total) * 100) : 0;
+    const pPct = total > 0 ? Math.round((p / total) * 100) : 0;
+    const tPct = total > 0 ? 100 - hPct - pPct : 0;
+    const isTop = i === 0;
+
+    const rank = isTop
+      ? `<i class="bi bi-star-fill" style="color:#c8a84b;font-size:.78rem;flex-shrink:0"></i>`
+      : `<span style="color:#bbb;font-size:.72rem;font-weight:700;min-width:14px;text-align:right;flex-shrink:0">${i + 1}</span>`;
+
+    const seg = (pct, bg, label, count) => pct > 0
+      ? `<div title="${label}: ${count}" style="width:${pct}%;background:${bg};height:100%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:${bg === '#c8a84b' ? '#5a3e00' : '#fff'};overflow:hidden;min-width:2px">${pct >= 18 ? count : ''}</div>`
+      : '';
+
+    return `
+      <div style="display:flex;align-items:center;gap:.55rem;padding:.42rem 0;border-bottom:1px solid #eef0eb">
+        ${rank}
+        <div style="width:130px;flex-shrink:0;font-size:.85rem;font-weight:${isTop ? '700' : '600'};color:#1c3a27;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
+        <div style="flex:1;height:22px;background:#f0ece4;border-radius:5px;overflow:hidden;display:flex">
+          <div style="width:${barPct}%;height:100%;display:flex;overflow:hidden;border-radius:5px;transition:width .4s ease">
+            ${seg(hPct, '#c8a84b', 'Hymn', h)}${seg(pPct, '#4a7c59', 'Praise', p)}${seg(tPct, '#e87b6e', 'Thanks', t)}
+          </div>
+        </div>
+        <span style="min-width:28px;text-align:center;font-size:.85rem;font-weight:800;color:#1c3a27;flex-shrink:0">${total}</span>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = legend + `<div>${rows}</div>`;
+}
+
 async function loadRangeStats() {
   const from = document.getElementById("analyticsFrom").value;
   const to = document.getElementById("analyticsTo").value;
@@ -1537,7 +1586,7 @@ async function loadRangeStats() {
   container.innerHTML = '<p class="text-muted small">Loading…</p>';
   try {
     const stats = await api("GET", `/api/analytics?from=${from}&to=${to}`);
-    renderStatsList(stats, container);
+    renderRangeChart(stats, container);
   } catch (error) {
     showToast(error.message, "danger");
     container.innerHTML = "";
