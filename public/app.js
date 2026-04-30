@@ -1432,39 +1432,48 @@ function renderStatsList(stats, container) {
     container.innerHTML = '<p class="text-muted small mb-0">No data for this period.</p>';
     return;
   }
-  const dash = '<span class="stats-dash">—</span>';
-  const badge = (count, cls) => count > 0
-    ? `<span class="stats-count-badge stats-count-badge--${cls}">${count}</span>`
+  const dash = `<span style="color:#bbb;font-size:.85rem">—</span>`;
+  const badge = (count, bg, color, border) => count > 0
+    ? `<span style="display:inline-block;min-width:26px;padding:.15rem .5rem;border-radius:999px;font-size:.8rem;font-weight:700;background:${bg};color:${color};border:1px solid ${border};text-align:center">${count}</span>`
     : dash;
   const rows = stats.map((s, i) => {
     const h = s.hymn_count || 0;
     const p = s.praise_worship_count || 0;
     const t = s.thanksgiving_count || 0;
     const total = s.total ?? (h + p + t);
-    return `<tr class="${i === 0 ? "stats-row--top" : ""}">
-      <td class="stats-name-cell">
-        ${i === 0 ? '<i class="bi bi-star-fill stats-top-star"></i>' : `<span class="stats-rank">${i + 1}</span>`}
-        ${escHtml(s.name)}
-      </td>
-      <td class="text-center">${badge(h, "hymn")}</td>
-      <td class="text-center">${badge(p, "praise")}</td>
-      <td class="text-center">${badge(t, "thanks")}</td>
-      <td class="text-center"><span class="stats-total-badge">${total}</span></td>
+    const isTop = i === 0;
+    const rowBg = isTop ? "#edf7e4" : (i % 2 === 0 ? "#fff" : "#f9fdf7");
+    const rankHtml = isTop
+      ? `<i class="bi bi-star-fill" style="color:#c8a84b;font-size:.75rem;margin-right:5px"></i>`
+      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#eee;color:#888;font-size:.68rem;font-weight:700;margin-right:5px;flex-shrink:0">${i + 1}</span>`;
+    return `<tr style="background:${rowBg}">
+      <td style="padding:.45rem .7rem;border-bottom:1px solid #eef0eb;font-weight:${isTop ? "700" : "600"};color:#1c3a27;display:flex;align-items:center;gap:0">${rankHtml}${escHtml(s.name)}</td>
+      <td style="padding:.45rem .5rem;border-bottom:1px solid #eef0eb;text-align:center">${badge(h, "#fdf8e8", "#8a6c1a", "#f0d880")}</td>
+      <td style="padding:.45rem .5rem;border-bottom:1px solid #eef0eb;text-align:center">${badge(p, "#edf4e8", "#2a5a38", "#bdd4b4")}</td>
+      <td style="padding:.45rem .5rem;border-bottom:1px solid #eef0eb;text-align:center">${badge(t, "#fdf0ee", "#b84a3a", "#f5c9c5")}</td>
+      <td style="padding:.45rem .5rem;border-bottom:1px solid #eef0eb;text-align:center"><span style="display:inline-block;min-width:28px;padding:.18rem .55rem;border-radius:999px;background:#1c3a27;color:#fff;font-size:.82rem;font-weight:800;text-align:center">${total}</span></td>
     </tr>`;
   }).join("");
   container.innerHTML = `
-    <table class="table table-sm mb-0 stats-breakdown-table">
-      <thead>
-        <tr>
-          <th class="stats-th-name">Chorister</th>
-          <th class="text-center stats-th stats-th--hymn"><span class="stats-col-dot stats-col-dot--hymn"></span>Hymn</th>
-          <th class="text-center stats-th stats-th--praise"><span class="stats-col-dot stats-col-dot--praise"></span>Praise</th>
-          <th class="text-center stats-th stats-th--thanks"><span class="stats-col-dot stats-col-dot--thanks"></span>Thanks</th>
-          <th class="text-center stats-th">Total</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+    <div style="border-radius:10px;overflow:hidden;border:1px solid #d9d2c3">
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+        <colgroup>
+          <col style="width:38%">
+          <col style="width:15.5%"><col style="width:15.5%"><col style="width:15.5%">
+          <col style="width:15.5%">
+        </colgroup>
+        <thead>
+          <tr style="background:#1c3a27">
+            <th style="padding:.55rem .7rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#a8c9b0;border:none;text-align:left">Chorister</th>
+            <th style="padding:.55rem .5rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#c8a84b;border:none;text-align:center"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#c8a84b;margin-right:4px;vertical-align:middle;position:relative;top:-1px"></span>Hymn</th>
+            <th style="padding:.55rem .5rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#7ec8a0;border:none;text-align:center"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4a7c59;margin-right:4px;vertical-align:middle;position:relative;top:-1px"></span>Praise</th>
+            <th style="padding:.55rem .5rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#f5a89e;border:none;text-align:center"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#e87b6e;margin-right:4px;vertical-align:middle;position:relative;top:-1px"></span>Thanks</th>
+            <th style="padding:.55rem .5rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#fff;border:none;text-align:center">Total</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
 
 function renderMonthlyStats() {
