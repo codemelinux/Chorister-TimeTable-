@@ -1481,7 +1481,7 @@ function renderStatsList(stats, container) {
   }).join("");
   container.innerHTML = `
     <div style="border-radius:10px;overflow:hidden;border:1px solid #d9d2c3">
-      <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-family:inherit">
         <colgroup>
           <col style="width:38%">
           <col style="width:15.5%"><col style="width:15.5%"><col style="width:15.5%">
