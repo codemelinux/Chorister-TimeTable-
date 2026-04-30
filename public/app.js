@@ -1533,9 +1533,9 @@ function renderRangeChart(stats, container) {
   }
 
   const cats = [
-    { key: 'hymn_count',           label: 'Hymn',           color: '#c8a84b', grad: '#e8c96a', track: '#fdf5d8', text: '#5a3e00' },
-    { key: 'praise_worship_count', label: 'Praise Worship', color: '#4a7c59', grad: '#6aad84', track: '#dff0e5', text: '#fff'    },
-    { key: 'thanksgiving_count',   label: 'Thanksgiving',   color: '#e87b6e', grad: '#f4a89e', track: '#fde8e5', text: '#fff'    },
+    { key: 'hymn_count',           label: 'Hymn',           color: '#c8a84b', grad: '#e8c96a', track: '#fff', text: '#5a3e00' },
+    { key: 'praise_worship_count', label: 'Praise Worship', color: '#4a7c59', grad: '#6aad84', track: '#fff', text: '#fff'    },
+    { key: 'thanksgiving_count',   label: 'Thanksgiving',   color: '#e87b6e', grad: '#f4a89e', track: '#fff', text: '#fff'    },
   ];
 
   // Fixed 0-12 scale for growth measurement; expands if data exceeds 12
@@ -1588,7 +1588,7 @@ function renderRangeChart(stats, container) {
       const anim = `${uid}_${ri}_${ci}`;
       return `
         <div style="display:flex;align-items:center;gap:.45rem;margin-bottom:${ci < cats.length - 1 ? '5px' : '0'}">
-          <div style="flex:1;height:17px;background:${c.track};border-radius:0 5px 5px 0;position:relative;overflow:hidden">
+          <div style="flex:1;height:17px;background:${c.track};border-radius:0 5px 5px 0;border:1px solid #e8e2d8;position:relative;overflow:hidden">
             <div style="height:100%;background:linear-gradient(90deg,${c.color},${c.grad});border-radius:0 5px 5px 0;animation:${anim} .7s cubic-bezier(.22,1,.36,1) ${delay}ms both;min-width:${count > 0 ? '4px' : '0'}"></div>
           </div>
           <span style="min-width:18px;font-size:.75rem;font-weight:${count > 0 ? 800 : 400};color:${count > 0 ? c.color : '#ccc'};font-family:'Nunito',sans-serif;text-align:left">${count > 0 ? count : '—'}</span>
@@ -1624,7 +1624,7 @@ function renderRangeChart(stats, container) {
       <div style="width:32px;flex-shrink:0;margin-left:.3rem"></div>
     </div>`;
 
-  container.innerHTML = `<style>${keyframes}</style>${legend}<div>${rows}</div>${axisBar}`;
+  container.innerHTML = `<style>${keyframes}</style><div style="border:1.5px solid #d4cfc7;border-radius:12px;padding:.9rem 1rem 0;background:#fff">${legend}<div>${rows}</div>${axisBar}</div>`;
 }
 
 async function loadRangeStats() {
