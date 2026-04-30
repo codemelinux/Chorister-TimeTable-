@@ -1615,7 +1615,7 @@ function renderRangeChart(stats, container) {
           </div>
           <div style="flex:1;height:12px;background:#f0ece6;border-radius:0 4px 4px 0;border:1px solid #e8e2d8;overflow:hidden">
             <div style="height:100%;display:flex;animation:${uid}_${ri} .55s cubic-bezier(.22,1,.36,1) ${delay}ms both">
-              ${displayTotal > 0 ? segments : ''}
+              ${raw > 0 ? segments : ''}
             </div>
           </div>
           <span style="min-width:28px;font-size:.72rem;font-weight:800;color:${isTop ? '#1c3a27' : '#555'};text-align:right;flex-shrink:0">${raw > 0 ? barPct + '%' : '—'}</span>
