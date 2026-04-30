@@ -171,6 +171,65 @@ main.container-fluid {
   border: none;
 }
 
+.home-library-shell {
+  overflow: visible;
+}
+
+.home-library-header {
+  padding: 1.45rem 1.75rem 1rem;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.home-library-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.home-library-title {
+  font-family: 'Pacifico', cursive;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--title-color);
+}
+
+.home-songs-list .list-group-item {
+  border: 1px solid var(--panel-border);
+  border-bottom-width: 1px;
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcf9 100%);
+}
+
+.home-songs-list .list-group-item + .list-group-item {
+  margin-top: 0.65rem;
+}
+
+.home-song-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--title-color);
+}
+
+.home-song-link,
+.home-song-lyrics-btn {
+  display: inline-block;
+  font-size: 0.84rem;
+  text-decoration: none;
+  margin-right: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.home-song-link {
+  color: var(--accent);
+}
+
+.home-song-link--doc {
+  color: #1a7b45;
+}
+
+.home-song-lyrics-btn {
+  color: var(--label-muted);
+}
+
 /* ---- Toolbar ---- */
 .toolbar {
   display: flex;
@@ -353,7 +412,7 @@ main.container-fluid {
 }
 
 .analytics-col {
-  padding: 0 1.25rem 1rem;
+  padding: 0.45rem 1.25rem 1rem;
 }
 
 .analytics-col--right {
@@ -938,6 +997,12 @@ main.container-fluid {
   .toolbar-controls { justify-content: space-between; }
   .toolbar-controls .form-control { min-width: 0; flex: 1; }
   .page-title { font-size: 1.55rem; }
+  .home-library-header {
+    padding: 1.2rem 1rem 0.85rem;
+  }
+  .home-library-body {
+    padding: 0.9rem 1rem 1rem;
+  }
   .auth-pill { order: -1; }
   .roster-table td:nth-child(2),
   .roster-table td:nth-child(3),
@@ -1107,6 +1172,13 @@ html.dark-theme body {
 body.dark-theme .page-shell {
   box-shadow: 0 24px 64px rgba(0,0,0,0.6);
 }
+body.dark-theme .home-songs-list .list-group-item {
+  background: linear-gradient(180deg, #1a2e1f 0%, #16261b 100%);
+  border-color: #243d2c;
+}
+body.dark-theme .home-song-link { color: #7ec89a; }
+body.dark-theme .home-song-link--doc { color: #8fd7a5; }
+body.dark-theme .home-song-lyrics-btn { color: #7a9a82; }
 
 /* Toolbar & page title */
 body.dark-theme .chart-subtitle { color: #6a8a72; }

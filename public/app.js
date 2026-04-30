@@ -38,6 +38,7 @@ let rosterEntries = [];    // Current month's roster from /api/roster
 let songs = [];            // All songs from /api/songs
 let songStats = [];        // Song usage counts from /api/songs/stats
 let sortSongsByMostSung = false;
+let homeSortSongsByMostSung = false;
 let selectedMonth = new Date();
 let isAdmin = false;
 let isChorister = false;
@@ -419,6 +420,7 @@ async function removeChorister(id, btn) {
 async function loadSongs() {
   songs = await api("GET", "/api/songs");
   populateSongSelects();
+  renderSongsLibraries();
 }
 
 function populateSongSelects() {
@@ -513,6 +515,35 @@ async function openSongsModal() {
   new bootstrap.Modal(document.getElementById("songsModal")).show();
 }
 
+function getSongsLibrarySource(query, sortMostSung) {
+  let source = songs.map((s) => {
+    const stat = songStats.find((st) => st.song_id === s.id);
+    return { ...s, count: stat ? stat.count : 0 };
+  });
+
+  if (sortMostSung) {
+    source = [...songStats].map((st) => {
+      const song = songs.find((s) => s.id === st.song_id);
+      return song ? { ...song, count: st.count } : null;
+    }).filter(Boolean);
+    const statIds = new Set(songStats.map((st) => st.song_id));
+    songs.forEach((s) => { if (!statIds.has(s.id)) source.push({ ...s, count: 0 }); });
+  }
+
+  if (query) {
+    source = source.filter((s) =>
+      s.title.toLowerCase().includes(query) || (s.lyrics && s.lyrics.toLowerCase().includes(query))
+    );
+  }
+
+  return source;
+}
+
+function renderSongsLibraries() {
+  renderSongsList();
+  renderHomeSongsList();
+}
+
 function openLyricsViewer(song) {
   const categoryLabels = { hymn: "Hymn", praise_worship: "Praise Worship", thanksgiving: "Thanksgiving", general: "General" };
   const categoryClasses = { hymn: "cat-hymn", praise_worship: "cat-praise", thanksgiving: "cat-thanks", general: "cat-general" };
@@ -551,7 +582,7 @@ async function syncSongToDrive(id, btn) {
     const updated = await api("POST", `/api/songs/${id}/sync-to-drive`);
     const idx = songs.findIndex((s) => s.id === id);
     if (idx !== -1) songs[idx] = updated;
-    renderSongsList();
+    renderSongsLibraries();
     showToast("Synced to Google Drive.", "success");
   } catch (error) {
     handleMutationError(error);
@@ -564,7 +595,7 @@ async function syncAllToDrive(btn) {
   try {
     const result = await api("POST", "/api/songs/sync-all-to-drive");
     await loadSongs();
-    renderSongsList();
+    renderSongsLibraries();
     const errDetail = result.errors && result.errors.length ? ` Error: ${result.errors[0]}` : "";
     const msg = `Synced ${result.synced} song(s) to Drive.${result.failed ? ` ${result.failed} failed.${errDetail}` : ""}`;
     showToast(msg, result.failed ? "warning" : "success");
@@ -577,25 +608,9 @@ async function syncAllToDrive(btn) {
 
 function renderSongsList() {
   const list = document.getElementById("songsList");
+  if (!list) return;
   const query = document.getElementById("songSearchInput").value.toLowerCase().trim();
-
-  let source = songs.map((s) => {
-    const stat = songStats.find((st) => st.song_id === s.id);
-    return { ...s, count: stat ? stat.count : 0 };
-  });
-
-  if (sortSongsByMostSung) {
-    source = [...songStats].map((st) => {
-      const song = songs.find((s) => s.id === st.song_id);
-      return song ? { ...song, count: st.count } : null;
-    }).filter(Boolean);
-    const statIds = new Set(songStats.map((st) => st.song_id));
-    songs.forEach((s) => { if (!statIds.has(s.id)) source.push({ ...s, count: 0 }); });
-  }
-
-  if (query) {
-    source = source.filter((s) => s.title.toLowerCase().includes(query) || (s.lyrics && s.lyrics.toLowerCase().includes(query)));
-  }
+  const source = getSongsLibrarySource(query, sortSongsByMostSung);
 
   list.innerHTML = "";
   if (source.length === 0) {
@@ -776,6 +791,81 @@ function renderSongsList() {
   });
 }
 
+function renderHomeSongsList() {
+  const list = document.getElementById("homeSongsList");
+  const searchInput = document.getElementById("homeSongSearchInput");
+  if (!list || !searchInput) return;
+
+  const query = searchInput.value.toLowerCase().trim();
+  const source = getSongsLibrarySource(query, homeSortSongsByMostSung);
+
+  list.innerHTML = "";
+  if (source.length === 0) {
+    list.innerHTML = '<li class="list-group-item text-muted">No songs found.</li>';
+    return;
+  }
+
+  const categoryLabels = { hymn: "Hymn", praise_worship: "Praise Worship", thanksgiving: "Thanksgiving", general: "General" };
+  const categoryClasses = { hymn: "cat-hymn", praise_worship: "cat-praise", thanksgiving: "cat-thanks", general: "cat-general" };
+
+  source.forEach((s) => {
+    const item = document.createElement("li");
+    item.className = "list-group-item home-song-item";
+
+    const titleRow = document.createElement("div");
+    titleRow.className = "d-flex align-items-center flex-wrap gap-1 mb-2";
+
+    const title = document.createElement("span");
+    title.className = "home-song-title";
+    title.textContent = s.title;
+    titleRow.appendChild(title);
+
+    const catBadge = document.createElement("span");
+    catBadge.className = `badge song-cat-badge ${categoryClasses[s.category] || ""}`;
+    catBadge.textContent = categoryLabels[s.category] || s.category;
+    titleRow.appendChild(catBadge);
+
+    if (s.count > 0) {
+      const useBadge = document.createElement("span");
+      useBadge.className = "badge bg-primary-subtle text-primary-emphasis";
+      useBadge.textContent = `${s.count} ${s.count === 1 ? "use" : "uses"}`;
+      titleRow.appendChild(useBadge);
+    }
+
+    item.appendChild(titleRow);
+
+    if (s.google_doc_url) {
+      const docLink = document.createElement("a");
+      docLink.href = s.google_doc_url;
+      docLink.target = "_blank";
+      docLink.rel = "noopener noreferrer";
+      docLink.className = "home-song-link home-song-link--doc";
+      docLink.innerHTML = '<i class="bi bi-file-earmark-text me-1"></i>View in Google Docs';
+      item.appendChild(docLink);
+    }
+
+    if (s.hyperlink) {
+      const extLink = document.createElement("a");
+      extLink.href = s.hyperlink;
+      extLink.target = "_blank";
+      extLink.rel = "noopener noreferrer";
+      extLink.className = "home-song-link";
+      extLink.innerHTML = '<i class="bi bi-link-45deg me-1"></i>External link';
+      item.appendChild(extLink);
+    }
+
+    if (s.lyrics) {
+      const lyricsBtn = document.createElement("button");
+      lyricsBtn.className = "btn btn-link btn-sm p-0 home-song-lyrics-btn";
+      lyricsBtn.textContent = "Show lyrics";
+      lyricsBtn.addEventListener("click", () => openLyricsViewer(s));
+      item.appendChild(lyricsBtn);
+    }
+
+    list.appendChild(item);
+  });
+}
+
 function openSongEditForm(song) {
   document.getElementById("editSongId").value = song.id;
   document.getElementById("songTitleInput").value = song.title;
@@ -817,7 +907,7 @@ async function saveSong() {
     resetSongForm();
     await loadSongs();
     songStats = await api("GET", "/api/songs/stats");
-    renderSongsList();
+    renderSongsLibraries();
     renderCategoryAnalytics();
     showToast(id ? "Song updated." : "Song added to library!", "success");
   } catch (error) {
@@ -835,7 +925,7 @@ async function deleteSong(id, btn) {
     await api("DELETE", `/api/songs/${id}`);
     await loadSongs();
     songStats = await api("GET", "/api/songs/stats");
-    renderSongsList();
+    renderSongsLibraries();
     renderCategoryAnalytics();
     showToast("Song deleted.", "success");
   } catch (error) {
@@ -855,7 +945,7 @@ async function assignSong(songId, choristerId, btn) {
     await api("POST", `/api/songs/${songId}/assign`, { chorister_id: choristerId });
     await loadSongs();
     songStats = await api("GET", "/api/songs/stats");
-    renderSongsList();
+    renderSongsLibraries();
     showToast("Song assigned to chorister.", "success");
   } catch (error) {
     handleMutationError(error);
@@ -869,7 +959,7 @@ async function unassignSong(songId, choristerId) {
     await api("DELETE", `/api/songs/${songId}/assign/${choristerId}`);
     await loadSongs();
     songStats = await api("GET", "/api/songs/stats");
-    renderSongsList();
+    renderSongsLibraries();
     showToast("Assignment removed.", "success");
   } catch (error) {
     handleMutationError(error);
@@ -1930,6 +2020,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     songStats = await api("GET", "/api/songs/stats");
     renderCategoryAnalytics();
+    renderSongsLibraries();
   } catch (_) {}
 
   // Login modal focus
@@ -1978,6 +2069,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("sortByMostSung").addEventListener("change", (e) => {
     sortSongsByMostSung = e.target.checked;
     renderSongsList();
+  });
+  document.getElementById("homeSongSearchInput").addEventListener("input", renderHomeSongsList);
+  document.getElementById("homeSortByMostSung").addEventListener("change", (e) => {
+    homeSortSongsByMostSung = e.target.checked;
+    renderHomeSongsList();
   });
 
   // View Lyrics

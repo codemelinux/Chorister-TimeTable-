@@ -156,6 +156,29 @@
       </div>
 
     </section>
+
+    <section class="page-shell home-library-shell mt-4">
+      <div class="home-library-header">
+        <div>
+          <h2 class="home-library-title mb-1">
+            <i class="bi bi-music-note-list me-2"></i>Songs Library
+          </h2>
+          <p class="chart-subtitle mb-0">Search by title or lyrics and browse the shared choir catalogue</p>
+        </div>
+      </div>
+
+      <div class="home-library-body">
+        <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+          <input type="search" class="form-control form-control-sm flex-grow-1" id="homeSongSearchInput" placeholder="Search by title or lyrics..." />
+          <div class="form-check form-switch mb-0 flex-shrink-0">
+            <input class="form-check-input" type="checkbox" id="homeSortByMostSung" />
+            <label class="form-check-label small" for="homeSortByMostSung">Sort by Most Sung</label>
+          </div>
+        </div>
+
+        <ul class="list-group home-songs-list" id="homeSongsList"></ul>
+      </div>
+    </section>
   </main>
 
   <!-- Toast container -->
