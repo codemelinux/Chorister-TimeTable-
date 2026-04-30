@@ -10,7 +10,7 @@ from datetime import date as date_type
 import bcrypt
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, ForeignKey, Integer,
-    String, Text, UniqueConstraint, create_engine, event, func, or_, select, text,
+    String, Text, UniqueConstraint, create_engine, event, extract, func, or_, select, text,
 )
 from sqlalchemy.orm import Session, declarative_base, relationship, selectinload, sessionmaker
 
@@ -149,6 +149,24 @@ class PrayerRosterEntry(Base):
     created_at   = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     chorister = relationship("Chorister", foreign_keys=[chorister_id])
+
+
+class PerformanceRating(Base):
+    """Admin rating for a chorister's performance in a specific service slot."""
+    __tablename__ = "performance_ratings"
+
+    id              = Column(Integer, primary_key=True)
+    roster_entry_id = Column(Integer, ForeignKey("roster_entries.id", ondelete="CASCADE"), nullable=False)
+    role            = Column(String(32), nullable=False)   # 'hymn' | 'praise_worship' | 'thanksgiving'
+    chorister_id    = Column(Integer, ForeignKey("choristers.id", ondelete="CASCADE"), nullable=False)
+    rating          = Column(Integer, nullable=False)       # 1–5
+    comment         = Column(Text, nullable=True)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    roster_entry = relationship("RosterEntry", foreign_keys=[roster_entry_id])
+    chorister    = relationship("Chorister", foreign_keys=[chorister_id])
+
+    __table_args__ = (UniqueConstraint("roster_entry_id", "role", name="uq_rating_entry_role"),)
 
 
 # ---------------------------------------------------------------------------
@@ -509,11 +527,89 @@ def list_songs_by_month(session: Session, year: int, month: int) -> list:
 
 
 # ---------------------------------------------------------------------------
+# Performance Ratings CRUD
+# ---------------------------------------------------------------------------
+
+def _serialize_rating(r: PerformanceRating) -> dict:
+    return {
+        "id": r.id,
+        "roster_entry_id": r.roster_entry_id,
+        "role": r.role,
+        "chorister_id": r.chorister_id,
+        "rating": r.rating,
+        "comment": r.comment,
+        "created_at": r.created_at.isoformat() if r.created_at else None,
+    }
+
+
+def upsert_rating(session: Session, roster_entry_id: int, role: str, chorister_id: int, rating: int, comment: str | None) -> dict:
+    existing = session.execute(
+        select(PerformanceRating).where(
+            PerformanceRating.roster_entry_id == roster_entry_id,
+            PerformanceRating.role == role,
+        )
+    ).scalar_one_or_none()
+    if existing:
+        existing.chorister_id = chorister_id
+        existing.rating = rating
+        existing.comment = comment
+    else:
+        existing = PerformanceRating(
+            roster_entry_id=roster_entry_id,
+            role=role,
+            chorister_id=chorister_id,
+            rating=rating,
+            comment=comment,
+        )
+        session.add(existing)
+    session.commit()
+    return _serialize_rating(existing)
+
+
+def get_ratings_for_month(session: Session, year: int, month: int) -> list:
+    """Return all ratings for roster entries in the given month."""
+    rows = session.execute(
+        select(PerformanceRating)
+        .join(RosterEntry, PerformanceRating.roster_entry_id == RosterEntry.id)
+        .where(
+            extract("year", RosterEntry.service_date) == year,
+            extract("month", RosterEntry.service_date) == month,
+        )
+        .order_by(RosterEntry.service_date)
+    ).scalars().all()
+    return [_serialize_rating(r) for r in rows]
+
+
+def get_ratings_by_chorister(session: Session, chorister_id: int) -> list:
+    rows = session.execute(
+        select(PerformanceRating)
+        .where(PerformanceRating.chorister_id == chorister_id)
+        .options(selectinload(PerformanceRating.roster_entry))
+        .order_by(PerformanceRating.created_at.desc())
+    ).scalars().all()
+    result = []
+    for r in rows:
+        d = _serialize_rating(r)
+        d["service_date"] = r.roster_entry.service_date.isoformat() if r.roster_entry else None
+        result.append(d)
+    return result
+
+
+def delete_rating(session: Session, rating_id: int) -> bool:
+    r = session.get(PerformanceRating, rating_id)
+    if not r:
+        return False
+    session.delete(r)
+    session.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Analytics
 # ---------------------------------------------------------------------------
 
 def get_chorister_stats(session: Session, date_from: date_type, date_to: date_type) -> list:
-    """Return per-chorister service-slot counts for the given date range, sorted descending."""
+    """Return per-chorister service-slot counts broken down by category for the given date range, sorted descending."""
     rows = session.execute(
         select(RosterEntry)
         .where(RosterEntry.service_date >= date_from, RosterEntry.service_date <= date_to)
@@ -526,13 +622,25 @@ def get_chorister_stats(session: Session, date_from: date_type, date_to: date_ty
 
     counts: dict = {}
     for row in rows:
-        for chorister in [row.hymn_chorister, row.praise_worship_chorister, row.thanksgiving_chorister]:
+        for chorister, role in [
+            (row.hymn_chorister, "hymn"),
+            (row.praise_worship_chorister, "praise_worship"),
+            (row.thanksgiving_chorister, "thanksgiving"),
+        ]:
             if chorister:
                 if chorister.id not in counts:
-                    counts[chorister.id] = {"chorister_id": chorister.id, "name": chorister.name, "count": 0}
-                counts[chorister.id]["count"] += 1
+                    counts[chorister.id] = {
+                        "chorister_id": chorister.id,
+                        "name": chorister.name,
+                        "hymn_count": 0,
+                        "praise_worship_count": 0,
+                        "thanksgiving_count": 0,
+                        "total": 0,
+                    }
+                counts[chorister.id][f"{role}_count"] += 1
+                counts[chorister.id]["total"] += 1
 
-    return sorted(counts.values(), key=lambda x: x["count"], reverse=True)
+    return sorted(counts.values(), key=lambda x: x["total"], reverse=True)
 
 
 def get_song_stats(session: Session) -> list:

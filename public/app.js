@@ -19,6 +19,7 @@ let isChorister = false;
 let choristerInfo = null;  // {chorister_id, name} when a chorister is logged in
 let prayerEntries = [];           // Current month's prayer roster
 let prayerSelectedMonth = new Date();
+let ratings = {};  // key: `${entry_id}_${role}` → rating object (admin only)
 
 // ---------------------------------------------------------------------------
 // API helper
@@ -131,15 +132,18 @@ function setChoristerMode(authenticated, info) {
   const pill = document.getElementById("choristerStatus");
   const loginBtn = document.getElementById("btnChoristerLogin");
   const logoutBtn = document.getElementById("btnChoristerLogout");
+  const myRatingsBtn = document.getElementById("btnMyRatings");
   if (authenticated && info) {
     pill.textContent = `🎵 ${info.name}`;
     pill.classList.remove("d-none");
     loginBtn.classList.add("d-none");
     logoutBtn.classList.remove("d-none");
+    if (myRatingsBtn) myRatingsBtn.classList.remove("d-none");
   } else {
     pill.classList.add("d-none");
     loginBtn.classList.remove("d-none");
     logoutBtn.classList.add("d-none");
+    if (myRatingsBtn) myRatingsBtn.classList.add("d-none");
   }
   updateSongFormVisibility();
 }
@@ -1054,6 +1058,13 @@ async function loadRoster() {
   const year = selectedMonth.getFullYear();
   const month = selectedMonth.getMonth() + 1;
   rosterEntries = await api("GET", `/api/roster?year=${year}&month=${month}`);
+  if (isAdmin) {
+    try {
+      const list = await api("GET", `/api/ratings?year=${year}&month=${month}`);
+      ratings = {};
+      list.forEach(r => { ratings[`${r.roster_entry_id}_${r.role}`] = r; });
+    } catch (_) { ratings = {}; }
+  }
   renderRosterTable();
   renderMonthlyStats();
 }
@@ -1073,9 +1084,23 @@ function renderRosterTable() {
   rosterEntries.forEach((entry) => {
     const tr = document.createElement("tr");
     tr.appendChild(cellWithHtml(formatDate(entry.service_date), "date-cell"));
-    tr.appendChild(cellWithHtml(formatHymn(entry)));
-    tr.appendChild(cellWithHtml(formatFunction(entry.praise_worship_chorister_name, entry.praise_worship_musical_key, entry.praise_worship_loop_bitrate, entry.praise_worship_song_title)));
-    tr.appendChild(cellWithHtml(formatFunction(entry.thanksgiving_chorister_name, entry.thanksgiving_musical_key, entry.thanksgiving_loop_bitrate, entry.thanksgiving_song_title)));
+
+    const hymnCell = cellWithHtml(formatHymn(entry));
+    const praiseCell = cellWithHtml(formatFunction(entry.praise_worship_chorister_name, entry.praise_worship_musical_key, entry.praise_worship_loop_bitrate, entry.praise_worship_song_title));
+    const thanksCell = cellWithHtml(formatFunction(entry.thanksgiving_chorister_name, entry.thanksgiving_musical_key, entry.thanksgiving_loop_bitrate, entry.thanksgiving_song_title));
+
+    if (isAdmin) {
+      [["hymn", hymnCell, entry.hymn_chorister_name, entry.hymn_chorister_id],
+       ["praise_worship", praiseCell, entry.praise_worship_chorister_name, entry.praise_worship_chorister_id],
+       ["thanksgiving", thanksCell, entry.thanksgiving_chorister_name, entry.thanksgiving_chorister_id]
+      ].forEach(([role, cell, name, cid]) => {
+        if (cid) cell.appendChild(ratingButton(entry, role, name));
+      });
+    }
+
+    tr.appendChild(hymnCell);
+    tr.appendChild(praiseCell);
+    tr.appendChild(thanksCell);
     if (isAdmin) {
       const actionsCell = document.createElement("td");
       actionsCell.className = "text-end";
@@ -1148,6 +1173,128 @@ function formatFunction(name, musicalKey, loopBitrate, songTitle = null) {
   if (loopBitrate) details.push(`Loop Bitrate: ${escHtml(loopBitrate)}`);
   if (details.length) parts.push(`<span class="function-meta">(${details.join("; ")})</span>`);
   return parts.length ? parts.join(" ") : '<span class="text-muted">Unassigned</span>';
+}
+
+// ---------------------------------------------------------------------------
+// Performance ratings — star buttons + modal
+// ---------------------------------------------------------------------------
+
+function ratingButton(entry, role, choristerName) {
+  const key = `${entry.id}_${role}`;
+  const existing = ratings[key];
+  const btn = document.createElement("button");
+  btn.className = "rating-btn";
+  btn.title = existing ? `Rated ${existing.rating}★ — click to edit` : "Add rating";
+  btn.innerHTML = existing
+    ? `${"★".repeat(existing.rating)}<span style="color:#ccc">${"★".repeat(5 - existing.rating)}</span>`
+    : "☆";
+  btn.style.display = "block";
+  btn.style.marginTop = "0.25rem";
+  btn.addEventListener("click", () => openRatingModal(entry, role, choristerName, existing || null));
+  return btn;
+}
+
+let _ratingModalState = {};  // holds context while modal is open
+
+function openRatingModal(entry, role, choristerName, existing) {
+  const roleLabel = { hymn: "Hymn", praise_worship: "Praise Worship", thanksgiving: "Thanksgiving" }[role] || role;
+  document.getElementById("ratingModalContext").textContent =
+    `${choristerName} — ${roleLabel} on ${formatDate(entry.service_date)}`;
+
+  const stars = document.getElementById("starRatingGroup");
+  stars.innerHTML = "";
+  const currentRating = existing ? existing.rating : 0;
+  for (let i = 1; i <= 5; i++) {
+    const s = document.createElement("button");
+    s.type = "button";
+    s.textContent = "★";
+    s.dataset.val = i;
+    if (i <= currentRating) s.classList.add("lit");
+    s.addEventListener("mouseover", () => {
+      [...stars.querySelectorAll("button")].forEach(b => b.classList.toggle("lit", +b.dataset.val <= i));
+    });
+    s.addEventListener("mouseleave", () => {
+      const sel = +stars.dataset.selected || 0;
+      [...stars.querySelectorAll("button")].forEach(b => b.classList.toggle("lit", +b.dataset.val <= sel));
+    });
+    s.addEventListener("click", () => {
+      stars.dataset.selected = i;
+      [...stars.querySelectorAll("button")].forEach(b => b.classList.toggle("lit", +b.dataset.val <= i));
+    });
+    stars.appendChild(s);
+  }
+  stars.dataset.selected = currentRating;
+
+  document.getElementById("ratingComment").value = existing ? (existing.comment || "") : "";
+  document.getElementById("btnClearRating").classList.toggle("d-none", !existing);
+
+  _ratingModalState = { entry, role, choristerName, existing };
+  new bootstrap.Modal(document.getElementById("ratingModal")).show();
+}
+
+async function saveRating() {
+  const { entry, role, existing } = _ratingModalState;
+  const stars = document.getElementById("starRatingGroup");
+  const ratingVal = +stars.dataset.selected;
+  if (!ratingVal) { showToast("Please select a star rating.", "warning"); return; }
+  const comment = document.getElementById("ratingComment").value.trim() || null;
+  const chorister_id = existing ? existing.chorister_id
+    : (entry[`${role}_chorister_id`]);
+  const btn = document.getElementById("btnSaveRating");
+  setLoading(btn, true);
+  try {
+    const saved = await api("POST", "/api/ratings", {
+      roster_entry_id: entry.id, role, chorister_id, rating: ratingVal, comment,
+    });
+    ratings[`${entry.id}_${role}`] = saved;
+    bootstrap.Modal.getInstance(document.getElementById("ratingModal")).hide();
+    renderRosterTable();
+    showToast("Rating saved.", "success");
+  } catch (error) {
+    showToast(error.message, "danger");
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+async function clearRating() {
+  const { entry, role, existing } = _ratingModalState;
+  if (!existing) return;
+  try {
+    await api("DELETE", `/api/ratings/${existing.id}`);
+    delete ratings[`${entry.id}_${role}`];
+    bootstrap.Modal.getInstance(document.getElementById("ratingModal")).hide();
+    renderRosterTable();
+    showToast("Rating removed.", "success");
+  } catch (error) {
+    showToast(error.message, "danger");
+  }
+}
+
+async function openMyRatings() {
+  const modal = new bootstrap.Modal(document.getElementById("myRatingsModal"));
+  const body = document.getElementById("myRatingsBody");
+  body.innerHTML = '<p class="text-muted small">Loading…</p>';
+  modal.show();
+  try {
+    const list = await api("GET", "/api/ratings/me");
+    if (!list.length) {
+      body.innerHTML = '<p class="text-muted small mb-0">No ratings yet.</p>';
+      return;
+    }
+    const roleLabel = { hymn: "Hymn", praise_worship: "Praise Worship", thanksgiving: "Thanksgiving" };
+    body.innerHTML = list.map(r => `
+      <div class="my-rating-card">
+        <div class="d-flex justify-content-between align-items-start">
+          <span class="my-rating-role">${escHtml(roleLabel[r.role] || r.role)}</span>
+          <span class="my-rating-date">${r.service_date ? formatDate(r.service_date) : ""}</span>
+        </div>
+        <div class="my-rating-stars">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>
+        ${r.comment ? `<div class="my-rating-comment"><i class="bi bi-chat-left-text me-1 text-muted"></i>${escHtml(r.comment)}</div>` : ""}
+      </div>`).join("");
+  } catch (error) {
+    body.innerHTML = `<p class="text-danger small">${escHtml(error.message)}</p>`;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1285,29 +1432,52 @@ function renderStatsList(stats, container) {
     container.innerHTML = '<p class="text-muted small mb-0">No data for this period.</p>';
     return;
   }
-  const maxCount = stats[0].count;
-  container.innerHTML = stats.map((s, i) => `
-    <div class="stat-row ${i === 0 ? "stat-top" : ""}">
-      <span class="stat-name">${escHtml(s.name)}</span>
-      <span class="stat-badge">${s.count} ${s.count === 1 ? "slot" : "slots"}</span>
-      <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round((s.count / maxCount) * 100)}%"></div></div>
-    </div>`).join("");
+  const dash = '<span class="text-muted">—</span>';
+  const rows = stats.map(s => {
+    const h = s.hymn_count || 0;
+    const p = s.praise_worship_count || 0;
+    const t = s.thanksgiving_count || 0;
+    const total = s.total ?? (h + p + t);
+    return `<tr>
+      <td>${escHtml(s.name)}</td>
+      <td class="text-center">${h > 0 ? h : dash}</td>
+      <td class="text-center">${p > 0 ? p : dash}</td>
+      <td class="text-center">${t > 0 ? t : dash}</td>
+      <td class="text-center fw-semibold">${total}</td>
+    </tr>`;
+  }).join("");
+  container.innerHTML = `
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Chorister</th>
+          <th class="text-center">Hymn</th>
+          <th class="text-center">Praise</th>
+          <th class="text-center">Thanks</th>
+          <th class="text-center">Total</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 function renderMonthlyStats() {
   const container = document.getElementById("analyticsMonthOutput");
   const counts = {};
   rosterEntries.forEach((entry) => {
-    [[entry.hymn_chorister_id, entry.hymn_chorister_name],
-     [entry.praise_worship_chorister_id, entry.praise_worship_chorister_name],
-     [entry.thanksgiving_chorister_id, entry.thanksgiving_chorister_name]].forEach(([id, name]) => {
+    [
+      [entry.hymn_chorister_id, entry.hymn_chorister_name, "hymn"],
+      [entry.praise_worship_chorister_id, entry.praise_worship_chorister_name, "praise_worship"],
+      [entry.thanksgiving_chorister_id, entry.thanksgiving_chorister_name, "thanksgiving"],
+    ].forEach(([id, name, role]) => {
       if (id && name) {
-        if (!counts[id]) counts[id] = { chorister_id: id, name, count: 0 };
-        counts[id].count += 1;
+        if (!counts[id]) counts[id] = { chorister_id: id, name, hymn_count: 0, praise_worship_count: 0, thanksgiving_count: 0, total: 0 };
+        counts[id][`${role}_count`] += 1;
+        counts[id].total += 1;
       }
     });
   });
-  const stats = Object.values(counts).sort((a, b) => b.count - a.count);
+  const stats = Object.values(counts).sort((a, b) => b.total - a.total);
   renderStatsList(stats, container);
   renderCategoryAnalytics();
 }
@@ -1645,6 +1815,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btnAddPrayerEntry").addEventListener("click", () => openPrayerEditForm(null));
   document.getElementById("btnSavePrayerEntry").addEventListener("click", savePrayerEntry);
   document.getElementById("btnCancelPrayerEdit").addEventListener("click", resetPrayerForm);
+
+  // Performance ratings
+  document.getElementById("btnSaveRating").addEventListener("click", saveRating);
+  document.getElementById("btnClearRating").addEventListener("click", clearRating);
+  document.getElementById("btnMyRatings").addEventListener("click", openMyRatings);
 
   // Analytics
   document.getElementById("btnShowStats").addEventListener("click", loadRangeStats);

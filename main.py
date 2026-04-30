@@ -709,6 +709,64 @@ def api_analytics(
 
 
 # ---------------------------------------------------------------------------
+# Performance Ratings (admin write, chorister read-own)
+# ---------------------------------------------------------------------------
+
+VALID_ROLES = {"hymn", "praise_worship", "thanksgiving"}
+
+
+class RatingIn(BaseModel):
+    roster_entry_id: int
+    role: str
+    chorister_id: int
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = None
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v):
+        if v not in VALID_ROLES:
+            raise ValueError(f"role must be one of {VALID_ROLES}")
+        return v
+
+
+@app.post("/api/ratings", dependencies=[Depends(require_admin)])
+def api_upsert_rating(body: RatingIn, session: Session = Depends(get_session)):
+    return db.upsert_rating(
+        session,
+        roster_entry_id=body.roster_entry_id,
+        role=body.role,
+        chorister_id=body.chorister_id,
+        rating=body.rating,
+        comment=body.comment,
+    )
+
+
+@app.get("/api/ratings", dependencies=[Depends(require_admin)])
+def api_get_ratings(
+    year: int = Query(...),
+    month: int = Query(...),
+    session: Session = Depends(get_session),
+):
+    return db.get_ratings_for_month(session, year, month)
+
+
+@app.get("/api/ratings/me")
+def api_get_my_ratings(request: Request, session: Session = Depends(get_session)):
+    chorister_id = request.session.get("chorister_id")
+    if not chorister_id:
+        raise HTTPException(status_code=401, detail="Chorister login required")
+    return db.get_ratings_by_chorister(session, chorister_id)
+
+
+@app.delete("/api/ratings/{rating_id}", dependencies=[Depends(require_admin)])
+def api_delete_rating(rating_id: int, session: Session = Depends(get_session)):
+    if not db.delete_rating(session, rating_id):
+        raise HTTPException(status_code=404, detail="Rating not found")
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
 # Static files — MUST be mounted last so API routes take priority
 # ---------------------------------------------------------------------------
 
