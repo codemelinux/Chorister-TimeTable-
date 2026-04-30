@@ -1558,90 +1558,128 @@ function renderRangeChart(stats, container) {
   }
 
   const cats = [
-    { key: 'hymn_count',           label: 'Hymn',           color: '#c8a84b', grad: '#e8c96a', track: '#fff', text: '#5a3e00' },
-    { key: 'praise_worship_count', label: 'Praise Worship', color: '#4a7c59', grad: '#6aad84', track: '#fff', text: '#fff'    },
-    { key: 'thanksgiving_count',   label: 'Thanksgiving',   color: '#e87b6e', grad: '#f4a89e', track: '#fff', text: '#fff'    },
+    { key: 'hymn_count',           label: 'Hymn',          color: '#c8a84b', grad: '#e8c96a' },
+    { key: 'praise_worship_count', label: 'Praise Worship', color: '#4a7c59', grad: '#6aad84' },
+    { key: 'thanksgiving_count',   label: 'Thanksgiving',   color: '#e87b6e', grad: '#f4a89e' },
   ];
 
-  // Fixed 0-12 scale for growth measurement; expands if data exceeds 12
-  const dataMax = Math.max(...stats.flatMap(s => cats.map(c => s[c.key] || 0)), 1);
-  const maxVal = Math.max(12, dataMax);
+  let activeFilter = 'all';
 
-  // X-axis ticks every 3 (0, 3, 6, 9, 12 …)
-  const tickStep = 3;
-  const ticks = [];
-  for (let v = 0; v <= maxVal; v += tickStep) ticks.push(v);
-  if (ticks[ticks.length - 1] < maxVal) ticks.push(maxVal);
+  function buildRows(filter) {
+    const activeCats = filter === 'all' ? cats : cats.filter(c => c.key === filter);
+    const dataMax = filter === 'all'
+      ? Math.max(...stats.map(s => cats.reduce((a,c) => a + (s[c.key]||0), 0)), 1)
+      : Math.max(...stats.map(s => s[activeCats[0].key] || 0), 1);
+    const maxVal = Math.max(filter === 'all' ? 12 : 4, dataMax);
 
-  const uid = `rc${Date.now()}`;
+    const tickStep = maxVal <= 4 ? 1 : 3;
+    const ticks = [];
+    for (let v = 0; v <= maxVal; v += tickStep) ticks.push(v);
+    if (ticks[ticks.length - 1] < maxVal) ticks.push(maxVal);
 
-  const keyframes = stats.flatMap((s, ri) =>
-    cats.map((c, ci) => {
-      const pct = Math.round(((s[c.key] || 0) / maxVal) * 100);
-      return `@keyframes ${uid}_${ri}_${ci}{from{width:0}to{width:${pct}%}}`;
-    })
-  ).join('');
+    const uid = `rc${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const kf = stats.map((s, ri) => {
+      const displayTotal = filter === 'all'
+        ? cats.reduce((a,c) => a + (s[c.key]||0), 0)
+        : s[activeCats[0].key] || 0;
+      const pct = Math.round((displayTotal / maxVal) * 100);
+      return `@keyframes ${uid}_${ri}{from{width:0}to{width:${pct}%}}`;
+    }).join('');
 
-  const legend = `
-    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid #f0ece6">
-      ${cats.map(c => `
-        <div style="display:flex;align-items:center;gap:.3rem">
-          <span style="width:14px;height:8px;border-radius:2px;background:linear-gradient(90deg,${c.color},${c.grad});display:inline-block"></span>
-          <span style="font-size:.7rem;font-weight:700;color:#3a4a3a;font-family:inherit">${c.label}</span>
-        </div>`).join('')}
-      <span style="margin-left:auto;font-size:.65rem;color:#aaa;font-weight:600;font-family:inherit">Count →</span>
-    </div>`;
+    const rows = stats.map((s, ri) => {
+      const isTop = ri === 0;
+      const displayTotal = filter === 'all'
+        ? cats.reduce((a,c) => a + (s[c.key]||0), 0)
+        : s[activeCats[0].key] || 0;
+      const barPct = Math.round((displayTotal / maxVal) * 100);
+      const delay = ri * 40;
 
-  const rows = stats.map((s, ri) => {
-    const isTop = ri === 0;
-    const total = s.total ?? cats.reduce((a, c) => a + (s[c.key] || 0), 0);
+      // Build stacked segments inside the bar (proportional within displayTotal)
+      const segments = filter === 'all'
+        ? cats.map(c => {
+            const count = s[c.key] || 0;
+            const segPct = displayTotal > 0 ? Math.round((count / displayTotal) * 100) : 0;
+            return count > 0
+              ? `<div title="${c.label}: ${count}" style="width:${segPct}%;background:linear-gradient(90deg,${c.color},${c.grad});height:100%;flex-shrink:0"></div>`
+              : '';
+          }).join('')
+        : `<div style="width:100%;background:linear-gradient(90deg,${activeCats[0].color},${activeCats[0].grad});height:100%"></div>`;
 
-    const nameBadge = isTop
-      ? `<div style="font-size:.55rem;font-weight:900;letter-spacing:.08em;color:#c8a84b;text-transform:uppercase;line-height:1;margin-bottom:1px">★ Top</div>`
-      : `<div style="font-size:.6rem;font-weight:700;color:#ccc;line-height:1;margin-bottom:1px">#${ri + 1}</div>`;
+      const nameBadge = isTop
+        ? `<div style="font-size:.55rem;font-weight:900;letter-spacing:.08em;color:#c8a84b;text-transform:uppercase;line-height:1;margin-bottom:1px">★ Top</div>`
+        : `<div style="font-size:.6rem;font-weight:700;color:#ccc;line-height:1;margin-bottom:1px">#${ri + 1}</div>`;
 
-    const nameEl = `
-      <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid ${isTop ? '#c5dfc9' : '#eee'}">
-        ${nameBadge}
-        <div style="font-size:.78rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
-      </div>`;
+      const rowBg = isTop ? 'linear-gradient(135deg,#f2fbec,#e6f5dc)' : ri % 2 === 0 ? '#fff' : '#fafaf8';
 
-    const bars = cats.map((c, ci) => {
-      const count = s[c.key] || 0;
-      const pct = Math.round((count / maxVal) * 100);
-      const delay = (ri * cats.length + ci) * 40;
-      const anim = `${uid}_${ri}_${ci}`;
       return `
-        <div style="display:flex;align-items:center;gap:.25rem;line-height:1;margin-bottom:1px">
-          <div style="flex:1;height:9px;background:${c.track};border-radius:0 3px 3px 0;border:1px solid #e8e2d8;overflow:hidden">
-            <div style="height:100%;background:linear-gradient(90deg,${c.color},${c.grad});border-radius:0 3px 3px 0;animation:${anim} .55s cubic-bezier(.22,1,.36,1) ${delay}ms both;min-width:${count > 0 ? '3px' : '0'}"></div>
+        <div style="display:flex;align-items:center;gap:.4rem;padding:.3rem .45rem;border-radius:6px;margin-bottom:2px;background:${rowBg};border:1px solid ${isTop ? '#c5dfc9' : 'transparent'}">
+          <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid ${isTop ? '#c5dfc9' : '#eee'}">
+            ${nameBadge}
+            <div style="font-size:.78rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
           </div>
-          <span style="min-width:13px;height:9px;font-size:.63rem;font-weight:${count > 0 ? 800 : 400};color:${count > 0 ? c.color : '#ddd'};line-height:9px;display:inline-block">${count > 0 ? count : '—'}</span>
+          <div style="flex:1;height:12px;background:#f0ece6;border-radius:0 4px 4px 0;border:1px solid #e8e2d8;overflow:hidden">
+            <div style="height:100%;display:flex;animation:${uid}_${ri} .55s cubic-bezier(.22,1,.36,1) ${delay}ms both">
+              ${displayTotal > 0 ? segments : ''}
+            </div>
+          </div>
+          <span style="min-width:22px;font-size:.72rem;font-weight:800;color:${isTop ? '#1c3a27' : '#555'};text-align:right;flex-shrink:0">${displayTotal || '—'}</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.68rem;font-weight:900;flex-shrink:0;${isTop ? 'box-shadow:0 0 0 2px #c8a84b80' : ''}">
+            ${cats.reduce((a,c) => a + (s[c.key]||0), 0)}
+          </span>
         </div>`;
     }).join('');
 
-    const rowBg = isTop ? 'linear-gradient(135deg,#f2fbec,#e6f5dc)' : ri % 2 === 0 ? '#fff' : '#fafaf8';
-
-    return `
-      <div style="display:flex;align-items:center;gap:.4rem;padding:.25rem .45rem;border-radius:6px;margin-bottom:2px;background:${rowBg};border:1px solid ${isTop ? '#c5dfc9' : 'transparent'}">
-        ${nameEl}
-        <div style="flex:1;padding:0 .1rem">${bars}</div>
-        <div style="flex-shrink:0;margin-left:.15rem">
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.68rem;font-weight:900;font-family:inherit;${isTop ? 'box-shadow:0 0 0 2px #c8a84b80' : ''}">${total}</span>
+    const axis = `
+      <div style="display:flex;align-items:flex-start;gap:.4rem;margin-top:.2rem;padding:0 .45rem">
+        <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid #eee"></div>
+        <div style="flex:1;position:relative;border-top:1.5px solid #d8d0c4;height:14px">
+          ${ticks.map(v => `<span style="position:absolute;left:${Math.round((v/maxVal)*100)}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px">${v}</span>`).join('')}
         </div>
+        <span style="width:22px;flex-shrink:0"></span>
+        <span style="width:22px;flex-shrink:0"></span>
       </div>`;
-  }).join('');
 
-  const axisBar = `
-    <div style="display:flex;align-items:flex-start;gap:.4rem;margin-top:.2rem;padding:0 .45rem">
-      <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid #eee"></div>
-      <div style="flex:1;position:relative;border-top:1.5px solid #d8d0c4;height:14px">
-        ${ticks.map(v => `<span style="position:absolute;left:${Math.round((v/maxVal)*100)}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px;font-family:inherit">${v}</span>`).join('')}
-      </div>
-      <div style="width:22px;flex-shrink:0;margin-left:.15rem"></div>
+    return `<style>${kf}</style><div class="rc-rows">${rows}</div>${axis}`;
+  }
+
+  // Toggle button styles
+  const togBtnStyle = (active) =>
+    `display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;cursor:pointer;border:1.5px solid;transition:all .15s;` +
+    (active ? 'background:#1c3a27;color:#fff;border-color:#1c3a27;' : 'background:#fff;color:#555;border-color:#ddd;');
+
+  const toggleButtons = `
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.55rem;padding-bottom:.45rem;border-bottom:1px solid #f0ece6" id="rc-toggles-${container.id || 'x'}">
+      <button data-f="all"   style="${togBtnStyle(true)}"><span style="width:10px;height:10px;border-radius:2px;background:linear-gradient(90deg,#c8a84b,#e87b6e);display:inline-block"></span>All</button>
+      <button data-f="hymn_count"           style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#c8a84b;display:inline-block"></span>Hymn</button>
+      <button data-f="praise_worship_count" style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#4a7c59;display:inline-block"></span>Praise</button>
+      <button data-f="thanksgiving_count"   style="${togBtnStyle(false)}"><span style="width:10px;height:10px;border-radius:2px;background:#e87b6e;display:inline-block"></span>Thanks</button>
+      <span style="margin-left:auto;font-size:.65rem;color:#aaa;font-weight:600;align-self:center">Count →</span>
     </div>`;
 
-  container.innerHTML = `<style>${keyframes}</style><div style="border:1.5px solid #d4cfc7;border-radius:10px;padding:.55rem .65rem .35rem;background:#fff">${legend}<div>${rows}</div>${axisBar}</div>`;
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'border:1.5px solid #d4cfc7;border-radius:10px;padding:.55rem .65rem .35rem;background:#fff';
+  wrap.innerHTML = toggleButtons + buildRows('all');
+  container.innerHTML = '';
+  container.appendChild(wrap);
+
+  wrap.querySelectorAll('[data-f]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.f;
+      wrap.querySelectorAll('[data-f]').forEach(b => b.style.cssText = togBtnStyle(false) + b.style.cssText.replace(/background:[^;]+;color:[^;]+;border-color:[^;]+;/, ''));
+      wrap.querySelectorAll('[data-f]').forEach(b => {
+        const on = b.dataset.f === activeFilter;
+        b.style.background = on ? '#1c3a27' : '#fff';
+        b.style.color = on ? '#fff' : '#555';
+        b.style.borderColor = on ? '#1c3a27' : '#ddd';
+      });
+      const existing = wrap.querySelector('.rc-rows');
+      const existingAxis = wrap.querySelector('.rc-rows + div');
+      const newContent = document.createElement('div');
+      newContent.innerHTML = buildRows(activeFilter);
+      if (existing) existing.replaceWith(newContent.querySelector('.rc-rows'));
+      if (existingAxis) existingAxis.replaceWith(newContent.lastElementChild);
+    });
+  });
 }
 
 async function loadRangeStats() {
