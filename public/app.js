@@ -1940,6 +1940,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Print
   document.getElementById("btnPrint").addEventListener("click", () => window.print());
 
+  // Analytics page
+  document.getElementById("btnAnalytics").addEventListener("click", () => {
+    renderMonthlyStats();
+    renderCategoryAnalytics();
+    new bootstrap.Modal(document.getElementById("analyticsModal")).show();
+  });
+
   // Prayer Roster
   document.getElementById("btnPrayerRoster").addEventListener("click", openPrayerRosterModal);
   document.getElementById("btnPrayerPrevMonth").addEventListener("click", () => shiftPrayerMonth(-1));

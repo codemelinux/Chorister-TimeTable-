@@ -69,6 +69,11 @@
               <i class="bi bi-person-arms-up me-2"></i>Prayer Roster
             </button>
           </li>
+          <li>
+            <button class="dropdown-item" id="btnAnalytics">
+              <i class="bi bi-bar-chart-line me-2"></i>Analytics
+            </button>
+          </li>
 
           <li><hr class="dropdown-divider" /></li>
 
@@ -150,67 +155,6 @@
         </table>
       </div>
 
-      <!-- Analytics panel -->
-      <details class="analytics-panel" id="analyticsPanel">
-        <summary><i class="bi bi-bar-chart-line me-2"></i>Analytics</summary>
-        <div class="analytics-body">
-          <div class="row g-0 analytics-two-col">
-            <div class="col-md-5 analytics-col">
-              <h6 class="analytics-section-title">This month — Choristers</h6>
-              <div id="analyticsMonthOutput"><p class="text-muted small">Navigate to a month to see stats.</p></div>
-            </div>
-            <div class="col-md-7 analytics-col analytics-col--right">
-              <h6 class="analytics-section-title">Date range</h6>
-              <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
-                <div>
-                  <label class="form-label mb-1 small">From</label>
-                  <input type="month" class="form-control form-control-sm" id="analyticsFrom" />
-                </div>
-                <div>
-                  <label class="form-label mb-1 small">To</label>
-                  <input type="month" class="form-control form-control-sm" id="analyticsTo" />
-                </div>
-                <button class="btn btn-sm btn-outline-secondary" id="btnShowStats">
-                  <i class="bi bi-search me-1"></i>Show Stats
-                </button>
-              </div>
-              <div id="analyticsRangeOutput"></div>
-            </div>
-          </div>
-
-          <!-- Color-coded song analytics cards -->
-          <h6 class="analytics-section-title mt-4">Most Sung Songs</h6>
-          <div class="category-analytics-grid" id="categoryAnalyticsGrid">
-            <div class="category-card category-card--hymn">
-              <div class="category-card__header">
-                <span class="category-card__emoji">🎵</span>
-                <span class="category-card__label">Hymn</span>
-              </div>
-              <div class="category-card__body" id="analyticsHymn">
-                <p class="text-muted small mb-0">No data yet.</p>
-              </div>
-            </div>
-            <div class="category-card category-card--praise">
-              <div class="category-card__header">
-                <span class="category-card__emoji">🙌</span>
-                <span class="category-card__label">Praise Worship</span>
-              </div>
-              <div class="category-card__body" id="analyticsPraise">
-                <p class="text-muted small mb-0">No data yet.</p>
-              </div>
-            </div>
-            <div class="category-card category-card--thanksgiving">
-              <div class="category-card__header">
-                <span class="category-card__emoji">🙏</span>
-                <span class="category-card__label">Thanksgiving</span>
-              </div>
-              <div class="category-card__body" id="analyticsThanksgiving">
-                <p class="text-muted small mb-0">No data yet.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </details>
     </section>
   </main>
 
@@ -637,6 +581,83 @@
           <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Page Modal -->
+  <div class="modal fade" id="analyticsModal" tabindex="-1" aria-labelledby="analyticsModalLabel">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="analyticsModalLabel">
+            <i class="bi bi-bar-chart-line me-2"></i>Analytics
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body analytics-body" style="overflow-y:auto">
+
+          <!-- Chorister stats + date range -->
+          <div class="row g-0 analytics-two-col mb-4">
+            <div class="col-md-5 analytics-col">
+              <h6 class="analytics-section-title">This month — Choristers</h6>
+              <div id="analyticsMonthOutput"><p class="text-muted small">Loading…</p></div>
+            </div>
+            <div class="col-md-7 analytics-col analytics-col--right">
+              <h6 class="analytics-section-title">Date range</h6>
+              <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+                <div>
+                  <label class="form-label mb-1 small">From</label>
+                  <input type="month" class="form-control form-control-sm" id="analyticsFrom" />
+                </div>
+                <div>
+                  <label class="form-label mb-1 small">To</label>
+                  <input type="month" class="form-control form-control-sm" id="analyticsTo" />
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" id="btnShowStats">
+                  <i class="bi bi-search me-1"></i>Show Stats
+                </button>
+              </div>
+              <div id="analyticsRangeOutput"></div>
+            </div>
+          </div>
+
+          <!-- Most Sung Songs -->
+          <h6 class="analytics-section-title">Most Sung Songs</h6>
+          <div class="category-analytics-grid" id="categoryAnalyticsGrid">
+            <div class="category-card category-card--hymn">
+              <div class="category-card__header">
+                <span class="category-card__emoji">🎵</span>
+                <span class="category-card__label">Hymn</span>
+              </div>
+              <div class="category-card__body" id="analyticsHymn">
+                <p class="text-muted small mb-0">No data yet.</p>
+              </div>
+            </div>
+            <div class="category-card category-card--praise">
+              <div class="category-card__header">
+                <span class="category-card__emoji">🙌</span>
+                <span class="category-card__label">Praise Worship</span>
+              </div>
+              <div class="category-card__body" id="analyticsPraise">
+                <p class="text-muted small mb-0">No data yet.</p>
+              </div>
+            </div>
+            <div class="category-card category-card--thanksgiving">
+              <div class="category-card__header">
+                <span class="category-card__emoji">🙏</span>
+                <span class="category-card__label">Thanksgiving</span>
+              </div>
+              <div class="category-card__body" id="analyticsThanksgiving">
+                <p class="text-muted small mb-0">No data yet.</p>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /.modal-body -->
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
   </div>
