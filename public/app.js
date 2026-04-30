@@ -1587,9 +1587,9 @@ function renderRangeChart(stats, container) {
       ${cats.map(c => `
         <div style="display:flex;align-items:center;gap:.3rem">
           <span style="width:14px;height:8px;border-radius:2px;background:linear-gradient(90deg,${c.color},${c.grad});display:inline-block"></span>
-          <span style="font-size:.7rem;font-weight:700;color:#3a4a3a;font-family:'Nunito',sans-serif">${c.label}</span>
+          <span style="font-size:.7rem;font-weight:700;color:#3a4a3a;font-family:inherit">${c.label}</span>
         </div>`).join('')}
-      <span style="margin-left:auto;font-size:.65rem;color:#aaa;font-weight:600;font-family:'Nunito',sans-serif">Count →</span>
+      <span style="margin-left:auto;font-size:.65rem;color:#aaa;font-weight:600;font-family:inherit">Count →</span>
     </div>`;
 
   const rows = stats.map((s, ri) => {
@@ -1603,7 +1603,7 @@ function renderRangeChart(stats, container) {
     const nameEl = `
       <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid ${isTop ? '#c5dfc9' : '#eee'}">
         ${nameBadge}
-        <div style="font-size:.78rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;font-family:'Nunito',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
+        <div style="font-size:.78rem;font-weight:${isTop ? 800 : 700};color:#1c3a27;font-family:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2" title="${escHtml(s.name)}">${escHtml(s.name)}</div>
       </div>`;
 
     const bars = cats.map((c, ci) => {
@@ -1612,11 +1612,11 @@ function renderRangeChart(stats, container) {
       const delay = (ri * cats.length + ci) * 40;
       const anim = `${uid}_${ri}_${ci}`;
       return `
-        <div style="display:flex;align-items:center;gap:.3rem;margin-bottom:${ci < cats.length - 1 ? '2px' : '0'}">
-          <div style="flex:1;height:10px;background:${c.track};border-radius:0 4px 4px 0;border:1px solid #e8e2d8;position:relative;overflow:hidden">
-            <div style="height:100%;background:linear-gradient(90deg,${c.color},${c.grad});border-radius:0 4px 4px 0;animation:${anim} .55s cubic-bezier(.22,1,.36,1) ${delay}ms both;min-width:${count > 0 ? '3px' : '0'}"></div>
+        <div style="display:flex;align-items:center;gap:.25rem;line-height:1;margin-bottom:1px">
+          <div style="flex:1;height:9px;background:${c.track};border-radius:0 3px 3px 0;border:1px solid #e8e2d8;overflow:hidden">
+            <div style="height:100%;background:linear-gradient(90deg,${c.color},${c.grad});border-radius:0 3px 3px 0;animation:${anim} .55s cubic-bezier(.22,1,.36,1) ${delay}ms both;min-width:${count > 0 ? '3px' : '0'}"></div>
           </div>
-          <span style="min-width:14px;font-size:.68rem;font-weight:${count > 0 ? 800 : 400};color:${count > 0 ? c.color : '#ddd'};font-family:'Nunito',sans-serif">${count > 0 ? count : '—'}</span>
+          <span style="min-width:13px;height:9px;font-size:.63rem;font-weight:${count > 0 ? 800 : 400};color:${count > 0 ? c.color : '#ddd'};line-height:9px;display:inline-block">${count > 0 ? count : '—'}</span>
         </div>`;
     }).join('');
 
@@ -1627,7 +1627,7 @@ function renderRangeChart(stats, container) {
         ${nameEl}
         <div style="flex:1;padding:0 .1rem">${bars}</div>
         <div style="flex-shrink:0;margin-left:.15rem">
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.68rem;font-weight:900;font-family:'Nunito',sans-serif;${isTop ? 'box-shadow:0 0 0 2px #c8a84b80' : ''}">${total}</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.68rem;font-weight:900;font-family:inherit;${isTop ? 'box-shadow:0 0 0 2px #c8a84b80' : ''}">${total}</span>
         </div>
       </div>`;
   }).join('');
@@ -1636,7 +1636,7 @@ function renderRangeChart(stats, container) {
     <div style="display:flex;align-items:flex-start;gap:.4rem;margin-top:.2rem;padding:0 .45rem">
       <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid #eee"></div>
       <div style="flex:1;position:relative;border-top:1.5px solid #d8d0c4;height:14px">
-        ${ticks.map(v => `<span style="position:absolute;left:${Math.round((v/maxVal)*100)}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px;font-family:'Nunito',sans-serif">${v}</span>`).join('')}
+        ${ticks.map(v => `<span style="position:absolute;left:${Math.round((v/maxVal)*100)}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px;font-family:inherit">${v}</span>`).join('')}
       </div>
       <div style="width:22px;flex-shrink:0;margin-left:.15rem"></div>
     </div>`;
