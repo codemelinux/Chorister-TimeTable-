@@ -1567,38 +1567,34 @@ function renderRangeChart(stats, container) {
 
   function buildRows(filter) {
     const activeCats = filter === 'all' ? cats : cats.filter(c => c.key === filter);
-    const dataMax = filter === 'all'
+    // Percentage scale: top performer = 100%, everyone else relative
+    const catMax = filter === 'all'
       ? Math.max(...stats.map(s => cats.reduce((a,c) => a + (s[c.key]||0), 0)), 1)
       : Math.max(...stats.map(s => s[activeCats[0].key] || 0), 1);
-    const maxVal = Math.max(filter === 'all' ? 12 : 4, dataMax);
-
-    const tickStep = maxVal <= 4 ? 1 : 3;
-    const ticks = [];
-    for (let v = 0; v <= maxVal; v += tickStep) ticks.push(v);
-    if (ticks[ticks.length - 1] < maxVal) ticks.push(maxVal);
+    const ticks = [0, 25, 50, 75, 100];
 
     const uid = `rc${Date.now()}${Math.random().toString(36).slice(2)}`;
     const kf = stats.map((s, ri) => {
-      const displayTotal = filter === 'all'
+      const raw = filter === 'all'
         ? cats.reduce((a,c) => a + (s[c.key]||0), 0)
         : s[activeCats[0].key] || 0;
-      const pct = Math.round((displayTotal / maxVal) * 100);
+      const pct = Math.round((raw / catMax) * 100);
       return `@keyframes ${uid}_${ri}{from{width:0}to{width:${pct}%}}`;
     }).join('');
 
     const rows = stats.map((s, ri) => {
       const isTop = ri === 0;
-      const displayTotal = filter === 'all'
+      const raw = filter === 'all'
         ? cats.reduce((a,c) => a + (s[c.key]||0), 0)
         : s[activeCats[0].key] || 0;
-      const barPct = Math.round((displayTotal / maxVal) * 100);
+      const barPct = Math.round((raw / catMax) * 100);
       const delay = ri * 40;
 
-      // Build stacked segments inside the bar (proportional within displayTotal)
+      // Build stacked segments inside the bar (proportional within raw total)
       const segments = filter === 'all'
         ? cats.map(c => {
             const count = s[c.key] || 0;
-            const segPct = displayTotal > 0 ? Math.round((count / displayTotal) * 100) : 0;
+            const segPct = raw > 0 ? Math.round((count / raw) * 100) : 0;
             return count > 0
               ? `<div title="${c.label}: ${count}" style="width:${segPct}%;background:linear-gradient(90deg,${c.color},${c.grad});height:100%;flex-shrink:0"></div>`
               : '';
@@ -1622,7 +1618,7 @@ function renderRangeChart(stats, container) {
               ${displayTotal > 0 ? segments : ''}
             </div>
           </div>
-          <span style="min-width:22px;font-size:.72rem;font-weight:800;color:${isTop ? '#1c3a27' : '#555'};text-align:right;flex-shrink:0">${displayTotal || '—'}</span>
+          <span style="min-width:28px;font-size:.72rem;font-weight:800;color:${isTop ? '#1c3a27' : '#555'};text-align:right;flex-shrink:0">${raw > 0 ? barPct + '%' : '—'}</span>
           <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1c3a27;color:#fff;font-size:.68rem;font-weight:900;flex-shrink:0;${isTop ? 'box-shadow:0 0 0 2px #c8a84b80' : ''}">
             ${cats.reduce((a,c) => a + (s[c.key]||0), 0)}
           </span>
@@ -1633,7 +1629,7 @@ function renderRangeChart(stats, container) {
       <div style="display:flex;align-items:flex-start;gap:.4rem;margin-top:.2rem;padding:0 .45rem">
         <div style="width:95px;flex-shrink:0;padding-right:.4rem;border-right:1.5px solid #eee"></div>
         <div style="flex:1;position:relative;border-top:1.5px solid #d8d0c4;height:14px">
-          ${ticks.map(v => `<span style="position:absolute;left:${Math.round((v/maxVal)*100)}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px">${v}</span>`).join('')}
+          ${ticks.map(v => `<span style="position:absolute;left:${v}%;transform:translateX(-50%);font-size:.6rem;color:#bbb;font-weight:700;top:2px">${v}%</span>`).join('')}
         </div>
         <span style="width:22px;flex-shrink:0"></span>
         <span style="width:22px;flex-shrink:0"></span>
@@ -1657,7 +1653,7 @@ function renderRangeChart(stats, container) {
     </div>`;
 
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'border:1.5px solid #d4cfc7;border-radius:10px;padding:.55rem .65rem .35rem;background:#fff';
+  wrap.style.cssText = 'border:1.5px solid #d4cfc7;border-radius:10px;padding:.55rem .65rem .35rem;background:#fff;max-width:680px';
   wrap.innerHTML = toggleButtons + buildRows('all');
   container.innerHTML = '';
   container.appendChild(wrap);
