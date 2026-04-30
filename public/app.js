@@ -1538,11 +1538,12 @@ function renderRangeChart(stats, container) {
     { key: 'thanksgiving_count',   label: 'Thanksgiving',   color: '#e87b6e', grad: '#f4a89e', track: '#fde8e5', text: '#fff'    },
   ];
 
-  // Normalise bars to global max so each category bar is directly comparable
-  const maxVal = Math.max(...stats.flatMap(s => cats.map(c => s[c.key] || 0)), 1);
+  // Fixed 0-12 scale for growth measurement; expands if data exceeds 12
+  const dataMax = Math.max(...stats.flatMap(s => cats.map(c => s[c.key] || 0)), 1);
+  const maxVal = Math.max(12, dataMax);
 
-  // X-axis ticks
-  const tickStep = maxVal <= 5 ? 1 : Math.ceil(maxVal / 5);
+  // X-axis ticks every 3 (0, 3, 6, 9, 12 …)
+  const tickStep = 3;
   const ticks = [];
   for (let v = 0; v <= maxVal; v += tickStep) ticks.push(v);
   if (ticks[ticks.length - 1] < maxVal) ticks.push(maxVal);
