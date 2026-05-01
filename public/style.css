@@ -412,11 +412,44 @@ body {
 
 .analytics-panel[open] > summary::after { transform: rotate(180deg); }
 
-.analytics-body { padding: 0 1.4rem 1.5rem; }
+.analytics-modal-content {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.analytics-body {
+  padding: 2rem 1rem 3rem;
+  background:
+    radial-gradient(circle at top left, rgba(200, 168, 75, 0.16), transparent 24%),
+    radial-gradient(circle at top right, rgba(74, 124, 89, 0.18), transparent 28%),
+    linear-gradient(180deg, #133120 0%, #0d2215 100%);
+}
 
 .analytics-shell {
-  width: min(100%, 1480px);
+  width: min(1440px, 100%);
   margin: 0 auto;
+}
+
+.analytics-page-shell {
+  overflow: hidden;
+}
+
+.analytics-page-toolbar {
+  align-items: flex-start;
+}
+
+.analytics-toolbar-controls {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.analytics-page-body {
+  padding: 1.25rem 1.4rem 1.5rem;
+}
+
+.analytics-song-title {
+  font-size: 1.35rem;
 }
 
 .analytics-layout {
@@ -475,11 +508,15 @@ body {
   }
 
   .analytics-body {
-    padding: 0 0.75rem 1rem;
+    padding: 1rem 0.7rem 2rem;
   }
 
   .analytics-shell {
     width: 100%;
+  }
+
+  .analytics-page-body {
+    padding: 1rem;
   }
 
   .analytics-pane {
@@ -498,6 +535,10 @@ body {
 
   .analytics-month-bar__controls {
     width: 100%;
+    justify-content: space-between;
+  }
+
+  .analytics-toolbar-controls {
     justify-content: space-between;
   }
 
@@ -1356,6 +1397,12 @@ body.dark-theme .date-cell { color: var(--text-main); }
 body.dark-theme .analytics-panel { border-top-color: #243d2c; }
 body.dark-theme .analytics-col--right { border-left-color: #243d2c; }
 body.dark-theme .analytics-section-title { border-bottom-color: #243d2c; }
+body.dark-theme .analytics-body {
+  background:
+    radial-gradient(circle at top left, rgba(200, 168, 75, 0.12), transparent 24%),
+    radial-gradient(circle at top right, rgba(74, 124, 89, 0.16), transparent 28%),
+    linear-gradient(180deg, #071009 0%, #050906 100%);
+}
 body.dark-theme .analytics-month-bar {
   border-color: #243d2c;
   background: linear-gradient(135deg, rgba(26,46,31,0.96), rgba(20,35,24,0.94));

@@ -654,15 +654,33 @@
   <!-- Analytics Page Modal -->
   <div class="modal fade" id="analyticsModal" tabindex="-1" aria-labelledby="analyticsModalLabel">
     <div class="modal-dialog modal-fullscreen">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="analyticsModalLabel">
-            <i class="bi bi-bar-chart-line me-2"></i>Analytics
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+      <div class="modal-content analytics-modal-content">
         <div class="modal-body analytics-body" style="overflow-y:auto">
-          <div class="analytics-shell">
+          <div class="site-body analytics-shell">
+          <div class="content-stack">
+          <section class="page-shell analytics-page-shell">
+          <div class="toolbar analytics-page-toolbar">
+            <div>
+              <span class="section-kicker">Analytics Dashboard</span>
+              <h2 class="page-title mb-1" id="analyticsModalLabel">
+                <i class="bi bi-bar-chart-line me-2"></i>Monthly Analytics
+              </h2>
+              <p class="chart-subtitle mb-0">Chorister activity, date-range summaries, and song usage trends</p>
+            </div>
+            <div class="toolbar-controls analytics-toolbar-controls">
+              <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsPrevMonth" aria-label="Previous month">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <input type="month" class="form-control analytics-month-bar__picker" id="analyticsMonthPicker" />
+              <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsNextMonth" aria-label="Next month">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="btn btn-outline-secondary analytics-close-btn" data-bs-dismiss="modal">
+                <i class="bi bi-x-lg me-1"></i>Close
+              </button>
+            </div>
+          </div>
+          <div class="analytics-page-body">
           <div class="analytics-layout">
           <!-- Chorister stats + date range -->
           <div class="row g-0 analytics-two-col">
@@ -674,15 +692,6 @@
                     <i class="bi bi-person-check me-1"></i>This month &mdash; Choristers
                   </h6>
                   <p class="analytics-month-bar__subtitle">Hymn &middot; Praise Worship &middot; Thanksgiving assignments</p>
-                </div>
-                <div class="analytics-month-bar__controls">
-                  <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsPrevMonth" aria-label="Previous month">
-                    <i class="bi bi-chevron-left"></i>
-                  </button>
-                  <input type="month" class="form-control analytics-month-bar__picker" id="analyticsMonthPicker" />
-                  <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsNextMonth" aria-label="Next month">
-                    <i class="bi bi-chevron-right"></i>
-                  </button>
                 </div>
               </div>
               <div id="analyticsMonthOutput"><p class="text-muted small">Loading…</p></div>
@@ -712,7 +721,10 @@
           <!-- Most Sung Songs -->
           <section class="analytics-song-section">
             <div class="analytics-song-section__header">
-              <h6 class="analytics-section-title mb-0">Most Sung Songs</h6>
+              <div>
+                <span class="section-kicker">Song Library</span>
+                <h6 class="page-title analytics-song-title mb-1">Most Sung Songs</h6>
+              </div>
               <p class="analytics-pane__subtitle mb-0">A quick category breakdown of the songs used most often across the selected period.</p>
             </div>
             <div class="category-analytics-grid" id="categoryAnalyticsGrid">
@@ -747,10 +759,10 @@
           </section>
           </div>
           </div>
+          </section>
+          </div>
+          </div>
         </div><!-- /.modal-body -->
-        <div class="modal-footer">
-          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
       </div>
     </div>
   </div>
