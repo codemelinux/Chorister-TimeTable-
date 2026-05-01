@@ -1292,13 +1292,22 @@ body {
    ================================================================ */
 
 .prayer-roster-table {
+  --prayer-row-bg: transparent;
+  --prayer-row-text: var(--text-main);
+  --prayer-header-bg: transparent;
+  --prayer-next-bg: linear-gradient(90deg, #fdf8e8 0%, #fff9f0 100%);
+  --prayer-next-text: var(--hymn-color);
+  --prayer-next-date: var(--text-soft);
+  --prayer-form-bg: #f7faf4;
+  --bs-table-bg: var(--prayer-row-bg);
+  --bs-table-color: var(--prayer-row-text);
   margin-bottom: 0;
   border-collapse: separate;
   border-spacing: 0;
 }
 
 .prayer-roster-table thead th {
-  background: transparent;
+  background: var(--prayer-header-bg) !important;
   border: none;
   padding: 0.85rem 0.75rem;
   border-bottom: 2px solid var(--panel-border);
@@ -1306,10 +1315,16 @@ body {
 }
 
 .prayer-roster-table td {
+  background: var(--prayer-row-bg) !important;
+  color: var(--prayer-row-text);
   border: none;
   border-bottom: 1px dashed var(--row-divider, #ddd);
   padding: 0.85rem 0.75rem;
   vertical-align: middle;
+}
+
+.prayer-roster-table .member-name {
+  color: var(--prayer-row-text);
 }
 
 .prayer-roster-table tbody tr:last-child td {
@@ -1318,7 +1333,7 @@ body {
 
 /* "Next Up" highlighted row */
 .prayer-next-up-row td {
-  background: linear-gradient(90deg, #fdf8e8 0%, #fff9f0 100%);
+  background: var(--prayer-next-bg) !important;
   border-top: 2px solid var(--hymn-color) !important;
   border-bottom: none !important;
 }
@@ -1336,13 +1351,17 @@ body {
 }
 
 .prayer-next-name {
-  color: var(--hymn-color);
+  color: var(--prayer-next-text);
   font-weight: 800;
+}
+
+.prayer-next-date {
+  color: var(--prayer-next-date);
 }
 
 /* Add/edit form card */
 .prayer-add-form {
-  background: #f7faf4;
+  background: var(--prayer-form-bg);
   border: 1px solid var(--col-badge-border, #c8a84b40);
   border-radius: 12px;
 }
@@ -1703,8 +1722,23 @@ body.dark-theme .my-rating-card { background: #1a2e1f; border-color: #2d4a38; }
 body.dark-theme .text-muted { color: #b8c4bb !important; }
 body.dark-theme .border { border-color: #243d2c !important; }
 body.dark-theme .bg-white { background: #111612 !important; }
+body.dark-theme .prayer-roster-table {
+  --prayer-row-bg: #0f1510;
+  --prayer-row-text: var(--text-main);
+  --prayer-header-bg: #14251a;
+  --prayer-next-bg: linear-gradient(90deg, #1f1a0d 0%, #17150d 100%);
+  --prayer-next-text: #f0da97;
+  --prayer-next-date: #b8c4bb;
+  --prayer-form-bg: #111912;
+}
 body.dark-theme .prayer-roster-table td,
 body.dark-theme .prayer-roster-table th { border-color: #243d2c; }
+body.dark-theme .prayer-roster-table tbody tr:not(.prayer-next-up-row):hover td {
+  background: #132017;
+}
+body.dark-theme .prayer-add-form {
+  border-color: #334437;
+}
 body.dark-theme .stats-breakdown-table tbody tr:hover { background: #1e3328; }
 body.dark-theme .stats-row--top td { background: #1a3a25 !important; }
 body.dark-theme .stats-row--top:hover td { background: #1e3a28 !important; }

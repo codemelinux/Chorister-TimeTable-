@@ -76,7 +76,7 @@ async function renderPrayerRosterTable() {
 
       const labelTd = document.createElement("td");
       labelTd.innerHTML = `<span class="prayer-next-badge">Next Up</span>
-        <span class="text-muted small ms-2">${escHtml(formatDate(next.date))}</span>`;
+        <span class="prayer-next-date small ms-2">${escHtml(formatDate(next.date))}</span>`;
 
       const nameTd2 = document.createElement("td");
       nameTd2.innerHTML = `<span class="member-name prayer-next-name">${escHtml(next.chorister_name)}</span>`;
