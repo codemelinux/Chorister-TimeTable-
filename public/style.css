@@ -465,6 +465,31 @@ body {
   align-items: flex-start;
 }
 
+.analytics-page-view {
+  --analytics-pane-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,246,0.94));
+  --analytics-table-bg: #ffffff;
+  --analytics-table-head-bg: #1c3a27;
+  --analytics-table-border: #d9d2c3;
+  --analytics-table-row-bg: #ffffff;
+  --analytics-table-row-alt-bg: #f9fdf7;
+  --analytics-table-row-top-bg: #edf7e4;
+  --analytics-table-cell-border: #eef0eb;
+  --analytics-table-name: #1c3a27;
+  --analytics-rank-bg: #eeeeee;
+  --analytics-rank-text: #888888;
+  --analytics-dash: #bbbbbb;
+  --analytics-chart-bg: #ffffff;
+  --analytics-chart-row-bg: #fafaf8;
+  --analytics-chart-track: #f0ece6;
+  --analytics-chart-border: #e8e2d8;
+  --analytics-toggle-bg: #ffffff;
+  --analytics-toggle-text: #555555;
+  --analytics-toggle-border: #dddddd;
+  --analytics-toggle-active-bg: #1c3a27;
+  --analytics-toggle-active-text: #ffffff;
+  --analytics-toggle-active-border: #1c3a27;
+}
+
 .analytics-toolbar-controls {
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -503,7 +528,7 @@ body {
 }
 
 .analytics-pane {
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,246,0.94));
+  background: var(--analytics-pane-bg);
   border: 1px solid var(--panel-border);
   border-radius: 18px;
   padding: 1.1rem;
@@ -1426,6 +1451,30 @@ body.dark-theme .date-cell { color: var(--text-main); }
 body.dark-theme .analytics-panel { border-top-color: #243d2c; }
 body.dark-theme .analytics-col--right { border-left-color: #243d2c; }
 body.dark-theme .analytics-section-title { border-bottom-color: #243d2c; }
+body.dark-theme .analytics-page-view {
+  --analytics-pane-bg: linear-gradient(180deg, rgba(16,22,17,0.98), rgba(13,19,14,0.96));
+  --analytics-table-bg: #0f1510;
+  --analytics-table-head-bg: #17321f;
+  --analytics-table-border: #2d3b30;
+  --analytics-table-row-bg: #101711;
+  --analytics-table-row-alt-bg: #121c14;
+  --analytics-table-row-top-bg: #1a2c1f;
+  --analytics-table-cell-border: #243128;
+  --analytics-table-name: var(--text-main);
+  --analytics-rank-bg: #243128;
+  --analytics-rank-text: #b8c4bb;
+  --analytics-dash: #76867a;
+  --analytics-chart-bg: #101711;
+  --analytics-chart-row-bg: #121c14;
+  --analytics-chart-track: #17231a;
+  --analytics-chart-border: #2a372d;
+  --analytics-toggle-bg: #111912;
+  --analytics-toggle-text: var(--text-soft);
+  --analytics-toggle-border: #334437;
+  --analytics-toggle-active-bg: #244d31;
+  --analytics-toggle-active-text: #f3f7f3;
+  --analytics-toggle-active-border: var(--accent);
+}
 body.dark-theme .analytics-month-bar {
   border-color: #243d2c;
   background: linear-gradient(135deg, rgba(26,46,31,0.96), rgba(20,35,24,0.94));
