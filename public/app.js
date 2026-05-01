@@ -60,6 +60,10 @@ let analyticsMonth = new Date();
 let ratings = {};
 let activePage = "home";
 
+function openAnalyticsPage(options = {}) {
+  setActivePage("analytics", options);
+}
+
 function setActivePage(page, options = {}) {
   const { syncAnalyticsMonth = true } = options;
   activePage = page;
@@ -492,8 +496,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btnPrint").addEventListener("click", () => window.print());
   document.getElementById("btnThemeToggle").addEventListener("click", toggleTheme);
   document.getElementById("btnNavHome").addEventListener("click", () => setActivePage("home", { syncAnalyticsMonth: false }));
-  document.getElementById("btnNavAnalytics").addEventListener("click", () => setActivePage("analytics"));
+  document.getElementById("btnNavAnalytics").addEventListener("click", () => openAnalyticsPage());
   setTheme(localStorage.getItem("chorister-theme") || "light");
+
+  // Wire analytics navigation before async startup work so the page switcher
+  // still functions even if one of the initial data requests stalls or fails.
+  registerAnalyticsModalEventHandlers();
 
   await Promise.all([loadSession(), loadChoristerSession()]);
   await loadChoristers();
@@ -515,6 +523,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   registerLyricsModalEventHandlers();
   registerRatingsModalEventHandlers();
   registerRosterModalEventHandlers();
-  registerAnalyticsModalEventHandlers();
   registerPrayerModalEventHandlers();
 });

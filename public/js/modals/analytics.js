@@ -288,24 +288,54 @@ async function loadRangeStats() {
 }
 
 function registerAnalyticsModalEventHandlers() {
-  document.getElementById("btnAnalytics").addEventListener("click", () => {
-    setActivePage("analytics");
-  });
-  document.getElementById("btnAnalyticsBackHome").addEventListener("click", () => {
-    setActivePage("home", { syncAnalyticsMonth: false });
-  });
-  document.getElementById("btnAnalyticsPrevMonth").addEventListener("click", () => {
-    analyticsMonth = new Date(analyticsMonth.getFullYear(), analyticsMonth.getMonth() - 1, 1);
-    loadAnalyticsMonthStats();
-  });
-  document.getElementById("btnAnalyticsNextMonth").addEventListener("click", () => {
-    analyticsMonth = new Date(analyticsMonth.getFullYear(), analyticsMonth.getMonth() + 1, 1);
-    loadAnalyticsMonthStats();
-  });
-  document.getElementById("analyticsMonthPicker").addEventListener("change", (e) => {
-    const [y, m] = e.target.value.split("-").map(Number);
-    analyticsMonth = new Date(y, m - 1, 1);
-    loadAnalyticsMonthStats();
-  });
-  document.getElementById("btnShowStats").addEventListener("click", loadRangeStats);
+  const menuBtn = document.getElementById("btnAnalytics");
+  const backBtn = document.getElementById("btnAnalyticsBackHome");
+  const prevBtn = document.getElementById("btnAnalyticsPrevMonth");
+  const nextBtn = document.getElementById("btnAnalyticsNextMonth");
+  const monthPicker = document.getElementById("analyticsMonthPicker");
+  const showStatsBtn = document.getElementById("btnShowStats");
+
+  if (menuBtn && !menuBtn.dataset.analyticsBound) {
+    menuBtn.dataset.analyticsBound = "true";
+    menuBtn.addEventListener("click", () => {
+      openAnalyticsPage();
+    });
+  }
+
+  if (backBtn && !backBtn.dataset.analyticsBound) {
+    backBtn.dataset.analyticsBound = "true";
+    backBtn.addEventListener("click", () => {
+      setActivePage("home", { syncAnalyticsMonth: false });
+    });
+  }
+
+  if (prevBtn && !prevBtn.dataset.analyticsBound) {
+    prevBtn.dataset.analyticsBound = "true";
+    prevBtn.addEventListener("click", () => {
+      analyticsMonth = new Date(analyticsMonth.getFullYear(), analyticsMonth.getMonth() - 1, 1);
+      loadAnalyticsMonthStats();
+    });
+  }
+
+  if (nextBtn && !nextBtn.dataset.analyticsBound) {
+    nextBtn.dataset.analyticsBound = "true";
+    nextBtn.addEventListener("click", () => {
+      analyticsMonth = new Date(analyticsMonth.getFullYear(), analyticsMonth.getMonth() + 1, 1);
+      loadAnalyticsMonthStats();
+    });
+  }
+
+  if (monthPicker && !monthPicker.dataset.analyticsBound) {
+    monthPicker.dataset.analyticsBound = "true";
+    monthPicker.addEventListener("change", (e) => {
+      const [y, m] = e.target.value.split("-").map(Number);
+      analyticsMonth = new Date(y, m - 1, 1);
+      loadAnalyticsMonthStats();
+    });
+  }
+
+  if (showStatsBtn && !showStatsBtn.dataset.analyticsBound) {
+    showStatsBtn.dataset.analyticsBound = "true";
+    showStatsBtn.addEventListener("click", loadRangeStats);
+  }
 }
