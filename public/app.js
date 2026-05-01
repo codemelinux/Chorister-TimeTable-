@@ -20,8 +20,10 @@
 
 function setTheme(theme) {
   if (theme === "dark") {
+    document.documentElement.classList.add("dark-theme");
     document.body.classList.add("dark-theme");
   } else {
+    document.documentElement.classList.remove("dark-theme");
     document.body.classList.remove("dark-theme");
   }
   localStorage.setItem("chorister-theme", theme);

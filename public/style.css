@@ -1287,26 +1287,26 @@ body {
 /* ---- Dark theme — class on <body> avoids :root specificity conflicts ---- */
 body.dark-theme,
 html.dark-theme body {
-  --bg: #0e1c13;
-  --card-bg: #162219;
-  --nav-bg: #091510;
+  --bg: #050805;
+  --card-bg: #0b0f0c;
+  --nav-bg: #030603;
   --nav-border: #c8a84b;
-  --title-color: #cfe8d5;
-  --label-muted: #6a8a72;
-  --row-divider: #243d2c;
+  --title-color: #f5fbf6;
+  --label-muted: #9fb0a3;
+  --row-divider: #263229;
   --accent: #5aad78;
-  --col-badge-bg: #1e3328;
-  --col-badge-border: #2d4a38;
-  --col-badge-text: #7ec89a;
-  --text-main: #b8d4bf;
-  --text-soft: #7a9a82;
-  --panel-border: #243d2c;
-  --hymn-light: #2a2412;
-  --hymn-mid: #3a3018;
-  --praise-light: #182a1e;
-  --praise-mid: #1e3426;
-  --thanks-light: #2a1a18;
-  --thanks-mid: #38221e;
+  --col-badge-bg: #151d17;
+  --col-badge-border: #334437;
+  --col-badge-text: #d8ebdc;
+  --text-main: #f3f7f3;
+  --text-soft: #c7d1c9;
+  --panel-border: #263229;
+  --hymn-light: #1f1a0d;
+  --hymn-mid: #4f421d;
+  --praise-light: #101813;
+  --praise-mid: #233528;
+  --thanks-light: #1b100f;
+  --thanks-mid: #4c2a26;
 }
 
 /* Card & page shell */
@@ -1315,7 +1315,7 @@ body.dark-theme .page-shell {
 }
 
 /* Toolbar & page title */
-body.dark-theme .chart-subtitle { color: #6a8a72; }
+body.dark-theme .chart-subtitle { color: #b8c4bb; }
 
 /* Roster table */
 body.dark-theme .roster-table th,
@@ -1355,55 +1355,104 @@ body.dark-theme .cat-stat-count { color: var(--text-soft); }
 /* Bootstrap form controls */
 body.dark-theme .form-control,
 body.dark-theme .form-select {
-  background: #1a2e1f;
-  border-color: #2d4a38;
+  background: #0f1510;
+  border-color: #334437;
   color: var(--text-main);
 }
 body.dark-theme .form-control:focus,
 body.dark-theme .form-select:focus {
-  background: #1e3328;
+  background: #121b14;
   border-color: var(--accent);
   color: var(--text-main);
   box-shadow: 0 0 0 3px rgba(90,173,120,.2);
 }
-body.dark-theme .form-control::placeholder { color: #4a6a52; }
+body.dark-theme .form-control::placeholder { color: #8a9b8e; }
 body.dark-theme .form-label { color: var(--text-soft); }
 body.dark-theme .form-check-label { color: var(--text-main); }
+body.dark-theme .form-text { color: #b0bdb3; }
 
 /* Bootstrap buttons */
 body.dark-theme .btn-outline-secondary {
-  color: #8aaa90;
-  border-color: #2d4a38;
+  color: #d9e4dc;
+  border-color: #415345;
 }
 body.dark-theme .btn-outline-secondary:hover {
-  background: #1e3328;
-  color: var(--text-main);
+  background: #182119;
+  color: #ffffff;
 }
 body.dark-theme .btn-outline-primary {
-  color: #6aad84;
-  border-color: #2d5a3a;
+  color: #9fd7af;
+  border-color: #3c6a48;
 }
-body.dark-theme .btn-outline-danger { border-color: #5a2820; }
+body.dark-theme .btn-outline-primary:hover,
+body.dark-theme .btn-outline-primary:focus {
+  background: #1f3a27;
+  color: #ffffff;
+  border-color: #4f8d60;
+}
+body.dark-theme .btn-outline-success {
+  color: #bfeacc;
+  border-color: #4f8d60;
+}
+body.dark-theme .btn-outline-success:hover,
+body.dark-theme .btn-outline-success:focus {
+  background: #183222;
+  color: #ffffff;
+  border-color: #62a777;
+}
+body.dark-theme .btn-outline-info {
+  color: #cbe7ea;
+  border-color: #4d7f88;
+}
+body.dark-theme .btn-outline-info:hover,
+body.dark-theme .btn-outline-info:focus {
+  background: #173038;
+  color: #ffffff;
+  border-color: #6aa4af;
+}
+body.dark-theme .btn-outline-warning {
+  color: #f0da97;
+  border-color: #927744;
+}
+body.dark-theme .btn-outline-warning:hover,
+body.dark-theme .btn-outline-warning:focus {
+  background: #302610;
+  color: #ffffff;
+  border-color: #b8954e;
+}
+body.dark-theme .btn-outline-danger {
+  color: #f0b1a7;
+  border-color: #7a3a31;
+}
+body.dark-theme .btn-outline-danger:hover,
+body.dark-theme .btn-outline-danger:focus {
+  background: #351714;
+  color: #ffffff;
+  border-color: #a35147;
+}
 body.dark-theme .btn-link { color: var(--accent); }
+body.dark-theme .btn-link.text-muted { color: #bfd0c2 !important; }
 
 /* Dropdown menu */
 body.dark-theme .navbar-dropdown-menu {
-  background: #162219;
-  border: 1px solid #243d2c;
+  background: #0b0f0c;
+  border: 1px solid #263229;
 }
 body.dark-theme .navbar-dropdown-menu .dropdown-item { color: var(--text-main); }
 body.dark-theme .navbar-dropdown-menu .dropdown-item:hover { background: #1e3328; color: var(--accent); }
+body.dark-theme .navbar-dropdown-menu .dropdown-item.text-danger { color: #f0b1a7; }
+body.dark-theme .navbar-dropdown-menu .dropdown-item.text-warning { color: #f0da97; }
 body.dark-theme .navbar-dropdown-menu .dropdown-divider { border-color: #243d2c; }
 
 /* Modals */
 body.dark-theme .modal-content {
-  background: #162219;
-  border: 1px solid #243d2c;
+  background: #0b0f0c;
+  border: 1px solid #263229;
   color: var(--text-main);
 }
 body.dark-theme .modal-header {
-  border-bottom-color: #243d2c;
-  background: #1a2e1f;
+  border-bottom-color: #263229;
+  background: #101510;
 }
 body.dark-theme .modal-footer { border-top-color: #243d2c; }
 body.dark-theme .modal-title { color: var(--title-color); }
@@ -1417,23 +1466,89 @@ body.dark-theme .table-hover tbody tr:hover { background: #1e3328; }
 body.dark-theme .table td, body.dark-theme .table th { border-color: #243d2c; }
 
 /* Lyrics & songs */
-body.dark-theme .lyrics-block { background: rgba(255,255,255,0.06); }
+body.dark-theme .lyrics-column { box-shadow: none; }
+body.dark-theme .lyrics-song-card,
+body.dark-theme .all-song-card,
+body.dark-theme .list-group-item {
+  background: #111612;
+  color: var(--text-main);
+  border-color: #334437;
+}
+body.dark-theme .lyrics-song-title,
+body.dark-theme .all-song-card__title,
+body.dark-theme .list-group-item .fw-semibold,
+body.dark-theme .list-group-item .member-name {
+  color: #ffffff;
+}
+body.dark-theme .lyrics-song-sub,
+body.dark-theme .all-song-card .text-muted,
+body.dark-theme .list-group-item .text-muted,
+body.dark-theme .function-meta {
+  color: #c7d1c9 !important;
+}
+body.dark-theme .lyrics-link {
+  background: #171d18;
+  color: #f2f6f2;
+}
+body.dark-theme .lyrics-link--gdoc {
+  background: #17311f;
+  color: #d8f3df;
+}
+body.dark-theme .lyrics-toggle { color: #d4dfd7; }
+body.dark-theme .lyrics-block {
+  background: #151b16;
+  border-color: #334437;
+  color: #edf3ee;
+}
 body.dark-theme .song-item { border-bottom-color: #243d2c; }
 body.dark-theme .song-item:hover { background: #1a2e1f; }
 body.dark-theme .song-title { color: var(--text-main); }
+body.dark-theme .list-group-item + .list-group-item { border-top-color: #243d2c; }
+body.dark-theme .badge.bg-light,
+body.dark-theme .badge.text-secondary.border {
+  background: #171d18 !important;
+  color: #edf3ee !important;
+  border-color: #334437 !important;
+}
+body.dark-theme .bg-primary-subtle.text-primary-emphasis,
+body.dark-theme .badge.bg-primary-subtle.text-primary-emphasis {
+  background: #1b3020 !important;
+  color: #dff3e4 !important;
+}
+body.dark-theme .bg-info-subtle.text-info-emphasis,
+body.dark-theme .badge.bg-info-subtle.text-info-emphasis {
+  background: #183038 !important;
+  color: #d6eef2 !important;
+}
+body.dark-theme a.small,
+body.dark-theme a.text-decoration-none {
+  color: #dce8df;
+}
+body.dark-theme a.text-success {
+  color: #bfeacc !important;
+}
+body.dark-theme .song-assignment-remove {
+  color: #d6eef2;
+  opacity: 0.9;
+}
+body.dark-theme .song-assignment-remove:hover {
+  color: #ffffff;
+}
 
 /* Rating cards */
 body.dark-theme .my-rating-card { background: #1a2e1f; border-color: #2d4a38; }
 
 /* Misc */
-body.dark-theme .text-muted { color: #5a7a62 !important; }
+body.dark-theme .text-muted { color: #b8c4bb !important; }
 body.dark-theme .border { border-color: #243d2c !important; }
-body.dark-theme .bg-white { background: #162219 !important; }
+body.dark-theme .bg-white { background: #111612 !important; }
 body.dark-theme .prayer-roster-table td,
 body.dark-theme .prayer-roster-table th { border-color: #243d2c; }
 body.dark-theme .stats-breakdown-table tbody tr:hover { background: #1e3328; }
 body.dark-theme .stats-row--top td { background: #1a3a25 !important; }
 body.dark-theme .stats-row--top:hover td { background: #1e3a28 !important; }
+body.dark-theme .text-danger { color: #f0b1a7 !important; }
+body.dark-theme .text-warning { color: #f0da97 !important; }
 
 /* ---- Print ---- */
 @media print {

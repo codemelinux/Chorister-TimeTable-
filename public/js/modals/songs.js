@@ -321,8 +321,10 @@ function renderSongsList() {
 
           const removeBtn = document.createElement("button");
           removeBtn.type = "button";
-          removeBtn.className = "btn-close ms-1";
-          removeBtn.style.cssText = "font-size:0.5rem;filter:none;opacity:0.6;";
+          removeBtn.className = "song-assignment-remove btn btn-sm p-0 ms-1 border-0 bg-transparent";
+          removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+          removeBtn.setAttribute("aria-label", "Remove assignment");
+          removeBtn.style.fontSize = "0.55rem";
           removeBtn.title = "Remove assignment";
           removeBtn.addEventListener("click", () => unassignSong(s.id, a.chorister_id));
           badge.appendChild(removeBtn);
