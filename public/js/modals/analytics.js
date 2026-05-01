@@ -38,8 +38,8 @@ function renderStatsList(stats, container) {
   }).join("");
 
   container.innerHTML = `
-    <div style="border-radius:10px;overflow:hidden;border:1px solid #d9d2c3">
-      <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-family:inherit">
+    <div style="border-radius:10px;border:1px solid #d9d2c3;background:#fff;overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table style="width:100%;min-width:640px;border-collapse:collapse;table-layout:fixed;font-family:inherit">
         <colgroup>
           <col style="width:38%">
           <col style="width:15.5%"><col style="width:15.5%"><col style="width:15.5%">

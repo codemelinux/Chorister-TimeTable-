@@ -414,6 +414,11 @@ body {
 
 .analytics-body { padding: 0 1.4rem 1.5rem; }
 
+.analytics-shell {
+  width: min(100%, 1480px);
+  margin: 0 auto;
+}
+
 .analytics-layout {
   display: grid;
   gap: 1.35rem;
@@ -427,6 +432,7 @@ body {
 
 .analytics-two-col {
   align-items: flex-start;
+  --bs-gutter-y: 1rem;
 }
 
 .analytics-col {
@@ -450,6 +456,17 @@ body {
   flex-direction: column;
 }
 
+@media (max-width: 1199px) {
+  .analytics-range-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analytics-range-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
 @media (max-width: 767px) {
   .analytics-col--right {
     border-left: none;
@@ -458,12 +475,20 @@ body {
   }
 
   .analytics-body {
-    padding: 0 0.85rem 1rem;
+    padding: 0 0.75rem 1rem;
+  }
+
+  .analytics-shell {
+    width: 100%;
   }
 
   .analytics-pane {
     padding: 0.95rem;
     border-radius: 16px;
+  }
+
+  .analytics-col {
+    padding: 0.2rem 0 0.9rem;
   }
 
   .analytics-month-bar {
@@ -473,6 +498,7 @@ body {
 
   .analytics-month-bar__controls {
     width: 100%;
+    justify-content: space-between;
   }
 
   .analytics-month-bar__picker {
