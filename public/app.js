@@ -64,13 +64,15 @@ function setActivePage(page, options = {}) {
   const { syncAnalyticsMonth = true } = options;
   activePage = page;
 
-  const homeView = document.getElementById("homePageView");
   const analyticsView = document.getElementById("analyticsPageView");
   const homeBtn = document.getElementById("btnNavHome");
   const analyticsBtn = document.getElementById("btnNavAnalytics");
+  const sections = document.querySelectorAll("[data-page]");
 
-  if (homeView) homeView.classList.toggle("d-none", page !== "home");
-  if (analyticsView) analyticsView.classList.toggle("d-none", page !== "analytics");
+  sections.forEach((section) => {
+    section.classList.toggle("d-none", section.dataset.page !== page);
+  });
+  if (analyticsView && page === "analytics") analyticsView.classList.remove("d-none");
 
   if (homeBtn) {
     const isActive = page === "home";
@@ -484,6 +486,15 @@ function escHtml(str) {
 document.addEventListener("DOMContentLoaded", async () => {
   selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
 
+  document.getElementById("monthPicker").addEventListener("change", onMonthChange);
+  document.getElementById("btnPrevMonth").addEventListener("click", () => shiftMonth(-1));
+  document.getElementById("btnNextMonth").addEventListener("click", () => shiftMonth(1));
+  document.getElementById("btnPrint").addEventListener("click", () => window.print());
+  document.getElementById("btnThemeToggle").addEventListener("click", toggleTheme);
+  document.getElementById("btnNavHome").addEventListener("click", () => setActivePage("home", { syncAnalyticsMonth: false }));
+  document.getElementById("btnNavAnalytics").addEventListener("click", () => setActivePage("analytics"));
+  setTheme(localStorage.getItem("chorister-theme") || "light");
+
   await Promise.all([loadSession(), loadChoristerSession()]);
   await loadChoristers();
   await loadSongs();
@@ -497,15 +508,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Home-page and shell controls stay registered centrally because they are not
   // owned by any single modal workflow.
-  document.getElementById("monthPicker").addEventListener("change", onMonthChange);
-  document.getElementById("btnPrevMonth").addEventListener("click", () => shiftMonth(-1));
-  document.getElementById("btnNextMonth").addEventListener("click", () => shiftMonth(1));
-  document.getElementById("btnPrint").addEventListener("click", () => window.print());
-  document.getElementById("btnThemeToggle").addEventListener("click", toggleTheme);
-  document.getElementById("btnNavHome").addEventListener("click", () => setActivePage("home", { syncAnalyticsMonth: false }));
-  document.getElementById("btnNavAnalytics").addEventListener("click", () => setActivePage("analytics"));
-  setTheme(localStorage.getItem("chorister-theme") || "light");
-
   // Register modal modules after the DOM and shared state are ready.
   registerAuthModalEventHandlers();
   registerChoristersModalEventHandlers();
