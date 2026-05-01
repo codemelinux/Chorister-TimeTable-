@@ -58,6 +58,40 @@ let prayerEntries = [];
 let prayerSelectedMonth = new Date();
 let analyticsMonth = new Date();
 let ratings = {};
+let activePage = "home";
+
+function setActivePage(page, options = {}) {
+  const { syncAnalyticsMonth = true } = options;
+  activePage = page;
+
+  const homeView = document.getElementById("homePageView");
+  const analyticsView = document.getElementById("analyticsPageView");
+  const homeBtn = document.getElementById("btnNavHome");
+  const analyticsBtn = document.getElementById("btnNavAnalytics");
+
+  if (homeView) homeView.classList.toggle("d-none", page !== "home");
+  if (analyticsView) analyticsView.classList.toggle("d-none", page !== "analytics");
+
+  if (homeBtn) {
+    const isActive = page === "home";
+    homeBtn.classList.toggle("active", isActive);
+    homeBtn.setAttribute("aria-pressed", String(isActive));
+  }
+
+  if (analyticsBtn) {
+    const isActive = page === "analytics";
+    analyticsBtn.classList.toggle("active", isActive);
+    analyticsBtn.setAttribute("aria-pressed", String(isActive));
+  }
+
+  if (page === "analytics") {
+    if (syncAnalyticsMonth) analyticsMonth = new Date(selectedMonth);
+    loadAnalyticsMonthStats();
+    renderCategoryAnalytics();
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 // ---------------------------------------------------------------------------
 // API helper
@@ -468,6 +502,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btnNextMonth").addEventListener("click", () => shiftMonth(1));
   document.getElementById("btnPrint").addEventListener("click", () => window.print());
   document.getElementById("btnThemeToggle").addEventListener("click", toggleTheme);
+  document.getElementById("btnNavHome").addEventListener("click", () => setActivePage("home", { syncAnalyticsMonth: false }));
+  document.getElementById("btnNavAnalytics").addEventListener("click", () => setActivePage("analytics"));
   setTheme(localStorage.getItem("chorister-theme") || "light");
 
   // Register modal modules after the DOM and shared state are ready.

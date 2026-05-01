@@ -1,9 +1,9 @@
 // Developed by Benedict U.
-// Modal feature module: analytics modal, monthly chorister stats, and range charts.
+// Analytics page feature module: monthly chorister stats and range charts.
 // Depends on shared helpers/state from public/app.js.
 
 // ---------------------------------------------------------------------------
-// Analytics modal
+// Analytics page
 // ---------------------------------------------------------------------------
 
 function renderStatsList(stats, container) {
@@ -289,10 +289,10 @@ async function loadRangeStats() {
 
 function registerAnalyticsModalEventHandlers() {
   document.getElementById("btnAnalytics").addEventListener("click", () => {
-    analyticsMonth = new Date(selectedMonth);
-    loadAnalyticsMonthStats();
-    renderCategoryAnalytics();
-    new bootstrap.Modal(document.getElementById("analyticsModal")).show();
+    setActivePage("analytics");
+  });
+  document.getElementById("btnAnalyticsBackHome").addEventListener("click", () => {
+    setActivePage("home", { syncAnalyticsMonth: false });
   });
   document.getElementById("btnAnalyticsPrevMonth").addEventListener("click", () => {
     analyticsMonth = new Date(analyticsMonth.getFullYear(), analyticsMonth.getMonth() - 1, 1);

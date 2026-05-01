@@ -33,6 +33,14 @@
     </div>
 
     <div class="d-flex align-items-center gap-2">
+      <div class="nav-page-switch" role="tablist" aria-label="Page navigation">
+        <button class="nav-page-btn active" id="btnNavHome" type="button" aria-pressed="true">
+          <i class="bi bi-house-door me-1"></i>Home
+        </button>
+        <button class="nav-page-btn" id="btnNavAnalytics" type="button" aria-pressed="false">
+          <i class="bi bi-bar-chart-line me-1"></i>Analytics
+        </button>
+      </div>
       <!-- Status pills — always visible -->
       <span class="auth-pill" id="authStatus">Public view</span>
       <button id="btnThemeToggle" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark / light mode">
@@ -125,6 +133,7 @@
   <main class="site-main">
     <div class="site-body">
       <div class="content-stack">
+        <div class="page-view" id="homePageView">
         <section class="page-shell">
       <div class="toolbar">
         <div>
@@ -219,6 +228,108 @@
         </div>
       </div>
     </section>
+        </div>
+
+        <section class="page-shell page-view d-none analytics-page-view" id="analyticsPageView">
+          <div class="toolbar analytics-page-toolbar">
+            <div>
+              <span class="section-kicker">Analytics Dashboard</span>
+              <h2 class="page-title mb-1" id="analyticsPageTitle">
+                <i class="bi bi-bar-chart-line me-2"></i>Monthly Analytics
+              </h2>
+              <p class="chart-subtitle mb-0">Chorister activity, date-range summaries, and song usage trends</p>
+            </div>
+            <div class="toolbar-controls analytics-toolbar-controls">
+              <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsPrevMonth" aria-label="Previous month">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <input type="month" class="form-control analytics-month-bar__picker" id="analyticsMonthPicker" />
+              <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsNextMonth" aria-label="Next month">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="btn btn-outline-secondary analytics-close-btn" id="btnAnalyticsBackHome" type="button">
+                <i class="bi bi-arrow-left me-1"></i>Home
+              </button>
+            </div>
+          </div>
+          <div class="analytics-page-body">
+            <div class="analytics-layout">
+              <div class="row g-0 analytics-two-col">
+                <div class="col-xl-5 col-lg-6 analytics-col">
+                  <div class="analytics-pane">
+                    <div class="analytics-month-bar">
+                      <div class="analytics-month-bar__copy">
+                        <h6 class="analytics-section-title analytics-section-title--plain">
+                          <i class="bi bi-person-check me-1"></i>This month &mdash; Choristers
+                        </h6>
+                        <p class="analytics-month-bar__subtitle">Hymn &middot; Praise Worship &middot; Thanksgiving assignments</p>
+                      </div>
+                    </div>
+                    <div id="analyticsMonthOutput"><p class="text-muted small">Loading&hellip;</p></div>
+                  </div>
+                </div>
+                <div class="col-xl-7 col-lg-6 analytics-col analytics-col--right">
+                  <div class="analytics-pane analytics-pane--range">
+                    <h6 class="analytics-section-title">Date range</h6>
+                    <div class="analytics-range-controls">
+                      <div class="analytics-range-field">
+                        <label class="form-label mb-1 small">From</label>
+                        <input type="month" class="form-control form-control-sm" id="analyticsFrom" />
+                      </div>
+                      <div class="analytics-range-field">
+                        <label class="form-label mb-1 small">To</label>
+                        <input type="month" class="form-control form-control-sm" id="analyticsTo" />
+                      </div>
+                      <button class="btn btn-sm btn-outline-secondary analytics-range-btn" id="btnShowStats">
+                        <i class="bi bi-search me-1"></i>Show Stats
+                      </button>
+                    </div>
+                    <div id="analyticsRangeOutput"></div>
+                  </div>
+                </div>
+              </div>
+
+              <section class="analytics-song-section">
+                <div class="analytics-song-section__header">
+                  <div>
+                    <span class="section-kicker">Song Library</span>
+                    <h6 class="page-title analytics-song-title mb-1">Most Sung Songs</h6>
+                  </div>
+                  <p class="analytics-pane__subtitle mb-0">A quick category breakdown of the songs used most often across the selected period.</p>
+                </div>
+                <div class="category-analytics-grid" id="categoryAnalyticsGrid">
+                  <div class="category-card category-card--hymn">
+                    <div class="category-card__header">
+                      <span class="category-card__emoji">🎵</span>
+                      <span class="category-card__label">Hymn</span>
+                    </div>
+                    <div class="category-card__body" id="analyticsHymn">
+                      <p class="text-muted small mb-0">No data yet.</p>
+                    </div>
+                  </div>
+                  <div class="category-card category-card--praise">
+                    <div class="category-card__header">
+                      <span class="category-card__emoji">🙌</span>
+                      <span class="category-card__label">Praise Worship</span>
+                    </div>
+                    <div class="category-card__body" id="analyticsPraise">
+                      <p class="text-muted small mb-0">No data yet.</p>
+                    </div>
+                  </div>
+                  <div class="category-card category-card--thanksgiving">
+                    <div class="category-card__header">
+                      <span class="category-card__emoji">🙏</span>
+                      <span class="category-card__label">Thanksgiving</span>
+                    </div>
+                    <div class="category-card__body" id="analyticsThanksgiving">
+                      <p class="text-muted small mb-0">No data yet.</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </main>
@@ -647,122 +758,6 @@
           <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
         </div>
 
-      </div>
-    </div>
-  </div>
-
-  <!-- Analytics Page Modal -->
-  <div class="modal fade" id="analyticsModal" tabindex="-1" aria-labelledby="analyticsModalLabel">
-    <div class="modal-dialog modal-fullscreen">
-      <div class="modal-content analytics-modal-content">
-        <div class="modal-body analytics-body" style="overflow-y:auto">
-          <div class="site-body analytics-shell">
-          <div class="content-stack">
-          <section class="page-shell analytics-page-shell">
-          <div class="toolbar analytics-page-toolbar">
-            <div>
-              <span class="section-kicker">Analytics Dashboard</span>
-              <h2 class="page-title mb-1" id="analyticsModalLabel">
-                <i class="bi bi-bar-chart-line me-2"></i>Monthly Analytics
-              </h2>
-              <p class="chart-subtitle mb-0">Chorister activity, date-range summaries, and song usage trends</p>
-            </div>
-            <div class="toolbar-controls analytics-toolbar-controls">
-              <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsPrevMonth" aria-label="Previous month">
-                <i class="bi bi-chevron-left"></i>
-              </button>
-              <input type="month" class="form-control analytics-month-bar__picker" id="analyticsMonthPicker" />
-              <button class="btn btn-outline-secondary analytics-month-bar__nav-btn" id="btnAnalyticsNextMonth" aria-label="Next month">
-                <i class="bi bi-chevron-right"></i>
-              </button>
-              <button class="btn btn-outline-secondary analytics-close-btn" data-bs-dismiss="modal">
-                <i class="bi bi-x-lg me-1"></i>Close
-              </button>
-            </div>
-          </div>
-          <div class="analytics-page-body">
-          <div class="analytics-layout">
-          <!-- Chorister stats + date range -->
-          <div class="row g-0 analytics-two-col">
-            <div class="col-xl-5 col-lg-6 analytics-col">
-              <div class="analytics-pane">
-                <div class="analytics-month-bar">
-                <div class="analytics-month-bar__copy">
-                  <h6 class="analytics-section-title analytics-section-title--plain">
-                    <i class="bi bi-person-check me-1"></i>This month &mdash; Choristers
-                  </h6>
-                  <p class="analytics-month-bar__subtitle">Hymn &middot; Praise Worship &middot; Thanksgiving assignments</p>
-                </div>
-              </div>
-              <div id="analyticsMonthOutput"><p class="text-muted small">Loading…</p></div>
-              </div>
-            </div>
-            <div class="col-xl-7 col-lg-6 analytics-col analytics-col--right">
-              <div class="analytics-pane analytics-pane--range">
-                <h6 class="analytics-section-title">Date range</h6>
-                <div class="analytics-range-controls">
-                  <div class="analytics-range-field">
-                    <label class="form-label mb-1 small">From</label>
-                    <input type="month" class="form-control form-control-sm" id="analyticsFrom" />
-                  </div>
-                  <div class="analytics-range-field">
-                    <label class="form-label mb-1 small">To</label>
-                    <input type="month" class="form-control form-control-sm" id="analyticsTo" />
-                  </div>
-                  <button class="btn btn-sm btn-outline-secondary analytics-range-btn" id="btnShowStats">
-                    <i class="bi bi-search me-1"></i>Show Stats
-                  </button>
-                </div>
-                <div id="analyticsRangeOutput"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Most Sung Songs -->
-          <section class="analytics-song-section">
-            <div class="analytics-song-section__header">
-              <div>
-                <span class="section-kicker">Song Library</span>
-                <h6 class="page-title analytics-song-title mb-1">Most Sung Songs</h6>
-              </div>
-              <p class="analytics-pane__subtitle mb-0">A quick category breakdown of the songs used most often across the selected period.</p>
-            </div>
-            <div class="category-analytics-grid" id="categoryAnalyticsGrid">
-            <div class="category-card category-card--hymn">
-              <div class="category-card__header">
-                <span class="category-card__emoji">🎵</span>
-                <span class="category-card__label">Hymn</span>
-              </div>
-              <div class="category-card__body" id="analyticsHymn">
-                <p class="text-muted small mb-0">No data yet.</p>
-              </div>
-            </div>
-            <div class="category-card category-card--praise">
-              <div class="category-card__header">
-                <span class="category-card__emoji">🙌</span>
-                <span class="category-card__label">Praise Worship</span>
-              </div>
-              <div class="category-card__body" id="analyticsPraise">
-                <p class="text-muted small mb-0">No data yet.</p>
-              </div>
-            </div>
-            <div class="category-card category-card--thanksgiving">
-              <div class="category-card__header">
-                <span class="category-card__emoji">🙏</span>
-                <span class="category-card__label">Thanksgiving</span>
-              </div>
-              <div class="category-card__body" id="analyticsThanksgiving">
-                <p class="text-muted small mb-0">No data yet.</p>
-              </div>
-            </div>
-            </div>
-          </section>
-          </div>
-          </div>
-          </section>
-          </div>
-          </div>
-        </div><!-- /.modal-body -->
       </div>
     </div>
   </div>
