@@ -491,8 +491,23 @@ body {
 }
 
 .analytics-toolbar-controls {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.analytics-toolbar-controls .analytics-month-bar__picker {
+  flex: 0 1 220px;
+  min-width: 180px;
+  width: 220px;
+}
+
+.analytics-toolbar-controls .analytics-close-btn {
+  flex: 0 0 auto;
+  min-height: 40px;
+  white-space: nowrap;
 }
 
 .analytics-page-body {
@@ -583,6 +598,7 @@ body {
 
   .analytics-toolbar-controls {
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 
   .nav-page-switch {
