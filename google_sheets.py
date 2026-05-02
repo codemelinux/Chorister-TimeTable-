@@ -68,7 +68,7 @@ def _ensure_sheet(service, spreadsheet_id: str, title: str):
 
 
 def sync_monthly_dues(year: int, dues_rows: list[dict]) -> None:
-    """Write dues rows to a worksheet named 'Monthly Dues YYYY'."""
+    """Write dues rows plus a summary footer to a worksheet named 'Monthly Dues YYYY'."""
     spreadsheet_id = os.getenv("MONTHLY_DUES_SPREADSHEET_ID")
     service = _get_service()
     if not spreadsheet_id or service is None:
@@ -77,14 +77,30 @@ def sync_monthly_dues(year: int, dues_rows: list[dict]) -> None:
     sheet_title = f"Monthly Dues {year}"
     _ensure_sheet(service, spreadsheet_id, sheet_title)
 
+    # Build per-chorister rows
     header = ["Chorister"] + [calendar.month_name[m] for m in range(1, 13)] + ["Total Owed"]
     values = [header]
+    total_owed = total_paid = total_waived = 0
     for row in dues_rows:
         month_cells = []
         for due in row["months"]:
-            status = str(due["status"]).title()
-            month_cells.append(f"RM{due['amount']} - {status}")
+            status = due["status"]
+            amount = int(due["amount"])
+            month_cells.append(f"RM{amount} - {status.title()}")
+            if status == "pending":
+                total_owed += amount
+            elif status == "paid":
+                total_paid += amount
+            elif status == "waived":
+                total_waived += amount
         values.append([row["chorister_name"], *month_cells, f"RM{row['total_owed']}"])
+
+    # Blank separator then summary footer
+    values.append([""] * 14)
+    values.append(["SUMMARY", f"Year: {year}", "", "", "", "", "", "", "", "", "", "", "", ""])
+    values.append(["Total Owed", f"RM{total_owed}", "", "", "", "", "", "", "", "", "", "", "", ""])
+    values.append(["Total Paid", f"RM{total_paid}", "", "", "", "", "", "", "", "", "", "", "", ""])
+    values.append(["Total Waived", f"RM{total_waived}", "", "", "", "", "", "", "", "", "", "", "", ""])
 
     escaped_title = sheet_title.replace("'", "''")
     service.spreadsheets().values().clear(
