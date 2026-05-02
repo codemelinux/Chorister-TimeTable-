@@ -59,7 +59,7 @@ let prayerSelectedMonth = new Date();
 let analyticsMonth = new Date();
 let ratings = {};
 let activePage = "home";
-let monthlyDuesYear = new Date().getFullYear();
+let monthlyDuesYear = Math.max(new Date().getFullYear(), 2026);
 let monthlyDuesRows = [];
 
 function openAnalyticsPage(options = {}) {

@@ -65,20 +65,25 @@ function renderMonthlyDuesTable() {
   }
 
   const totalOwed = monthlyDuesRows.reduce((sum, row) => sum + Number(row.total_owed || 0), 0);
-  const pendingCells = monthlyDuesRows.reduce(
-    (sum, row) => sum + row.months.filter((due) => due.status === "pending").length,
-    0
+  const totalPaid = monthlyDuesRows.reduce(
+    (sum, row) => sum + row.months.filter((d) => d.status === "paid").reduce((s, d) => s + Number(d.amount), 0), 0
+  );
+  const totalWaived = monthlyDuesRows.reduce(
+    (sum, row) => sum + row.months.filter((d) => d.status === "waived").reduce((s, d) => s + Number(d.amount), 0), 0
   );
   if (summary) {
     summary.innerHTML = `
       <div class="monthly-dues-stat">
         <span>Year</span><strong>${monthlyDuesYear}</strong>
       </div>
-      <div class="monthly-dues-stat">
-        <span>Pending Months</span><strong>${pendingCells}</strong>
-      </div>
-      <div class="monthly-dues-stat">
+      <div class="monthly-dues-stat monthly-dues-stat--owed">
         <span>Total Owed</span><strong>RM${totalOwed}</strong>
+      </div>
+      <div class="monthly-dues-stat monthly-dues-stat--paid">
+        <span>Total Paid</span><strong>RM${totalPaid}</strong>
+      </div>
+      <div class="monthly-dues-stat monthly-dues-stat--waived">
+        <span>Total Waived</span><strong>RM${totalWaived}</strong>
       </div>`;
   }
 

@@ -1351,6 +1351,24 @@ body {
   font-size: 1.1rem;
 }
 
+.monthly-dues-stat--owed {
+  background: #fff5f5;
+  border-color: #f5c2c2;
+}
+.monthly-dues-stat--owed strong { color: #c0392b; }
+
+.monthly-dues-stat--paid {
+  background: #f0faf3;
+  border-color: #b2dfc0;
+}
+.monthly-dues-stat--paid strong { color: #1e7e34; }
+
+.monthly-dues-stat--waived {
+  background: #f5f7fa;
+  border-color: #c8d0db;
+}
+.monthly-dues-stat--waived strong { color: #4a5568; }
+
 .monthly-dues-table-wrap {
   border: 1px solid var(--panel-border);
   border-radius: 12px;
@@ -1893,6 +1911,21 @@ body.dark-theme .monthly-dues-stat {
   background: #111912;
   border-color: #334437;
 }
+body.dark-theme .monthly-dues-stat--owed {
+  background: #2a1010;
+  border-color: #6b2020;
+}
+body.dark-theme .monthly-dues-stat--owed strong { color: #f08080; }
+body.dark-theme .monthly-dues-stat--paid {
+  background: #0e2218;
+  border-color: #2a6040;
+}
+body.dark-theme .monthly-dues-stat--paid strong { color: #6fdc8c; }
+body.dark-theme .monthly-dues-stat--waived {
+  background: #1a1f27;
+  border-color: #3a4455;
+}
+body.dark-theme .monthly-dues-stat--waived strong { color: #9aa5b4; }
 body.dark-theme .monthly-dues-table-wrap {
   background: #0f1510;
   border-color: #243d2c;
