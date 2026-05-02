@@ -176,14 +176,16 @@ async function syncMonthlyDuesToSheets() {
 }
 
 function shiftMonthlyDuesYear(delta) {
-  monthlyDuesYear += delta;
+  const next = monthlyDuesYear + delta;
+  if (next < 2026) return;
+  monthlyDuesYear = next;
   loadMonthlyDues();
 }
 
 function onMonthlyDuesYearChange() {
   const value = parseInt(document.getElementById("monthlyDuesYearPicker").value, 10);
-  if (!value || value < 2000 || value > 2100) {
-    showToast("Enter a year between 2000 and 2100.", "warning");
+  if (!value || value < 2026 || value > 2100) {
+    showToast("Enter a year between 2026 and 2100.", "warning");
     setMonthlyDuesYearPickerValue();
     return;
   }
