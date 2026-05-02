@@ -166,26 +166,29 @@ function renderAllSongsCatalogue({
     title.textContent = s.title;
     card.appendChild(title);
 
+    const meta = document.createElement("div");
+    meta.className = "all-song-card__meta";
+
     const catBadge = document.createElement("span");
-    catBadge.className = `badge song-cat-badge flex-shrink-0 ${categoryClasses[s.category] || ""}`;
+    catBadge.className = `badge song-cat-badge ${categoryClasses[s.category] || ""}`;
     catBadge.textContent = categoryLabels[s.category] || s.category;
-    card.appendChild(catBadge);
+    meta.appendChild(catBadge);
 
     if (s.submitted_by_chorister_name) {
       const chorBadge = document.createElement("span");
-      chorBadge.className = "badge bg-light text-secondary border flex-shrink-0";
+      chorBadge.className = "badge bg-light text-secondary border";
       chorBadge.style.fontSize = "0.7rem";
       chorBadge.innerHTML = `<i class="bi bi-person-fill me-1"></i>${escHtml(s.submitted_by_chorister_name)}`;
-      card.appendChild(chorBadge);
+      meta.appendChild(chorBadge);
     }
 
     if (s.lyrics) {
       const showBtn = document.createElement("button");
-      showBtn.className = "btn btn-sm btn-outline-secondary flex-shrink-0";
+      showBtn.className = "btn btn-sm btn-outline-secondary";
       showBtn.style.fontSize = "0.72rem";
       showBtn.innerHTML = '<i class="bi bi-eye me-1"></i>Show lyrics';
       showBtn.addEventListener("click", () => openLyricsViewer(s));
-      card.appendChild(showBtn);
+      meta.appendChild(showBtn);
     }
 
     if (s.google_doc_url) {
@@ -193,12 +196,13 @@ function renderAllSongsCatalogue({
       docLink.href = s.google_doc_url;
       docLink.target = "_blank";
       docLink.rel = "noopener noreferrer";
-      docLink.className = "btn btn-sm btn-outline-success flex-shrink-0";
+      docLink.className = "btn btn-sm btn-outline-success";
       docLink.style.fontSize = "0.72rem";
       docLink.innerHTML = '<i class="bi bi-file-earmark-text me-1"></i>Google Docs';
-      card.appendChild(docLink);
+      meta.appendChild(docLink);
     }
 
+    card.appendChild(meta);
     container.appendChild(card);
   });
 }

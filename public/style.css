@@ -1164,11 +1164,15 @@ body {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  flex-wrap: wrap;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 @media (max-width: 600px) {
   .all-songs-grid { grid-template-columns: 1fr; }
+  .all-song-card__meta {
+    flex: 0 0 100%;
+  }
 }
 
 .lyrics-viewer-body {
