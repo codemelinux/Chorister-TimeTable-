@@ -1318,41 +1318,35 @@ body {
   }
   .monthly-dues-controls {
     width: 100%;
-    flex-wrap: nowrap;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
   .monthly-dues-controls .btn,
   .monthly-dues-controls .form-control {
-    height: 38px;
+    height: 32px;
   }
   .monthly-dues-controls .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.35rem 0.45rem;
-    white-space: nowrap;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
   }
   .monthly-dues-controls #btnMonthlyDuesPrevYear,
   .monthly-dues-controls #btnMonthlyDuesNextYear {
-    flex: 0 0 42px;
+    flex: 0 0 34px;
+    padding: 0.2rem;
   }
   .monthly-dues-controls #monthlyDuesYearPicker {
-    flex: 0 1 78px;
+    flex: 0 0 70px;
     min-width: 0;
+    font-size: 0.82rem;
+    height: 32px;
   }
   .monthly-dues-controls #btnSyncDuesToSheets {
-    flex: 1 1 96px;
-    min-width: 86px;
-    font-size: 0.78rem;
-    line-height: 1.1;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.72rem;
   }
   .monthly-dues-controls #btnMonthlyDuesBackHome {
-    flex: 0 0 64px;
-    font-size: 0.78rem;
-  }
-  .monthly-dues-controls #btnSyncDuesToSheets .bi,
-  .monthly-dues-controls #btnMonthlyDuesBackHome .bi {
-    margin-right: 0.25rem !important;
+    flex: 0 0 auto;
+    font-size: 0.72rem;
   }
   .roster-table-wrap,
   .home-library-body {
@@ -1388,10 +1382,25 @@ body {
   padding: 1.25rem 1.4rem 1.5rem;
 }
 
+.monthly-dues-controls {
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+.monthly-dues-controls .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.82rem;
+  height: 34px;
+}
 .monthly-dues-controls input[type="number"] {
-  max-width: 110px;
+  max-width: 90px;
+  height: 34px;
   text-align: center;
   font-weight: 800;
+  font-size: 0.9rem;
 }
 
 .monthly-dues-summary {
