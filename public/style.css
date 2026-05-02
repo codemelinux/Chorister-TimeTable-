@@ -601,15 +601,37 @@ body {
     flex-wrap: wrap;
   }
 
-  .nav-page-switch {
-    order: 3;
-    width: 100%;
-    justify-content: stretch;
+  /* Navbar mobile layout */
+  .app-navbar {
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
+    align-items: center;
   }
-
+  .app-navbar > div:first-child {
+    flex: 1 1 auto;
+  }
+  .navbar-right {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+    justify-content: flex-end;
+  }
+  .nav-page-switch {
+    order: 10;
+    flex: 1 1 100%;
+    justify-content: stretch;
+    width: 100%;
+  }
   .nav-page-btn {
     flex: 1;
     text-align: center;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  .auth-pill {
+    order: 0;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
   }
 
   .analytics-month-bar__picker {
@@ -1251,7 +1273,6 @@ body {
     flex: 1 1 calc(50% - 0.25rem);
     justify-content: center;
   }
-  .auth-pill { order: -1; }
   .roster-table td:nth-child(2),
   .roster-table td:nth-child(3),
   .roster-table td:nth-child(4) { text-align: left; }
