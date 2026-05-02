@@ -24,6 +24,7 @@ _docs_service = None
 SCOPES = [
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/documents",
+    "https://www.googleapis.com/auth/spreadsheets",
 ]
 
 # Human-readable folder names for each song category.

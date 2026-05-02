@@ -20,6 +20,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 import database as db
 import google_drive
+import google_sheets
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -235,6 +236,18 @@ class PrayerEntryCreate(BaseModel):
 class PrayerEntryUpdate(BaseModel):
     date: Optional[str] = None
     chorister_id: Optional[int] = None
+
+
+class MonthlyDueUpdate(BaseModel):
+    status: str = Field(..., max_length=16)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v):
+        v = (v or "").strip().lower()
+        if v not in db.MONTHLY_DUE_STATUSES:
+            raise ValueError("status must be pending, paid, or waived")
+        return v
 
 
 def parse_service_date(value: str) -> date:
@@ -792,6 +805,50 @@ def api_delete_rating(rating_id: int, session: Session = Depends(get_session)):
 # ---------------------------------------------------------------------------
 # Static files — MUST be mounted last so API routes take priority
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Monthly Dues (admin write, admin/chorister read)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/monthly-dues", dependencies=[Depends(require_chorister_or_admin)])
+def api_list_monthly_dues(
+    request: Request,
+    year: int = Query(..., ge=2000, le=2100),
+    session: Session = Depends(get_session),
+):
+    chorister_id = None if request.session.get("is_admin") else request.session.get("chorister_id")
+    return {
+        "year": year,
+        "is_admin": bool(request.session.get("is_admin")),
+        "rows": db.list_monthly_dues(session, year, chorister_id=chorister_id),
+    }
+
+
+@app.put("/api/monthly-dues/{chorister_id}/{year}/{month}", dependencies=[Depends(require_admin)])
+def api_update_monthly_due(
+    chorister_id: int,
+    year: int,
+    month: int,
+    body: MonthlyDueUpdate,
+    session: Session = Depends(get_session),
+):
+    if not (2000 <= year <= 2100):
+        raise HTTPException(400, "year must be between 2000 and 2100")
+    if not (1 <= month <= 12):
+        raise HTTPException(400, "month must be 1-12")
+
+    due = db.upsert_monthly_due(session, chorister_id, year, month, body.status)
+    if not due:
+        raise HTTPException(404, "Chorister not found")
+
+    warning = None
+    try:
+        google_sheets.sync_monthly_dues(year, db.list_monthly_dues(session, year))
+    except Exception as exc:
+        warning = f"Saved, but Google Sheets sync failed: {exc}"
+
+    return {"due": due, "warning": warning}
+
 
 if PUBLIC_DIR.exists():
     app.mount("/", StaticFiles(directory=str(PUBLIC_DIR), html=True), name="public")

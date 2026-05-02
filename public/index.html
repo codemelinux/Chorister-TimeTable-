@@ -82,6 +82,11 @@
               <i class="bi bi-bar-chart-line me-2"></i>Analytics
             </button>
           </li>
+          <li>
+            <button class="dropdown-item d-none" id="btnMonthlyDues">
+              <i class="bi bi-cash-coin me-2"></i>Monthly Dues
+            </button>
+          </li>
 
           <li><hr class="dropdown-divider" /></li>
 
@@ -325,6 +330,41 @@
                   </div>
                 </div>
               </section>
+            </div>
+          </div>
+        </section>
+
+        <section class="page-shell d-none monthly-dues-page-view" id="monthlyDuesPageView" data-page="monthly-dues">
+          <div class="toolbar monthly-dues-toolbar">
+            <div>
+              <span class="section-kicker">Monthly Dues</span>
+              <h2 class="page-title mb-1">
+                <i class="bi bi-cash-coin me-2"></i>Monthly Dues
+              </h2>
+              <p class="chart-subtitle mb-0">RM10 monthly levy status for choristers</p>
+            </div>
+            <div class="toolbar-controls monthly-dues-controls">
+              <button class="btn btn-outline-secondary" id="btnMonthlyDuesPrevYear" aria-label="Previous year">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <input type="number" class="form-control" id="monthlyDuesYearPicker" min="2000" max="2100" />
+              <button class="btn btn-outline-secondary" id="btnMonthlyDuesNextYear" aria-label="Next year">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+              <button class="btn btn-outline-secondary" id="btnMonthlyDuesBackHome" type="button">
+                <i class="bi bi-arrow-left me-1"></i>Home
+              </button>
+            </div>
+          </div>
+          <div class="monthly-dues-body">
+            <div class="monthly-dues-summary" id="monthlyDuesSummary"></div>
+            <div class="table-responsive monthly-dues-table-wrap">
+              <table class="table align-middle monthly-dues-table">
+                <thead id="monthlyDuesTableHead"></thead>
+                <tbody id="monthlyDuesTableBody">
+                  <tr><td class="text-muted py-4">Loading...</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -832,5 +872,6 @@
   <script src="/js/modals/roster.js"></script>
   <script src="/js/modals/analytics.js"></script>
   <script src="/js/modals/prayer.js"></script>
+  <script src="/js/modals/monthly-dues.js"></script>
 </body>
 </html>

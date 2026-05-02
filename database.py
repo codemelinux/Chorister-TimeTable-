@@ -169,6 +169,24 @@ class PerformanceRating(Base):
     __table_args__ = (UniqueConstraint("roster_entry_id", "role", name="uq_rating_entry_role"),)
 
 
+class MonthlyDue(Base):
+    """Monthly RM10 dues status for one chorister."""
+    __tablename__ = "monthly_dues"
+
+    id = Column(Integer, primary_key=True)
+    chorister_id = Column(Integer, ForeignKey("choristers.id", ondelete="CASCADE"), nullable=False)
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    amount = Column(Integer, nullable=False, default=10, server_default="10")
+    status = Column(String(16), nullable=False, default="pending", server_default="pending")
+    marked_by_admin_at = Column(DateTime(timezone=True), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    chorister = relationship("Chorister", foreign_keys=[chorister_id])
+
+    __table_args__ = (UniqueConstraint("chorister_id", "year", "month", name="uq_monthly_due"),)
+
+
 # ---------------------------------------------------------------------------
 # DB initialisation + session factory
 # ---------------------------------------------------------------------------
@@ -605,6 +623,87 @@ def delete_rating(session: Session, rating_id: int) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Monthly dues CRUD
+# ---------------------------------------------------------------------------
+
+MONTHLY_DUE_AMOUNT = 10
+MONTHLY_DUE_STATUSES = {"pending", "paid", "waived"}
+
+
+def _default_due(chorister_id: int, year: int, month: int) -> dict:
+    return {
+        "id": None,
+        "chorister_id": chorister_id,
+        "year": year,
+        "month": month,
+        "amount": MONTHLY_DUE_AMOUNT,
+        "status": "pending",
+        "marked_by_admin_at": None,
+        "updated_at": None,
+    }
+
+
+def list_monthly_dues(session: Session, year: int, chorister_id: int | None = None) -> list[dict]:
+    chorister_query = select(Chorister).order_by(Chorister.name)
+    if chorister_id is not None:
+        chorister_query = chorister_query.where(Chorister.id == chorister_id)
+    chorister_rows = session.execute(chorister_query).scalars().all()
+
+    due_rows = session.execute(select(MonthlyDue).where(MonthlyDue.year == year)).scalars().all()
+    dues_by_key = {(row.chorister_id, row.month): serialize_monthly_due(row) for row in due_rows}
+
+    result = []
+    for chorister in chorister_rows:
+        months = []
+        total_owed = 0
+        for month in range(1, 13):
+            due = dues_by_key.get((chorister.id, month), _default_due(chorister.id, year, month))
+            months.append(due)
+            if due["status"] == "pending":
+                total_owed += due["amount"]
+        result.append({
+            "chorister_id": chorister.id,
+            "chorister_name": chorister.name,
+            "year": year,
+            "months": months,
+            "total_owed": total_owed,
+        })
+    return result
+
+
+def upsert_monthly_due(session: Session, chorister_id: int, year: int, month: int, status: str) -> dict | None:
+    if status not in MONTHLY_DUE_STATUSES:
+        raise ValueError("Invalid dues status")
+    if not session.get(Chorister, chorister_id):
+        return None
+
+    row = session.execute(
+        select(MonthlyDue).where(
+            MonthlyDue.chorister_id == chorister_id,
+            MonthlyDue.year == year,
+            MonthlyDue.month == month,
+        )
+    ).scalar_one_or_none()
+
+    if row:
+        row.status = status
+        row.amount = MONTHLY_DUE_AMOUNT
+    else:
+        row = MonthlyDue(
+            chorister_id=chorister_id,
+            year=year,
+            month=month,
+            amount=MONTHLY_DUE_AMOUNT,
+            status=status,
+        )
+        session.add(row)
+    row.marked_by_admin_at = func.now()
+    session.commit()
+    session.refresh(row)
+    return serialize_monthly_due(row)
+
+
+# ---------------------------------------------------------------------------
 # Analytics
 # ---------------------------------------------------------------------------
 
@@ -715,6 +814,19 @@ def serialize_chorister(row: Chorister) -> dict:
         "name": row.name,
         "has_portal_access": bool(row.has_portal_access),
         "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def serialize_monthly_due(row: MonthlyDue) -> dict:
+    return {
+        "id": row.id,
+        "chorister_id": row.chorister_id,
+        "year": row.year,
+        "month": row.month,
+        "amount": row.amount,
+        "status": row.status,
+        "marked_by_admin_at": row.marked_by_admin_at.isoformat() if row.marked_by_admin_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
 
 

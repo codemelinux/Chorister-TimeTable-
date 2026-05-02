@@ -59,6 +59,8 @@ let prayerSelectedMonth = new Date();
 let analyticsMonth = new Date();
 let ratings = {};
 let activePage = "home";
+let monthlyDuesYear = new Date().getFullYear();
+let monthlyDuesRows = [];
 
 function openAnalyticsPage(options = {}) {
   setActivePage("analytics", options);
@@ -94,6 +96,16 @@ function setActivePage(page, options = {}) {
     if (syncAnalyticsMonth) analyticsMonth = new Date(selectedMonth);
     loadAnalyticsMonthStats();
     renderCategoryAnalytics();
+  }
+
+  if (page === "monthly-dues") {
+    if (!(isAdmin || isChorister)) {
+      showToast("Login required to view Monthly Dues.", "warning");
+      activePage = "home";
+      setActivePage("home", { syncAnalyticsMonth: false });
+      return;
+    }
+    if (typeof loadMonthlyDues === "function") loadMonthlyDues();
   }
 
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -223,6 +235,7 @@ function setAdminMode(authenticated) {
   const prayerAddForm = document.getElementById("prayerAddForm");
   if (prayerAddForm && !authenticated) prayerAddForm.classList.add("d-none");
 
+  updateMonthlyDuesVisibility();
   updateSongFormVisibility();
 }
 
@@ -248,7 +261,16 @@ function setChoristerMode(authenticated, info) {
     if (myRatingsBtn) myRatingsBtn.classList.add("d-none");
   }
 
+  updateMonthlyDuesVisibility();
   updateSongFormVisibility();
+}
+
+function updateMonthlyDuesVisibility() {
+  const btnMonthlyDues = document.getElementById("btnMonthlyDues");
+  if (btnMonthlyDues) btnMonthlyDues.classList.toggle("d-none", !(isAdmin || isChorister));
+  if (!(isAdmin || isChorister) && activePage === "monthly-dues") {
+    setActivePage("home", { syncAnalyticsMonth: false });
+  }
 }
 
 function updateSongFormVisibility() {
@@ -524,4 +546,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   registerRatingsModalEventHandlers();
   registerRosterModalEventHandlers();
   registerPrayerModalEventHandlers();
+  registerMonthlyDuesEventHandlers();
 });
