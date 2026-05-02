@@ -157,6 +157,19 @@ async function updateMonthlyDueStatus(select) {
   }
 }
 
+async function syncMonthlyDuesToSheets() {
+  const btn = document.getElementById("btnSyncDuesToSheets");
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Exporting…'; }
+  try {
+    const result = await api("POST", `/api/monthly-dues/sync?year=${monthlyDuesYear}`);
+    showToast(`Exported ${result.synced} chorister(s) for ${result.year} to Google Sheets.`, "success");
+  } catch (error) {
+    handleMutationError(error);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-file-earmark-spreadsheet me-1"></i>Export to Sheets'; }
+  }
+}
+
 function shiftMonthlyDuesYear(delta) {
   monthlyDuesYear += delta;
   loadMonthlyDues();
@@ -179,4 +192,5 @@ function registerMonthlyDuesEventHandlers() {
   document.getElementById("btnMonthlyDuesNextYear").addEventListener("click", () => shiftMonthlyDuesYear(1));
   document.getElementById("monthlyDuesYearPicker").addEventListener("change", onMonthlyDuesYearChange);
   document.getElementById("btnMonthlyDuesBackHome").addEventListener("click", () => setActivePage("home", { syncAnalyticsMonth: false }));
+  document.getElementById("btnSyncDuesToSheets").addEventListener("click", syncMonthlyDuesToSheets);
 }

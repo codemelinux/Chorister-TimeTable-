@@ -235,6 +235,9 @@ function setAdminMode(authenticated) {
   const prayerAddForm = document.getElementById("prayerAddForm");
   if (prayerAddForm && !authenticated) prayerAddForm.classList.add("d-none");
 
+  const btnSyncDuesToSheets = document.getElementById("btnSyncDuesToSheets");
+  if (btnSyncDuesToSheets) btnSyncDuesToSheets.classList.toggle("d-none", !authenticated);
+
   updateMonthlyDuesVisibility();
   updateSongFormVisibility();
 }

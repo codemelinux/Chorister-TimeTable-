@@ -850,5 +850,17 @@ def api_update_monthly_due(
     return {"due": due, "warning": warning}
 
 
+@app.post("/api/monthly-dues/sync", dependencies=[Depends(require_admin)])
+def api_sync_monthly_dues_to_sheets(
+    year: int = Query(..., ge=2000, le=2100),
+    session: Session = Depends(get_session),
+):
+    if not google_sheets.is_configured():
+        raise HTTPException(503, "Google Sheets is not configured")
+    rows = db.list_monthly_dues(session, year)
+    google_sheets.sync_monthly_dues(year, rows)
+    return {"synced": len(rows), "year": year}
+
+
 if PUBLIC_DIR.exists():
     app.mount("/", StaticFiles(directory=str(PUBLIC_DIR), html=True), name="public")
