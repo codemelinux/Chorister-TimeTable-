@@ -6,6 +6,10 @@ const MONTHLY_DUES_MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
+const MONTHLY_DUES_MONTHS_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 
 function openMonthlyDuesPage() {
   monthlyDuesYear = selectedMonth.getFullYear();
@@ -42,7 +46,7 @@ async function loadMonthlyDues() {
 function renderMonthlyDuesHeader() {
   const thead = document.getElementById("monthlyDuesTableHead");
   if (!thead) return;
-  const monthHeaders = MONTHLY_DUES_MONTHS
+  const monthHeaders = MONTHLY_DUES_MONTHS_SHORT
     .map((month) => `<th><span class="monthly-dues-month-label">${month}</span></th>`)
     .join("");
   thead.innerHTML = `

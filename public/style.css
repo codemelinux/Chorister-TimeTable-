@@ -1376,7 +1376,8 @@ body {
 }
 
 .monthly-dues-table {
-  min-width: 1280px;
+  width: 100%;
+  table-layout: fixed;
   margin-bottom: 0;
   border-collapse: separate;
   border-spacing: 0;
@@ -1386,7 +1387,7 @@ body {
 .monthly-dues-table th,
 .monthly-dues-table td {
   border-color: var(--row-divider);
-  padding: 0.75rem 0.65rem;
+  padding: 0.35rem 0.25rem;
   vertical-align: middle;
   text-align: center;
 }
@@ -1397,9 +1398,9 @@ body {
   z-index: 2;
   background: var(--bg);
   color: var(--text-soft);
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .monthly-dues-name-head,
@@ -1407,9 +1408,10 @@ body {
   position: sticky;
   left: 0;
   z-index: 3;
-  min-width: 180px;
+  width: 110px;
   text-align: left !important;
   background: var(--card-bg) !important;
+  font-size: 0.8rem;
 }
 
 .monthly-dues-name-head {
@@ -1421,32 +1423,31 @@ body {
 }
 
 .monthly-dues-cell {
-  min-width: 90px;
+  width: 6%;
 }
 
 .monthly-dues-amount {
-  display: block;
-  color: var(--title-color);
-  font-weight: 800;
-  font-size: 0.85rem;
+  display: none;
 }
 
 .monthly-dues-status {
   display: inline-block;
-  margin-top: 0.25rem;
-  padding: 0.22rem 0.48rem;
+  margin-top: 0;
+  padding: 0.15rem 0.3rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 800;
 }
 
 .monthly-dues-status-select {
-  width: 94px;
-  margin: 0.3rem auto 0;
-  font-size: 0.75rem;
+  width: 100%;
+  max-width: 78px;
+  margin: 0 auto;
+  font-size: 0.65rem;
   font-weight: 800;
   text-align: center;
   border-radius: 999px;
+  padding: 0.15rem 0.1rem;
 }
 
 .monthly-dues-status--pending {
@@ -1469,7 +1470,8 @@ body {
 
 .monthly-dues-total-cell,
 .monthly-dues-total-head {
-  min-width: 105px;
+  width: 70px;
+  font-size: 0.78rem;
   font-weight: 900;
   color: var(--title-color) !important;
 }
