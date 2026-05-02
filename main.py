@@ -856,9 +856,12 @@ def api_sync_monthly_dues_to_sheets(
     session: Session = Depends(get_session),
 ):
     if not google_sheets.is_configured():
-        raise HTTPException(503, "Google Sheets is not configured")
+        raise HTTPException(503, "Google Sheets is not configured — check MONTHLY_DUES_SPREADSHEET_ID and Google credentials in environment variables")
     rows = db.list_monthly_dues(session, year)
-    google_sheets.sync_monthly_dues(year, rows)
+    try:
+        google_sheets.sync_monthly_dues(year, rows)
+    except Exception as exc:
+        raise HTTPException(500, f"Google Sheets sync failed: {exc}")
     return {"synced": len(rows), "year": year}
 
 
