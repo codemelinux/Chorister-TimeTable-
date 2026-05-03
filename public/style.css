@@ -648,6 +648,11 @@ body {
     align-items: center;
     text-align: center;
   }
+  .analytics-song-section__header > div,
+  .analytics-song-section__header .analytics-pane__subtitle {
+    text-align: center;
+    width: 100%;
+  }
 }
 
 .analytics-section-title {
