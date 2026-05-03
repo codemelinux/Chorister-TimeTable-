@@ -643,16 +643,6 @@ body {
     width: 100%;
   }
 
-  .analytics-song-section__header {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  .analytics-song-section__header > div,
-  .analytics-song-section__header .analytics-pane__subtitle {
-    text-align: center;
-    width: 100%;
-  }
 }
 
 .analytics-section-title {
@@ -741,10 +731,16 @@ body {
 
 .analytics-song-section__header {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
   margin-bottom: 0.9rem;
+}
+.analytics-song-section__header > div,
+.analytics-song-section__header .analytics-pane__subtitle {
+  text-align: center;
+  width: 100%;
 }
 
 .stat-row {
