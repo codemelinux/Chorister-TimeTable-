@@ -244,12 +244,8 @@ async function updateMonthlyDueStatus(select) {
   select.disabled = true;
 
   try {
-    const result = await api("PUT", `/api/monthly-dues/${choristerId}/${year}/${month}`, { status });
-    if (result.warning) {
-      showToast(result.warning, "warning");
-    } else {
-      showToast("Monthly dues updated.", "success");
-    }
+    await api("PUT", `/api/monthly-dues/${choristerId}/${year}/${month}`, { status });
+    showToast("Monthly dues updated.", "success");
     await loadMonthlyDues();
   } catch (error) {
     handleMutationError(error);

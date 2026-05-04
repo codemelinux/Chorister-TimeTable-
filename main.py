@@ -10,7 +10,7 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, or_
@@ -839,6 +839,7 @@ def api_update_monthly_due(
     year: int,
     month: int,
     body: MonthlyDueUpdate,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
 ):
     if not (2000 <= year <= 2100):
@@ -850,13 +851,19 @@ def api_update_monthly_due(
     if not due:
         raise HTTPException(404, "Chorister not found")
 
-    warning = None
-    try:
-        google_sheets.sync_monthly_dues(year, db.list_monthly_dues(session, year))
-    except Exception as exc:
-        warning = f"Saved, but Google Sheets sync failed: {exc}"
+    # Run Sheets sync in background so a slow/failing sync never blocks the response.
+    if google_sheets.is_configured():
+        rows = db.list_monthly_dues(session, year)
+        background_tasks.add_task(_sync_dues_to_sheets, year, rows)
 
-    return {"due": due, "warning": warning}
+    return {"due": due, "warning": None}
+
+
+def _sync_dues_to_sheets(year: int, rows: list) -> None:
+    try:
+        google_sheets.sync_monthly_dues(year, rows)
+    except Exception as exc:
+        print(f"[monthly-dues] Background Sheets sync failed: {exc}")
 
 
 @app.post("/api/monthly-dues/sync", dependencies=[Depends(require_admin)])
