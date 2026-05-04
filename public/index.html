@@ -351,6 +351,7 @@
               <button class="btn btn-sm btn-outline-secondary" id="btnMonthlyDuesNextYear" aria-label="Next year">
                 <i class="bi bi-chevron-right"></i>
               </button>
+              <select class="form-select form-select-sm" id="monthlyDuesMonthPicker" aria-label="Focus month"></select>
               <button class="btn btn-sm btn-outline-success d-none text-nowrap" id="btnSyncDuesToSheets" type="button">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export to Sheets
               </button>
@@ -361,7 +362,18 @@
           </div>
           <div class="monthly-dues-body">
             <div class="monthly-dues-summary" id="monthlyDuesSummary"></div>
-            <div class="table-responsive monthly-dues-table-wrap">
+            <div class="monthly-dues-view-tabs" role="tablist" aria-label="Monthly dues views">
+              <button class="monthly-dues-view-tab active" id="btnMonthlyDuesDashboardView" type="button" data-dues-view="dashboard">
+                <i class="bi bi-list-check"></i> Collect
+              </button>
+              <button class="monthly-dues-view-tab" id="btnMonthlyDuesGridView" type="button" data-dues-view="grid">
+                <i class="bi bi-grid-3x3-gap"></i> Year grid
+              </button>
+            </div>
+            <div class="monthly-dues-dashboard" id="monthlyDuesDashboard">
+              <div class="text-muted py-4">Loading...</div>
+            </div>
+            <div class="table-responsive monthly-dues-table-wrap d-none" id="monthlyDuesGridWrap">
               <table class="table align-middle monthly-dues-table">
                 <thead id="monthlyDuesTableHead"></thead>
                 <tbody id="monthlyDuesTableBody">
