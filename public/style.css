@@ -1456,7 +1456,7 @@ body {
 .monthly-dues-table th,
 .monthly-dues-table td {
   border-color: var(--row-divider);
-  padding: 0.35rem 0.25rem;
+  padding: 0.25rem 0.15rem;
   vertical-align: middle;
   text-align: center;
 }
@@ -1503,9 +1503,9 @@ body {
 .monthly-dues-status {
   display: inline-block;
   margin-top: 0;
-  padding: 0.2rem 0.45rem;
+  padding: 0.12rem 0.3rem;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 800;
   border: 1px solid transparent;
   letter-spacing: 0.01em;
@@ -1546,6 +1546,37 @@ body {
   font-size: 0.78rem;
   font-weight: 900;
   color: var(--title-color) !important;
+}
+
+.monthly-dues-owed-pill {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.monthly-dues-owed-pill--owed {
+  background: #fff5f5;
+  color: #c0392b;
+  border-color: #f5c2c2;
+}
+.monthly-dues-owed-pill--clear {
+  background: #f0faf3;
+  color: #1e7e34;
+  border-color: #b2dfc0;
+}
+
+body.dark-theme .monthly-dues-owed-pill--owed {
+  background: #2a1010;
+  color: #f08080;
+  border-color: #6b2020;
+}
+body.dark-theme .monthly-dues-owed-pill--clear {
+  background: #0e2218;
+  color: #6fdc8c;
+  border-color: #2a6040;
 }
 
 .monthly-dues-table tbody .monthly-dues-main-row:hover td,

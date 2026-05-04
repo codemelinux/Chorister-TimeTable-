@@ -106,7 +106,9 @@ function renderMonthlyDuesTable() {
           <span class="member-name">${escHtml(row.chorister_name)}</span>
         </th>
         ${cells}
-        <td class="monthly-dues-total-cell">RM${row.total_owed}</td>
+        <td class="monthly-dues-total-cell">
+          <span class="monthly-dues-owed-pill ${Number(row.total_owed) > 0 ? 'monthly-dues-owed-pill--owed' : 'monthly-dues-owed-pill--clear'}">RM${row.total_owed}</span>
+        </td>
       </tr>
       <tr class="monthly-dues-progress-row">
         <td colspan="14" class="monthly-dues-progress-cell">
