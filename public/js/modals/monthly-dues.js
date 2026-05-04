@@ -126,6 +126,79 @@ function renderMonthlyDuesTable() {
       select.addEventListener("change", () => updateMonthlyDueStatus(select));
     });
   }
+
+  renderMonthlyDuesCards();
+}
+
+function renderMonthlyDuesCards() {
+  const container = document.getElementById("monthlyDuesCards");
+  if (!container) return;
+
+  if (!monthlyDuesRows.length) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = monthlyDuesRows.map((row) => {
+    const paidCount   = row.months.filter((m) => m.status === "paid").length;
+    const waivedCount = row.months.filter((m) => m.status === "waived").length;
+    const paidPct     = (paidCount / 12) * 100;
+    const waivedPct   = (waivedCount / 12) * 100;
+    const progressLabel = waivedCount > 0
+      ? `${paidCount}/12 paid · ${waivedCount} waived`
+      : `${paidCount}/12 paid`;
+
+    const monthCells = row.months.map((due) => {
+      const statusClass = `monthly-dues-status--${due.status}`;
+      const monthName   = MONTHLY_DUES_MONTHS_SHORT[due.month - 1];
+      const statusLabel = formatDueStatus(due.status);
+
+      if (isAdmin) {
+        return `
+          <div class="mdc-month-cell ${statusClass}">
+            <span class="mdc-month-name">${monthName}</span>
+            <span class="mdc-status-label">${statusLabel}</span>
+            <select class="mdc-month-select monthly-dues-card-select"
+              aria-label="${escHtml(row.chorister_name)} ${MONTHLY_DUES_MONTHS[due.month - 1]} dues status"
+              data-chorister-id="${row.chorister_id}"
+              data-year="${due.year}"
+              data-month="${due.month}">
+              <option value="pending"${due.status === "pending" ? " selected" : ""}>Pending</option>
+              <option value="paid"${due.status === "paid" ? " selected" : ""}>Paid</option>
+              <option value="waived"${due.status === "waived" ? " selected" : ""}>Waived</option>
+            </select>
+          </div>`;
+      }
+
+      return `
+        <div class="mdc-month-cell ${statusClass}">
+          <span class="mdc-month-name">${monthName}</span>
+          <span class="mdc-status-label">${statusLabel}</span>
+        </div>`;
+    }).join("");
+
+    return `
+      <div class="monthly-dues-card">
+        <div class="mdc-header">
+          <span class="mdc-name">${escHtml(row.chorister_name)}</span>
+          <span class="mdc-owed">RM${row.total_owed} owed</span>
+        </div>
+        <div class="mdc-progress">
+          <div class="monthly-dues-progress-bar">
+            <div class="mpb-paid" style="width:${paidPct}%"></div>
+            <div class="mpb-waived" style="width:${waivedPct}%"></div>
+          </div>
+          <span class="monthly-dues-progress-label">${progressLabel}</span>
+        </div>
+        <div class="mdc-month-grid">${monthCells}</div>
+      </div>`;
+  }).join("");
+
+  if (isAdmin) {
+    container.querySelectorAll(".monthly-dues-card-select").forEach((select) => {
+      select.addEventListener("change", () => updateMonthlyDueStatus(select));
+    });
+  }
 }
 
 function renderMonthlyDuesCell(row, due) {

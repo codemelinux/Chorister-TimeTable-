@@ -28,6 +28,7 @@ def _build_credentials():
         token_uri="https://oauth2.googleapis.com/token",
         client_id=client_id,
         client_secret=client_secret,
+        scopes=SCOPES,
     )
 
 

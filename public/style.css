@@ -1596,6 +1596,119 @@ body {
   font-weight: 700;
 }
 
+/* ---- Mobile card view ---- */
+
+.monthly-dues-cards {
+  display: none;
+}
+
+.monthly-dues-card {
+  background: var(--card-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.mdc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.mdc-name {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--title-color);
+}
+
+.mdc-owed {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #c0392b;
+  background: #fff5f5;
+  border: 1px solid #f5c2c2;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  white-space: nowrap;
+}
+
+.mdc-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.mdc-month-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.3rem;
+}
+
+.mdc-month-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  position: relative;
+  cursor: default;
+}
+
+.mdc-month-cell.monthly-dues-status--pending {
+  background: #fff4d4;
+  border-color: #e4c36f;
+}
+.mdc-month-cell.monthly-dues-status--paid {
+  background: #e3f5e7;
+  border-color: #95caa0;
+}
+.mdc-month-cell.monthly-dues-status--waived {
+  background: #edf0f5;
+  border-color: #c9d0da;
+}
+
+.mdc-month-name {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.mdc-status-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.mdc-month-cell.monthly-dues-status--pending .mdc-month-name,
+.mdc-month-cell.monthly-dues-status--pending .mdc-status-label { color: #8a5a00; }
+.mdc-month-cell.monthly-dues-status--paid .mdc-month-name,
+.mdc-month-cell.monthly-dues-status--paid .mdc-status-label { color: #256f36; }
+.mdc-month-cell.monthly-dues-status--waived .mdc-month-name,
+.mdc-month-cell.monthly-dues-status--waived .mdc-status-label { color: #526070; }
+
+/* Transparent native select overlaid on admin cells for touch-friendly picking */
+.mdc-month-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px; /* prevent iOS auto-zoom */
+}
+
+@media (max-width: 767px) {
+  .monthly-dues-table-wrap { display: none !important; }
+  .monthly-dues-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
 .prayer-roster-table thead th {
   background: var(--prayer-header-bg) !important;
   border: none;
@@ -2091,6 +2204,33 @@ body.dark-theme .monthly-dues-table tbody .monthly-dues-main-row:hover th {
 body.dark-theme .monthly-dues-progress-bar { background: #2d260f; }
 body.dark-theme .mpb-paid   { background: #2f9e58; }
 body.dark-theme .mpb-waived { background: #4a5568; }
+body.dark-theme .monthly-dues-card {
+  background: #0f1510;
+  border-color: #243d2c;
+}
+body.dark-theme .mdc-owed {
+  background: #2a1010;
+  border-color: #6b2020;
+  color: #f08080;
+}
+body.dark-theme .mdc-month-cell.monthly-dues-status--pending {
+  background: #2d260f;
+  border-color: #6f5b1d;
+}
+body.dark-theme .mdc-month-cell.monthly-dues-status--paid {
+  background: #102c19;
+  border-color: #2f6c3e;
+}
+body.dark-theme .mdc-month-cell.monthly-dues-status--waived {
+  background: #1d242c;
+  border-color: #3e4b5a;
+}
+body.dark-theme .mdc-month-cell.monthly-dues-status--pending .mdc-month-name,
+body.dark-theme .mdc-month-cell.monthly-dues-status--pending .mdc-status-label { color: #f0da97; }
+body.dark-theme .mdc-month-cell.monthly-dues-status--paid .mdc-month-name,
+body.dark-theme .mdc-month-cell.monthly-dues-status--paid .mdc-status-label { color: #a8e5b5; }
+body.dark-theme .mdc-month-cell.monthly-dues-status--waived .mdc-month-name,
+body.dark-theme .mdc-month-cell.monthly-dues-status--waived .mdc-status-label { color: #c9d0da; }
 body.dark-theme .stats-breakdown-table tbody tr:hover { background: #1e3328; }
 body.dark-theme .stats-row--top td { background: #1a3a25 !important; }
 body.dark-theme .stats-row--top:hover td { background: #1e3a28 !important; }
