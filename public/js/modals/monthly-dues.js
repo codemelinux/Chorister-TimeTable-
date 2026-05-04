@@ -93,13 +93,31 @@ function renderMonthlyDuesTable() {
 
   tbody.innerHTML = monthlyDuesRows.map((row) => {
     const cells = row.months.map((due) => renderMonthlyDuesCell(row, due)).join("");
+    const paidCount   = row.months.filter((m) => m.status === "paid").length;
+    const waivedCount = row.months.filter((m) => m.status === "waived").length;
+    const paidPct     = (paidCount / 12) * 100;
+    const waivedPct   = (waivedCount / 12) * 100;
+    const progressLabel = waivedCount > 0
+      ? `${paidCount}/12 paid · ${waivedCount} waived`
+      : `${paidCount}/12 paid`;
     return `
-      <tr>
+      <tr class="monthly-dues-main-row">
         <th scope="row" class="monthly-dues-name-cell">
           <span class="member-name">${escHtml(row.chorister_name)}</span>
         </th>
         ${cells}
         <td class="monthly-dues-total-cell">RM${row.total_owed}</td>
+      </tr>
+      <tr class="monthly-dues-progress-row">
+        <td colspan="14" class="monthly-dues-progress-cell">
+          <div class="monthly-dues-progress-wrap">
+            <div class="monthly-dues-progress-bar">
+              <div class="mpb-paid" style="width:${paidPct}%"></div>
+              <div class="mpb-waived" style="width:${waivedPct}%"></div>
+            </div>
+            <span class="monthly-dues-progress-label">${progressLabel}</span>
+          </div>
+        </td>
       </tr>`;
   }).join("");
 
