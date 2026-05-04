@@ -1330,40 +1330,9 @@ body {
     flex: 0 0 68px !important;
     min-width: 0;
   }
-  .monthly-dues-controls #monthlyDuesMonthPicker {
-    flex: 1 1 120px !important;
-    min-width: 112px;
-  }
   .monthly-dues-controls #btnSyncDuesToSheets,
   .monthly-dues-controls #btnMonthlyDuesBackHome {
     flex: 0 0 auto !important;
-  }
-  .monthly-dues-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .monthly-dues-view-tabs {
-    display: flex;
-    width: 100%;
-  }
-  .monthly-dues-view-tab {
-    flex: 1 1 0;
-    justify-content: center;
-  }
-  .monthly-dues-owing-row {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-  .monthly-dues-row-total {
-    text-align: left;
-  }
-  .monthly-dues-row-actions,
-  .monthly-dues-row-actions .btn {
-    width: 100%;
-  }
-  .monthly-dues-paid-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.1rem;
   }
   .roster-table-wrap,
   .home-library-body {
@@ -1415,24 +1384,19 @@ body {
   text-align: center;
   font-weight: 800;
 }
-.monthly-dues-controls select {
-  width: 118px;
-  min-width: 100px;
-  font-weight: 800;
-}
 
 .monthly-dues-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.65rem;
-  margin-bottom: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .monthly-dues-stat {
-  min-width: 0;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid #d9e6d5;
-  border-radius: 8px;
+  min-width: 140px;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--col-badge-border);
+  border-radius: 10px;
   background: #f7faf4;
 }
 
@@ -1449,7 +1413,7 @@ body {
   display: block;
   margin-top: 0.2rem;
   color: var(--title-color);
-  font-size: 1.25rem;
+  font-size: 1.1rem;
 }
 
 .monthly-dues-stat--owed {
@@ -1470,206 +1434,9 @@ body {
 }
 .monthly-dues-stat--waived strong { color: #4a5568; }
 
-.monthly-dues-view-tabs {
-  display: inline-flex;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  margin-bottom: 0.85rem;
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  background: #f4f7f2;
-}
-
-.monthly-dues-view-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 0;
-  border-radius: 6px;
-  padding: 0.4rem 0.7rem;
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.monthly-dues-view-tab.active {
-  background: var(--card-bg);
-  color: var(--title-color);
-  box-shadow: 0 1px 3px rgba(20, 45, 28, 0.12);
-}
-
-.monthly-dues-dashboard {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-}
-
-.monthly-dues-collection-panel,
-.monthly-dues-paid-panel {
-  border: 1px solid var(--panel-border);
-  border-radius: 10px;
-  background: var(--card-bg);
-  overflow: hidden;
-}
-
-.monthly-dues-panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--row-divider);
-  background: #fbfcf8;
-}
-
-.monthly-dues-panel-heading h3 {
-  margin: 0;
-  color: var(--title-color);
-  font-size: 1rem;
-  font-weight: 900;
-}
-
-.monthly-dues-panel-kicker {
-  display: block;
-  margin-bottom: 0.1rem;
-  color: var(--text-soft);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.monthly-dues-panel-count {
-  flex: 0 0 auto;
-  color: var(--text-soft);
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.monthly-dues-owing-list,
-.monthly-dues-paid-list {
-  display: grid;
-}
-
-.monthly-dues-owing-row {
-  display: grid;
-  grid-template-columns: minmax(135px, 1fr) minmax(260px, 3fr) 76px minmax(150px, auto);
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--row-divider);
-}
-
-.monthly-dues-owing-row:last-child,
-.monthly-dues-paid-row:last-child {
-  border-bottom: 0;
-}
-
-.monthly-dues-member-block strong,
-.monthly-dues-paid-row strong {
-  display: block;
-  color: var(--title-color);
-  font-size: 0.9rem;
-  font-weight: 900;
-}
-
-.monthly-dues-member-block span,
-.monthly-dues-paid-row span {
-  display: block;
-  color: var(--text-soft);
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.monthly-dues-month-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.monthly-dues-chip-group {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #e1bd5d;
-  border-radius: 999px;
-  overflow: hidden;
-  background: #fff4d4;
-}
-
-.monthly-dues-month-chip,
-.monthly-dues-waive-action {
-  min-height: 26px;
-  border: 0;
-  font-size: 0.72rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.monthly-dues-month-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem 0.55rem;
-  border-radius: 999px;
-}
-
-.monthly-dues-month-chip--pending {
-  background: #fff4d4;
-  color: #7a5200;
-}
-
-.monthly-dues-waive-action {
-  width: 26px;
-  border-left: 1px solid #e1bd5d;
-  background: #fff9e8;
-  color: #8a5a00;
-}
-
-.monthly-dues-row-total {
-  color: #b02a24;
-  font-size: 0.95rem;
-  font-weight: 950;
-  text-align: right;
-}
-
-.monthly-dues-row-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.monthly-dues-row-actions .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 142px;
-  justify-content: center;
-  font-weight: 800;
-}
-
-.monthly-dues-paid-panel {
-  opacity: 0.88;
-}
-
-.monthly-dues-paid-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.55rem 1rem;
-  border-bottom: 1px solid var(--row-divider);
-}
-
-.monthly-dues-empty {
-  padding: 1.6rem 1rem;
-  color: var(--text-soft);
-  font-weight: 700;
-  text-align: center;
-}
-
 .monthly-dues-table-wrap {
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--card-bg);
 }
 
@@ -1724,6 +1491,10 @@ body {
   width: 6%;
 }
 
+.monthly-dues-amount {
+  display: none;
+}
+
 .monthly-dues-status {
   display: inline-block;
   margin-top: 0;
@@ -1734,32 +1505,14 @@ body {
 }
 
 .monthly-dues-status-select {
-  width: 28px;
-  height: 28px;
+  width: 100%;
+  max-width: 78px;
   margin: 0 auto;
-  font-size: 0.82rem;
-  font-weight: 950;
+  font-size: 0.65rem;
+  font-weight: 800;
   text-align: center;
-  border-radius: 50%;
-  padding: 0;
-}
-
-.monthly-dues-grid-button,
-.monthly-dues-grid-dot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid transparent;
-  border-radius: 50%;
-  font-size: 0.82rem;
-  font-weight: 950;
-  line-height: 1;
-}
-
-.monthly-dues-grid-button {
-  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.15rem 0.1rem;
 }
 
 .monthly-dues-status--pending {
@@ -1786,36 +1539,6 @@ body {
   font-size: 0.78rem;
   font-weight: 900;
   color: var(--title-color) !important;
-}
-
-@media (max-width: 768px) {
-  .monthly-dues-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .monthly-dues-view-tabs {
-    display: flex;
-    width: 100%;
-  }
-  .monthly-dues-view-tab {
-    flex: 1 1 0;
-    justify-content: center;
-  }
-  .monthly-dues-owing-row {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-  .monthly-dues-row-total {
-    text-align: left;
-  }
-  .monthly-dues-row-actions,
-  .monthly-dues-row-actions .btn {
-    width: 100%;
-  }
-  .monthly-dues-paid-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.1rem;
-  }
 }
 
 .prayer-roster-table thead th {
@@ -2271,59 +1994,6 @@ body.dark-theme .monthly-dues-stat--waived {
   border-color: #3a4455;
 }
 body.dark-theme .monthly-dues-stat--waived strong { color: #9aa5b4; }
-body.dark-theme .monthly-dues-view-tabs {
-  background: #101911;
-  border-color: #243d2c;
-}
-body.dark-theme .monthly-dues-view-tab {
-  color: #9aa99e;
-}
-body.dark-theme .monthly-dues-view-tab.active {
-  background: #17261b;
-  color: #eef5ea;
-  box-shadow: none;
-}
-body.dark-theme .monthly-dues-collection-panel,
-body.dark-theme .monthly-dues-paid-panel {
-  background: #0f1510;
-  border-color: #243d2c;
-}
-body.dark-theme .monthly-dues-panel-heading {
-  background: #14251a;
-  border-color: #243d2c;
-}
-body.dark-theme .monthly-dues-panel-heading h3,
-body.dark-theme .monthly-dues-member-block strong,
-body.dark-theme .monthly-dues-paid-row strong {
-  color: #eef5ea;
-}
-body.dark-theme .monthly-dues-member-block span,
-body.dark-theme .monthly-dues-paid-row span,
-body.dark-theme .monthly-dues-panel-kicker,
-body.dark-theme .monthly-dues-panel-count,
-body.dark-theme .monthly-dues-empty {
-  color: #9aa99e;
-}
-body.dark-theme .monthly-dues-owing-row,
-body.dark-theme .monthly-dues-paid-row {
-  border-color: #243d2c;
-}
-body.dark-theme .monthly-dues-chip-group {
-  background: #2d260f;
-  border-color: #6f5b1d;
-}
-body.dark-theme .monthly-dues-month-chip--pending {
-  background: #2d260f;
-  color: #f0da97;
-}
-body.dark-theme .monthly-dues-waive-action {
-  background: #372f14;
-  border-color: #6f5b1d;
-  color: #f0da97;
-}
-body.dark-theme .monthly-dues-row-total {
-  color: #f08080;
-}
 body.dark-theme .monthly-dues-table-wrap {
   background: #0f1510;
   border-color: #243d2c;

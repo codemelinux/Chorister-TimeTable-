@@ -10,12 +10,9 @@ const MONTHLY_DUES_MONTHS_SHORT = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
-let monthlyDuesFocusMonth = Math.min(Math.max(new Date().getMonth() + 1, 1), 12);
-let monthlyDuesView = "dashboard";
 
 function openMonthlyDuesPage() {
   monthlyDuesYear = selectedMonth.getFullYear();
-  monthlyDuesFocusMonth = selectedMonth.getMonth() + 1;
   setActivePage("monthly-dues", { syncAnalyticsMonth: false });
 }
 
@@ -24,55 +21,26 @@ function setMonthlyDuesYearPickerValue() {
   if (picker) picker.value = monthlyDuesYear;
 }
 
-function renderMonthlyDuesMonthPicker() {
-  const picker = document.getElementById("monthlyDuesMonthPicker");
-  if (!picker) return;
-  picker.innerHTML = MONTHLY_DUES_MONTHS
-    .map((month, index) => `<option value="${index + 1}"${monthlyDuesFocusMonth === index + 1 ? " selected" : ""}>${month}</option>`)
-    .join("");
-}
-
 async function loadMonthlyDues() {
   setMonthlyDuesYearPickerValue();
-  renderMonthlyDuesMonthPicker();
-  renderMonthlyDuesViewTabs();
   renderMonthlyDuesHeader();
 
   const tbody = document.getElementById("monthlyDuesTableBody");
-  const dashboard = document.getElementById("monthlyDuesDashboard");
   if (tbody) {
     tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-5">Loading monthly dues...</td></tr>`;
-  }
-  if (dashboard) {
-    dashboard.innerHTML = `<div class="monthly-dues-empty">Loading monthly dues...</div>`;
   }
 
   try {
     const data = await api("GET", `/api/monthly-dues?year=${monthlyDuesYear}`);
     monthlyDuesRows = data.rows || [];
-    renderMonthlyDues();
+    renderMonthlyDuesTable();
   } catch (error) {
     monthlyDuesRows = [];
     if (tbody) {
       tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-5">Login required to view Monthly Dues.</td></tr>`;
     }
-    if (dashboard) {
-      dashboard.innerHTML = `<div class="monthly-dues-empty">Login required to view Monthly Dues.</div>`;
-    }
     handleMutationError(error);
   }
-}
-
-function renderMonthlyDuesViewTabs() {
-  document.querySelectorAll(".monthly-dues-view-tab").forEach((button) => {
-    const active = button.dataset.duesView === monthlyDuesView;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", active ? "true" : "false");
-  });
-  const dashboard = document.getElementById("monthlyDuesDashboard");
-  const grid = document.getElementById("monthlyDuesGridWrap");
-  if (dashboard) dashboard.classList.toggle("d-none", monthlyDuesView !== "dashboard");
-  if (grid) grid.classList.toggle("d-none", monthlyDuesView !== "grid");
 }
 
 function renderMonthlyDuesHeader() {
@@ -89,13 +57,17 @@ function renderMonthlyDuesHeader() {
     </tr>`;
 }
 
-function renderMonthlyDues() {
-  renderMonthlyDuesDashboard();
-  renderMonthlyDuesTable();
-  renderMonthlyDuesViewTabs();
-}
+function renderMonthlyDuesTable() {
+  const tbody = document.getElementById("monthlyDuesTableBody");
+  const summary = document.getElementById("monthlyDuesSummary");
+  if (!tbody) return;
 
-function getMonthlyDuesSummary() {
+  if (!monthlyDuesRows.length) {
+    tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-5">No choristers found.</td></tr>`;
+    if (summary) summary.innerHTML = "";
+    return;
+  }
+
   const totalOwed = monthlyDuesRows.reduce((sum, row) => sum + Number(row.total_owed || 0), 0);
   const totalPaid = monthlyDuesRows.reduce(
     (sum, row) => sum + row.months.filter((d) => d.status === "paid").reduce((s, d) => s + Number(d.amount), 0), 0
@@ -103,148 +75,20 @@ function getMonthlyDuesSummary() {
   const totalWaived = monthlyDuesRows.reduce(
     (sum, row) => sum + row.months.filter((d) => d.status === "waived").reduce((s, d) => s + Number(d.amount), 0), 0
   );
-  const choristersOwing = monthlyDuesRows.filter((row) => Number(row.total_owed || 0) > 0).length;
-  return { totalOwed, totalPaid, totalWaived, choristersOwing };
-}
-
-function renderMonthlyDuesDashboard() {
-  const dashboard = document.getElementById("monthlyDuesDashboard");
-  const summary = document.getElementById("monthlyDuesSummary");
-  if (!dashboard) return;
-
-  if (!monthlyDuesRows.length) {
-    dashboard.innerHTML = `<div class="monthly-dues-empty">No choristers found.</div>`;
-    if (summary) summary.innerHTML = "";
-    return;
-  }
-
-  const totals = getMonthlyDuesSummary();
   if (summary) {
     summary.innerHTML = `
+      <div class="monthly-dues-stat">
+        <span>Year</span><strong>${monthlyDuesYear}</strong>
+      </div>
       <div class="monthly-dues-stat monthly-dues-stat--owed">
-        <span>Outstanding</span><strong>RM${totals.totalOwed}</strong>
+        <span>Total Owed</span><strong>RM${totalOwed}</strong>
       </div>
       <div class="monthly-dues-stat monthly-dues-stat--paid">
-        <span>Collected</span><strong>RM${totals.totalPaid}</strong>
+        <span>Total Paid</span><strong>RM${totalPaid}</strong>
       </div>
       <div class="monthly-dues-stat monthly-dues-stat--waived">
-        <span>Waived</span><strong>RM${totals.totalWaived}</strong>
-      </div>
-      <div class="monthly-dues-stat">
-        <span>Choristers owing</span><strong>${totals.choristersOwing}</strong>
+        <span>Total Waived</span><strong>RM${totalWaived}</strong>
       </div>`;
-  }
-
-  const preparedRows = monthlyDuesRows.map((row) => {
-    const pendingMonths = row.months.filter((due) => due.status === "pending");
-    const paidMonths = row.months.filter((due) => due.status === "paid");
-    const waivedMonths = row.months.filter((due) => due.status === "waived");
-    const focusDue = row.months.find((due) => due.month === monthlyDuesFocusMonth);
-    return { ...row, pendingMonths, paidMonths, waivedMonths, focusDue };
-  });
-  const owingRows = preparedRows.filter((row) => Number(row.total_owed || 0) > 0);
-  const paidRows = preparedRows.filter((row) => Number(row.total_owed || 0) <= 0);
-
-  dashboard.innerHTML = `
-    <section class="monthly-dues-collection-panel">
-      <div class="monthly-dues-panel-heading">
-        <div>
-          <span class="monthly-dues-panel-kicker">${MONTHLY_DUES_MONTHS[monthlyDuesFocusMonth - 1]} focus</span>
-          <h3>Outstanding dues</h3>
-        </div>
-        <span class="monthly-dues-panel-count">${owingRows.length} owing</span>
-      </div>
-      <div class="monthly-dues-owing-list">
-        ${owingRows.length ? owingRows.map(renderMonthlyDuesOwingRow).join("") : `<div class="monthly-dues-empty">Everyone is paid up for ${monthlyDuesYear}.</div>`}
-      </div>
-    </section>
-    <section class="monthly-dues-paid-panel">
-      <div class="monthly-dues-panel-heading">
-        <div>
-          <span class="monthly-dues-panel-kicker">Clear accounts</span>
-          <h3>Paid up</h3>
-        </div>
-        <span class="monthly-dues-panel-count">${paidRows.length} clear</span>
-      </div>
-      <div class="monthly-dues-paid-list">
-        ${paidRows.length ? paidRows.map(renderMonthlyDuesPaidRow).join("") : `<div class="monthly-dues-empty">No paid-up choristers yet.</div>`}
-      </div>
-    </section>`;
-
-  if (isAdmin) {
-    dashboard.querySelectorAll(".monthly-dues-action").forEach((button) => {
-      button.addEventListener("click", () => updateMonthlyDueStatus(button));
-    });
-  }
-}
-
-function renderMonthlyDuesOwingRow(row) {
-  const focusDue = row.focusDue;
-  const focusPending = focusDue && focusDue.status === "pending";
-  return `
-    <article class="monthly-dues-owing-row">
-      <div class="monthly-dues-member-block">
-        <strong>${escHtml(row.chorister_name)}</strong>
-        <span>${row.pendingMonths.length} pending month${row.pendingMonths.length === 1 ? "" : "s"}</span>
-      </div>
-      <div class="monthly-dues-month-chip-row">
-        ${row.pendingMonths.map((due) => renderMonthlyDuesMonthChip(row, due)).join("")}
-      </div>
-      <div class="monthly-dues-row-total">RM${row.total_owed}</div>
-      ${isAdmin ? `
-        <div class="monthly-dues-row-actions">
-          ${focusDue ? `
-            <button
-              class="btn btn-sm ${focusPending ? "btn-success" : "btn-outline-secondary"} monthly-dues-action"
-              type="button"
-              data-chorister-id="${row.chorister_id}"
-              data-year="${focusDue.year}"
-              data-month="${focusDue.month}"
-              data-status="paid"
-              ${focusPending ? "" : "disabled"}
-            >
-              <i class="bi bi-check2"></i>${focusPending ? `Mark ${MONTHLY_DUES_MONTHS_SHORT[focusDue.month - 1]} paid` : `${MONTHLY_DUES_MONTHS_SHORT[focusDue.month - 1]} ${formatDueStatus(focusDue.status)}`}
-            </button>
-          ` : ""}
-        </div>` : ""}
-    </article>`;
-}
-
-function renderMonthlyDuesPaidRow(row) {
-  return `
-    <article class="monthly-dues-paid-row">
-      <strong>${escHtml(row.chorister_name)}</strong>
-      <span>${row.paidMonths.length} paid &middot; ${row.waivedMonths.length} waived</span>
-    </article>`;
-}
-
-function renderMonthlyDuesMonthChip(row, due) {
-  const canEdit = isAdmin;
-  const commonAttrs = `
-    data-chorister-id="${row.chorister_id}"
-    data-year="${due.year}"
-    data-month="${due.month}"`;
-  if (!canEdit) {
-    return `<span class="monthly-dues-month-chip monthly-dues-month-chip--pending">${MONTHLY_DUES_MONTHS_SHORT[due.month - 1]}</span>`;
-  }
-  return `
-    <span class="monthly-dues-chip-group">
-      <button class="monthly-dues-month-chip monthly-dues-month-chip--pending monthly-dues-action" type="button" ${commonAttrs} data-status="paid" title="Mark ${MONTHLY_DUES_MONTHS[due.month - 1]} paid">
-        ${MONTHLY_DUES_MONTHS_SHORT[due.month - 1]}
-      </button>
-      <button class="monthly-dues-waive-action monthly-dues-action" type="button" ${commonAttrs} data-status="waived" aria-label="Waive ${MONTHLY_DUES_MONTHS[due.month - 1]} for ${escHtml(row.chorister_name)}">
-        W
-      </button>
-    </span>`;
-}
-
-function renderMonthlyDuesTable() {
-  const tbody = document.getElementById("monthlyDuesTableBody");
-  if (!tbody) return;
-
-  if (!monthlyDuesRows.length) {
-    tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-5">No choristers found.</td></tr>`;
-    return;
   }
 
   tbody.innerHTML = monthlyDuesRows.map((row) => {
@@ -261,7 +105,7 @@ function renderMonthlyDuesTable() {
 
   if (isAdmin) {
     tbody.querySelectorAll(".monthly-dues-status-select").forEach((select) => {
-      select.addEventListener("click", () => updateMonthlyDueStatus(select));
+      select.addEventListener("change", () => updateMonthlyDueStatus(select));
     });
   }
 }
@@ -271,23 +115,25 @@ function renderMonthlyDuesCell(row, due) {
   if (!isAdmin) {
     return `
       <td class="monthly-dues-cell">
-        <span class="monthly-dues-grid-dot ${statusClass}" title="${MONTHLY_DUES_MONTHS[due.month - 1]} ${formatDueStatus(due.status)}">${formatDueSymbol(due.status)}</span>
+        <span class="monthly-dues-amount">RM${due.amount}</span>
+        <span class="monthly-dues-status ${statusClass}">${formatDueStatus(due.status)}</span>
       </td>`;
   }
 
   return `
     <td class="monthly-dues-cell monthly-dues-cell--editable">
-      <button
-        class="monthly-dues-grid-button monthly-dues-status-select ${statusClass}"
-        type="button"
-        title="${escHtml(row.chorister_name)} ${MONTHLY_DUES_MONTHS[due.month - 1]}: ${formatDueStatus(due.status)}"
+      <span class="monthly-dues-amount">RM${due.amount}</span>
+      <select
+        class="form-select form-select-sm monthly-dues-status-select ${statusClass}"
+        aria-label="${escHtml(row.chorister_name)} ${MONTHLY_DUES_MONTHS[due.month - 1]} dues status"
         data-chorister-id="${row.chorister_id}"
         data-year="${due.year}"
         data-month="${due.month}"
-        data-status="${getNextDueStatus(due.status)}"
       >
-        ${formatDueSymbol(due.status)}
-      </button>
+        <option value="pending"${due.status === "pending" ? " selected" : ""}>Pending</option>
+        <option value="paid"${due.status === "paid" ? " selected" : ""}>Paid</option>
+        <option value="waived"${due.status === "waived" ? " selected" : ""}>Waived</option>
+      </select>
     </td>`;
 }
 
@@ -297,24 +143,12 @@ function formatDueStatus(status) {
   return "Pending";
 }
 
-function formatDueSymbol(status) {
-  if (status === "paid") return "P";
-  if (status === "waived") return "W";
-  return "D";
-}
-
-function getNextDueStatus(status) {
-  if (status === "pending") return "paid";
-  if (status === "paid") return "waived";
-  return "pending";
-}
-
-async function updateMonthlyDueStatus(control) {
-  const choristerId = control.dataset.choristerId;
-  const year = control.dataset.year;
-  const month = control.dataset.month;
-  const status = control.dataset.status || control.value;
-  control.disabled = true;
+async function updateMonthlyDueStatus(select) {
+  const choristerId = select.dataset.choristerId;
+  const year = select.dataset.year;
+  const month = select.dataset.month;
+  const status = select.value;
+  select.disabled = true;
 
   try {
     const result = await api("PUT", `/api/monthly-dues/${choristerId}/${year}/${month}`, { status });
@@ -328,13 +162,13 @@ async function updateMonthlyDueStatus(control) {
     handleMutationError(error);
     await loadMonthlyDues();
   } finally {
-    control.disabled = false;
+    select.disabled = false;
   }
 }
 
 async function syncMonthlyDuesToSheets() {
   const btn = document.getElementById("btnSyncDuesToSheets");
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Exporting...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Exporting…'; }
   try {
     const result = await api("POST", `/api/monthly-dues/sync?year=${monthlyDuesYear}`);
     showToast(`Exported ${result.synced} chorister(s) for ${result.year} to Google Sheets.`, "success");
@@ -363,27 +197,11 @@ function onMonthlyDuesYearChange() {
   loadMonthlyDues();
 }
 
-function onMonthlyDuesMonthChange() {
-  const value = parseInt(document.getElementById("monthlyDuesMonthPicker").value, 10);
-  if (!value || value < 1 || value > 12) return;
-  monthlyDuesFocusMonth = value;
-  renderMonthlyDues();
-}
-
-function setMonthlyDuesView(view) {
-  monthlyDuesView = view === "grid" ? "grid" : "dashboard";
-  renderMonthlyDuesViewTabs();
-}
-
 function registerMonthlyDuesEventHandlers() {
   document.getElementById("btnMonthlyDues").addEventListener("click", openMonthlyDuesPage);
   document.getElementById("btnMonthlyDuesPrevYear").addEventListener("click", () => shiftMonthlyDuesYear(-1));
   document.getElementById("btnMonthlyDuesNextYear").addEventListener("click", () => shiftMonthlyDuesYear(1));
   document.getElementById("monthlyDuesYearPicker").addEventListener("change", onMonthlyDuesYearChange);
-  document.getElementById("monthlyDuesMonthPicker").addEventListener("change", onMonthlyDuesMonthChange);
   document.getElementById("btnMonthlyDuesBackHome").addEventListener("click", () => setActivePage("home", { syncAnalyticsMonth: false }));
   document.getElementById("btnSyncDuesToSheets").addEventListener("click", syncMonthlyDuesToSheets);
-  document.querySelectorAll(".monthly-dues-view-tab").forEach((button) => {
-    button.addEventListener("click", () => setMonthlyDuesView(button.dataset.duesView));
-  });
 }
