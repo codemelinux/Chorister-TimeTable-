@@ -584,12 +584,21 @@ def api_unassign_song(
 @app.delete("/api/songs/{song_id}", status_code=204)
 def api_delete_song(
     song_id: int,
+    request: Request,
     session: Session = Depends(get_session),
-    _admin: None = Depends(require_admin),
+    _auth: None = Depends(require_chorister_or_admin),
 ):
-    """Delete a song and its corresponding Google Doc (if any)."""
+    """Delete a song. Choristers may only delete their own submissions (IDOR check)."""
     song = db.get_song_obj(session, song_id)
-    if song and song.google_doc_id:
+    if not song:
+        raise HTTPException(404, "Song not found")
+
+    chorister_id = request.session.get("chorister_id")
+    if chorister_id and not request.session.get("is_admin"):
+        if song.submitted_by_chorister_id != chorister_id:
+            raise HTTPException(403, "You can only delete songs you submitted")
+
+    if song.google_doc_id:
         # Best-effort deletion — Drive errors don't block the DB delete.
         google_drive.delete_doc_from_drive(song.google_doc_id)
     db.delete_song(session, song_id)

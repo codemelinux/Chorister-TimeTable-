@@ -278,12 +278,13 @@ function renderSongsList() {
       editBtn.addEventListener("click", () => openSongEditForm(s));
       actions.appendChild(editBtn);
 
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn btn-sm btn-outline-danger";
+      delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+      delBtn.addEventListener("click", () => deleteSong(s.id, delBtn));
+      actions.appendChild(delBtn);
+
       if (isAdmin) {
-        const delBtn = document.createElement("button");
-        delBtn.className = "btn btn-sm btn-outline-danger";
-        delBtn.innerHTML = '<i class="bi bi-trash"></i>';
-        delBtn.addEventListener("click", () => deleteSong(s.id, delBtn));
-        actions.appendChild(delBtn);
 
         if (!s.google_doc_url) {
           const syncBtn = document.createElement("button");
