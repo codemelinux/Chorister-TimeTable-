@@ -66,6 +66,15 @@ function openAnalyticsPage(options = {}) {
   setActivePage("analytics", options);
 }
 
+async function openAdminFeedbackPage() {
+  openAnalyticsPage();
+  if (typeof loadAdminGeneralFeedbackSummary === "function") {
+    await loadAdminGeneralFeedbackSummary(analyticsMonth.getFullYear(), analyticsMonth.getMonth() + 1);
+  }
+  const section = document.getElementById("analyticsGeneralFeedbackSection");
+  if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function setActivePage(page, options = {}) {
   const { syncAnalyticsMonth = true } = options;
   activePage = page;
@@ -216,6 +225,7 @@ function setAdminMode(authenticated) {
   document.getElementById("authStatus").textContent = authenticated ? "Admin mode" : "Public view";
   document.getElementById("btnAddRoster").classList.toggle("d-none", !authenticated);
   document.getElementById("btnManageChoristers").classList.toggle("d-none", !authenticated);
+  document.getElementById("btnAdminFeedback")?.classList.toggle("d-none", !authenticated);
   document.getElementById("btnLogin").classList.toggle("d-none", authenticated);
   document.getElementById("btnLogout").classList.toggle("d-none", !authenticated);
   document.getElementById("actionsHeader").classList.toggle("d-none", !authenticated);
@@ -570,6 +580,7 @@ function registerAppShellEventHandlers() {
   bind("btnThemeToggle", "click", toggleTheme);
   bind("btnNavHome", "click", () => setActivePage("home", { syncAnalyticsMonth: false }));
   bind("btnNavAnalytics", "click", () => openAnalyticsPage());
+  bind("btnAdminFeedback", "click", () => openAdminFeedbackPage());
 
   callIfAvailable("registerAuthModalEventHandlers");
   callIfAvailable("registerChoristersModalEventHandlers");
