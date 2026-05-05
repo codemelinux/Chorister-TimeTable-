@@ -94,8 +94,16 @@ async function loadAnalyticsMonthStats() {
     });
     const stats = Object.values(counts).sort((a, b) => b.total - a.total);
     renderStatsList(stats, container);
+    await loadAnalyticsFeedbackSummary(year, month, entries);
+    if (typeof loadAdminGeneralFeedbackSummary === "function") {
+      await loadAdminGeneralFeedbackSummary(year, month);
+    }
   } catch (_) {
     container.innerHTML = '<p class="text-muted small">Failed to load.</p>';
+    hideAnalyticsFeedbackSummary();
+    if (typeof renderAdminGeneralFeedbackSummary === "function") {
+      renderAdminGeneralFeedbackSummary([]);
+    }
   }
 }
 
@@ -119,7 +127,124 @@ function renderMonthlyStats() {
   });
   const stats = Object.values(counts).sort((a, b) => b.total - a.total);
   renderStatsList(stats, container);
+  renderAnalyticsFeedbackSummary(Object.values(ratings || {}), rosterEntries);
+  if (typeof loadAdminGeneralFeedbackSummary === "function") {
+    loadAdminGeneralFeedbackSummary(analyticsMonth.getFullYear(), analyticsMonth.getMonth() + 1);
+  }
   renderCategoryAnalytics();
+}
+
+function hideAnalyticsFeedbackSummary() {
+  const section = document.getElementById("analyticsFeedbackSection");
+  if (section) section.classList.add("d-none");
+}
+
+function buildRosterFeedbackLookup(entries) {
+  const lookup = {};
+  (entries || []).forEach((entry) => {
+    [
+      ["hymn", entry.hymn_chorister_name],
+      ["praise_worship", entry.praise_worship_chorister_name],
+      ["thanksgiving", entry.thanksgiving_chorister_name],
+    ].forEach(([role, name]) => {
+      lookup[`${entry.id}_${role}`] = {
+        name: name || "Unassigned",
+        service_date: entry.service_date,
+      };
+    });
+  });
+  return lookup;
+}
+
+function averageRating(list, key) {
+  const values = list.map((r) => feedbackScore(r, key)).filter(Boolean);
+  if (!values.length) return 0;
+  return Number((values.reduce((sum, score) => sum + score, 0) / values.length).toFixed(1));
+}
+
+async function loadAnalyticsFeedbackSummary(year, month, entries) {
+  if (!isAdmin) {
+    hideAnalyticsFeedbackSummary();
+    return;
+  }
+
+  try {
+    const list = await api("GET", `/api/ratings?year=${year}&month=${month}`);
+    renderAnalyticsFeedbackSummary(list, entries);
+  } catch (_) {
+    hideAnalyticsFeedbackSummary();
+  }
+}
+
+function renderAnalyticsFeedbackSummary(list, entries) {
+  const section = document.getElementById("analyticsFeedbackSection");
+  const container = document.getElementById("analyticsFeedbackOutput");
+  if (!section || !container) return;
+
+  if (!isAdmin) {
+    hideAnalyticsFeedbackSummary();
+    return;
+  }
+
+  section.classList.remove("d-none");
+  const feedbackList = list || [];
+  if (!feedbackList.length) {
+    container.innerHTML = '<p class="text-muted small mb-0">No performance feedback has been recorded for this month.</p>';
+    return;
+  }
+
+  const lookup = buildRosterFeedbackLookup(entries);
+  const overallAverage = Number((feedbackList.reduce((sum, r) => sum + feedbackOverall(r), 0) / feedbackList.length).toFixed(1));
+  const categoryAverages = FEEDBACK_CATEGORIES.map((category) => ({
+    ...category,
+    average: averageRating(feedbackList, category.key),
+  }));
+  const weakest = categoryAverages.filter((category) => category.average > 0).sort((a, b) => a.average - b.average)[0];
+  const topRecords = [...feedbackList].sort((a, b) => feedbackOverall(b) - feedbackOverall(a)).slice(0, 5);
+
+  container.innerHTML = `
+    <div class="feedback-summary-grid">
+      <div class="feedback-summary-card feedback-summary-card--overall">
+        <span>Monthly average</span>
+        <strong>${overallAverage}/5</strong>
+        <small>${feedbackList.length} feedback record${feedbackList.length === 1 ? "" : "s"}</small>
+      </div>
+      <div class="feedback-summary-card feedback-summary-card--focus">
+        <span>Lowest category</span>
+        <strong>${weakest ? escHtml(weakest.label) : "-"}</strong>
+        <small>${weakest ? `${weakest.average}/5 average` : "No category data"}</small>
+      </div>
+      <div class="feedback-summary-card feedback-summary-card--category">
+        <span>Category averages</span>
+        <div class="feedback-summary-bars">
+          ${categoryAverages.map((category) => {
+            const width = Math.max(0, Math.min(100, (category.average / 5) * 100));
+            return `
+              <div class="feedback-summary-bar-row">
+                <em>${escHtml(category.label)}</em>
+                <div class="feedback-score-bar"><i style="width:${width}%"></i></div>
+                <strong>${category.average || "-"}/5</strong>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>
+      <div class="feedback-summary-card feedback-summary-card--top">
+        <span>Top feedback records</span>
+        <div class="feedback-top-list">
+          ${topRecords.map((record) => {
+            const meta = lookup[`${record.roster_entry_id}_${record.role}`] || {};
+            return `
+              <div class="feedback-top-item">
+                <div>
+                  <strong>${escHtml(meta.name || `Chorister #${record.chorister_id}`)}</strong>
+                  <small>${escHtml(FEEDBACK_ROLE_LABEL[record.role] || record.role)}${meta.service_date ? ` - ${formatDate(meta.service_date)}` : ""}</small>
+                </div>
+                <b>${feedbackOverall(record)}/5</b>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderCategoryAnalytics() {

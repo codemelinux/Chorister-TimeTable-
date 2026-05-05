@@ -9,7 +9,7 @@
 //   - public/js/modals/choristers.js
 //   - public/js/modals/songs.js
 //   - public/js/modals/lyrics.js
-//   - public/js/modals/ratings.js
+//   - public/js/modals/Feedback_Rating.js
 //   - public/js/modals/roster.js
 //   - public/js/modals/analytics.js
 //   - public/js/modals/prayer.js
@@ -250,6 +250,7 @@ function setChoristerMode(authenticated, info) {
   const loginBtn = document.getElementById("btnChoristerLogin");
   const logoutBtn = document.getElementById("btnChoristerLogout");
   const myRatingsBtn = document.getElementById("btnMyRatings");
+  const submitFeedbackBtn = document.getElementById("btnSubmitFeedback");
 
   if (authenticated && info) {
     pill.textContent = `Chorister: ${info.name}`;
@@ -257,11 +258,13 @@ function setChoristerMode(authenticated, info) {
     loginBtn.classList.add("d-none");
     logoutBtn.classList.remove("d-none");
     if (myRatingsBtn) myRatingsBtn.classList.remove("d-none");
+    if (submitFeedbackBtn) submitFeedbackBtn.classList.remove("d-none");
   } else {
     pill.classList.add("d-none");
     loginBtn.classList.remove("d-none");
     logoutBtn.classList.add("d-none");
     if (myRatingsBtn) myRatingsBtn.classList.add("d-none");
+    if (submitFeedbackBtn) submitFeedbackBtn.classList.add("d-none");
   }
 
   updateMonthlyDuesVisibility();
@@ -354,6 +357,8 @@ function renderRosterTable() {
 
   rosterEntries.forEach((entry) => {
     const tr = document.createElement("tr");
+    if (isDateInCurrentWeek(entry.service_date)) tr.classList.add("roster-current-week-row");
+
     tr.appendChild(cellWithHtml(formatDate(entry.service_date), "date-cell"));
 
     const hymnCell = cellWithHtml(formatHymn(entry));
@@ -412,6 +417,7 @@ function renderRosterTable() {
     if (entry.notes) {
       const notesTr = document.createElement("tr");
       notesTr.className = "roster-notes-row";
+      if (isDateInCurrentWeek(entry.service_date)) notesTr.classList.add("roster-current-week-notes-row");
 
       const notesTd = document.createElement("td");
       notesTd.colSpan = isAdmin ? 5 : 4;
@@ -500,6 +506,29 @@ function formatDate(iso) {
   });
 }
 
+function parseLocalDate(iso) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function startOfLocalWeek(date) {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = start.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  start.setDate(start.getDate() + mondayOffset);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
+function isDateInCurrentWeek(iso) {
+  if (!iso) return false;
+  const date = parseLocalDate(iso);
+  const weekStart = startOfLocalWeek(new Date());
+  const nextWeekStart = new Date(weekStart);
+  nextWeekStart.setDate(weekStart.getDate() + 7);
+  return date >= weekStart && date < nextWeekStart;
+}
+
 function escHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -512,21 +541,53 @@ function escHtml(str) {
 // Startup
 // ---------------------------------------------------------------------------
 
+const registeredEventModules = new Set();
+
+function callIfAvailable(name) {
+  if (registeredEventModules.has(name)) return;
+  const fn = window[name];
+  if (typeof fn !== "function") return;
+  try {
+    fn();
+    registeredEventModules.add(name);
+  } catch (error) {
+    console.error(`Failed to register ${name}:`, error);
+  }
+}
+
+function registerAppShellEventHandlers() {
+  const bind = (id, eventName, handler) => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.appShellBound === "true") return;
+    el.dataset.appShellBound = "true";
+    el.addEventListener(eventName, handler);
+  };
+
+  bind("monthPicker", "change", onMonthChange);
+  bind("btnPrevMonth", "click", () => shiftMonth(-1));
+  bind("btnNextMonth", "click", () => shiftMonth(1));
+  bind("btnPrint", "click", () => window.print());
+  bind("btnThemeToggle", "click", toggleTheme);
+  bind("btnNavHome", "click", () => setActivePage("home", { syncAnalyticsMonth: false }));
+  bind("btnNavAnalytics", "click", () => openAnalyticsPage());
+
+  callIfAvailable("registerAuthModalEventHandlers");
+  callIfAvailable("registerChoristersModalEventHandlers");
+  callIfAvailable("registerSongsModalEventHandlers");
+  callIfAvailable("registerLyricsModalEventHandlers");
+  callIfAvailable("registerRatingsModalEventHandlers");
+  callIfAvailable("registerGeneralFeedbackEventHandlers");
+  callIfAvailable("registerRosterModalEventHandlers");
+  callIfAvailable("registerAnalyticsModalEventHandlers");
+  callIfAvailable("registerPrayerModalEventHandlers");
+  callIfAvailable("registerMonthlyDuesEventHandlers");
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   selectedMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
 
-  document.getElementById("monthPicker").addEventListener("change", onMonthChange);
-  document.getElementById("btnPrevMonth").addEventListener("click", () => shiftMonth(-1));
-  document.getElementById("btnNextMonth").addEventListener("click", () => shiftMonth(1));
-  document.getElementById("btnPrint").addEventListener("click", () => window.print());
-  document.getElementById("btnThemeToggle").addEventListener("click", toggleTheme);
-  document.getElementById("btnNavHome").addEventListener("click", () => setActivePage("home", { syncAnalyticsMonth: false }));
-  document.getElementById("btnNavAnalytics").addEventListener("click", () => openAnalyticsPage());
+  registerAppShellEventHandlers();
   setTheme(localStorage.getItem("chorister-theme") || "light");
-
-  // Wire analytics navigation before async startup work so the page switcher
-  // still functions even if one of the initial data requests stalls or fails.
-  registerAnalyticsModalEventHandlers();
 
   await Promise.all([loadSession(), loadChoristerSession()]);
   await loadChoristers();
@@ -539,15 +600,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderSongsLibraries();
   } catch (_) {}
 
-  // Home-page and shell controls stay registered centrally because they are not
-  // owned by any single modal workflow.
-  // Register modal modules after the DOM and shared state are ready.
-  registerAuthModalEventHandlers();
-  registerChoristersModalEventHandlers();
-  registerSongsModalEventHandlers();
-  registerLyricsModalEventHandlers();
-  registerRatingsModalEventHandlers();
-  registerRosterModalEventHandlers();
-  registerPrayerModalEventHandlers();
-  registerMonthlyDuesEventHandlers();
+  registerAppShellEventHandlers();
 });

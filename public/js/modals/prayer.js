@@ -99,6 +99,20 @@ function openPrayerRosterModal() {
   new bootstrap.Modal(document.getElementById("prayerRosterModal")).show();
 }
 
+function handlePrayerRosterMenuClick(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  try {
+    openPrayerRosterModal();
+  } catch (error) {
+    showToast(error.message || "Prayer roster could not be opened.", "danger");
+    console.error("Prayer roster open failed:", error);
+  }
+}
+
 function openPrayerEditForm(entry) {
   const form = document.getElementById("prayerAddForm");
   form.classList.remove("d-none");
@@ -184,11 +198,46 @@ function onPrayerMonthChange() {
 }
 
 function registerPrayerModalEventHandlers() {
-  document.getElementById("btnPrayerRoster").addEventListener("click", openPrayerRosterModal);
-  document.getElementById("btnPrayerPrevMonth").addEventListener("click", () => shiftPrayerMonth(-1));
-  document.getElementById("btnPrayerNextMonth").addEventListener("click", () => shiftPrayerMonth(1));
-  document.getElementById("prayerMonthPicker").addEventListener("change", onPrayerMonthChange);
-  document.getElementById("btnAddPrayerEntry").addEventListener("click", () => openPrayerEditForm(null));
-  document.getElementById("btnSavePrayerEntry").addEventListener("click", savePrayerEntry);
-  document.getElementById("btnCancelPrayerEdit").addEventListener("click", resetPrayerForm);
+  const rosterBtn = document.getElementById("btnPrayerRoster");
+  const prevBtn = document.getElementById("btnPrayerPrevMonth");
+  const nextBtn = document.getElementById("btnPrayerNextMonth");
+  const picker = document.getElementById("prayerMonthPicker");
+  const addBtn = document.getElementById("btnAddPrayerEntry");
+  const saveBtn = document.getElementById("btnSavePrayerEntry");
+  const cancelBtn = document.getElementById("btnCancelPrayerEdit");
+
+  if (rosterBtn && !rosterBtn.dataset.prayerBound) {
+    rosterBtn.dataset.prayerBound = "true";
+    rosterBtn.addEventListener("click", handlePrayerRosterMenuClick);
+  }
+  if (prevBtn && !prevBtn.dataset.prayerBound) {
+    prevBtn.dataset.prayerBound = "true";
+    prevBtn.addEventListener("click", () => shiftPrayerMonth(-1));
+  }
+  if (nextBtn && !nextBtn.dataset.prayerBound) {
+    nextBtn.dataset.prayerBound = "true";
+    nextBtn.addEventListener("click", () => shiftPrayerMonth(1));
+  }
+  if (picker && !picker.dataset.prayerBound) {
+    picker.dataset.prayerBound = "true";
+    picker.addEventListener("change", onPrayerMonthChange);
+  }
+  if (addBtn && !addBtn.dataset.prayerBound) {
+    addBtn.dataset.prayerBound = "true";
+    addBtn.addEventListener("click", () => openPrayerEditForm(null));
+  }
+  if (saveBtn && !saveBtn.dataset.prayerBound) {
+    saveBtn.dataset.prayerBound = "true";
+    saveBtn.addEventListener("click", savePrayerEntry);
+  }
+  if (cancelBtn && !cancelBtn.dataset.prayerBound) {
+    cancelBtn.dataset.prayerBound = "true";
+    cancelBtn.addEventListener("click", resetPrayerForm);
+  }
 }
+
+document.addEventListener("click", (event) => {
+  const rosterBtn = event.target.closest("#btnPrayerRoster");
+  if (!rosterBtn || rosterBtn.dataset.prayerBound === "true") return;
+  handlePrayerRosterMenuClick(event);
+});

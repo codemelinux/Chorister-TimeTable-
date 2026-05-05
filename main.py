@@ -764,7 +764,11 @@ class RatingIn(BaseModel):
     roster_entry_id: int
     role: str
     chorister_id: int
-    rating: int = Field(..., ge=1, le=5)
+    rating: Optional[int] = Field(None, ge=1, le=5)
+    on_key_rating: int = Field(..., ge=1, le=5)
+    audience_engagement_rating: int = Field(..., ge=1, le=5)
+    stage_management_rating: int = Field(..., ge=1, le=5)
+    sync_rating: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
 
     @field_validator("role")
@@ -775,15 +779,68 @@ class RatingIn(BaseModel):
         return v
 
 
+class GeneralFeedbackCreate(BaseModel):
+    topic: str = Field(..., max_length=64)
+    message: str = Field(..., min_length=1, max_length=4000)
+    suggested_action: Optional[str] = Field(None, max_length=4000)
+
+    @field_validator("topic")
+    @classmethod
+    def validate_topic(cls, v):
+        v = (v or "").strip().lower()
+        if v not in db.FEEDBACK_TOPICS:
+            raise ValueError("Invalid feedback topic")
+        return v
+
+    @field_validator("message")
+    @classmethod
+    def clean_message(cls, v):
+        v = (v or "").strip()
+        if not v:
+            raise ValueError("Feedback message cannot be empty")
+        return v
+
+    @field_validator("suggested_action", mode="before")
+    @classmethod
+    def clean_suggested_action(cls, v):
+        if v is None:
+            return None
+        v = str(v).strip()
+        return v or None
+
+
+class GeneralFeedbackStatusUpdate(BaseModel):
+    status: str = Field(..., max_length=16)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v):
+        v = (v or "").strip().lower()
+        if v not in db.FEEDBACK_STATUSES:
+            raise ValueError("status must be new, reviewed, or resolved")
+        return v
+
+
 @app.post("/api/ratings", dependencies=[Depends(require_admin)])
 def api_upsert_rating(body: RatingIn, session: Session = Depends(get_session)):
+    category_total = (
+        body.on_key_rating
+        + body.audience_engagement_rating
+        + body.stage_management_rating
+        + body.sync_rating
+    )
+    overall_rating = int((category_total / 4) + 0.5)
     return db.upsert_rating(
         session,
         roster_entry_id=body.roster_entry_id,
         role=body.role,
         chorister_id=body.chorister_id,
-        rating=body.rating,
+        rating=overall_rating,
         comment=body.comment,
+        on_key_rating=body.on_key_rating,
+        audience_engagement_rating=body.audience_engagement_rating,
+        stage_management_rating=body.stage_management_rating,
+        sync_rating=body.sync_rating,
     )
 
 
@@ -809,6 +866,65 @@ def api_delete_rating(rating_id: int, session: Session = Depends(get_session)):
     if not db.delete_rating(session, rating_id):
         raise HTTPException(status_code=404, detail="Rating not found")
     return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# General Feedback (chorister write/read-own, admin review)
+# ---------------------------------------------------------------------------
+
+@app.post("/api/feedback", status_code=201)
+def api_create_general_feedback(
+    body: GeneralFeedbackCreate,
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    chorister_id = request.session.get("chorister_id")
+    if not chorister_id:
+        raise HTTPException(status_code=401, detail="Chorister login required")
+    result = db.create_chorister_feedback(
+        session,
+        chorister_id=chorister_id,
+        topic=body.topic,
+        message=body.message,
+        suggested_action=body.suggested_action,
+    )
+    if not result:
+        raise HTTPException(404, "Chorister not found")
+    return result
+
+
+@app.get("/api/feedback/me")
+def api_get_my_general_feedback(request: Request, session: Session = Depends(get_session)):
+    chorister_id = request.session.get("chorister_id")
+    if not chorister_id:
+        raise HTTPException(status_code=401, detail="Chorister login required")
+    return db.list_feedback_by_chorister(session, chorister_id)
+
+
+@app.get("/api/feedback", dependencies=[Depends(require_admin)])
+def api_get_general_feedback(
+    year: Optional[int] = Query(None, ge=2000, le=2100),
+    month: Optional[int] = Query(None, ge=1, le=12),
+    status: Optional[str] = Query(None),
+    session: Session = Depends(get_session),
+):
+    if status:
+        status = status.strip().lower()
+        if status not in db.FEEDBACK_STATUSES:
+            raise HTTPException(400, "status must be new, reviewed, or resolved")
+    return db.list_chorister_feedback(session, year=year, month=month, status=status)
+
+
+@app.patch("/api/feedback/{feedback_id}", dependencies=[Depends(require_admin)])
+def api_update_general_feedback_status(
+    feedback_id: int,
+    body: GeneralFeedbackStatusUpdate,
+    session: Session = Depends(get_session),
+):
+    result = db.update_chorister_feedback_status(session, feedback_id, body.status)
+    if not result:
+        raise HTTPException(404, "Feedback not found")
+    return result
 
 
 # ---------------------------------------------------------------------------

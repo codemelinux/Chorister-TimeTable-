@@ -160,6 +160,10 @@ class PerformanceRating(Base):
     role            = Column(String(32), nullable=False)   # 'hymn' | 'praise_worship' | 'thanksgiving'
     chorister_id    = Column(Integer, ForeignKey("choristers.id", ondelete="CASCADE"), nullable=False)
     rating          = Column(Integer, nullable=False)       # 1–5
+    on_key_rating   = Column(Integer, nullable=True)
+    audience_engagement_rating = Column(Integer, nullable=True)
+    stage_management_rating = Column(Integer, nullable=True)
+    sync_rating     = Column(Integer, nullable=True)
     comment         = Column(Text, nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -167,6 +171,22 @@ class PerformanceRating(Base):
     chorister    = relationship("Chorister", foreign_keys=[chorister_id])
 
     __table_args__ = (UniqueConstraint("roster_entry_id", "role", name="uq_rating_entry_role"),)
+
+
+class ChoristerFeedback(Base):
+    """Named chorister-submitted feedback that is not part of performance scoring."""
+    __tablename__ = "chorister_feedback"
+
+    id = Column(Integer, primary_key=True)
+    chorister_id = Column(Integer, ForeignKey("choristers.id", ondelete="CASCADE"), nullable=False)
+    feedback_type = Column(String(32), nullable=False, default="general", server_default="general")
+    topic = Column(String(64), nullable=False)
+    message = Column(Text, nullable=False)
+    suggested_action = Column(Text, nullable=True)
+    status = Column(String(16), nullable=False, default="new", server_default="new")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    chorister = relationship("Chorister", foreign_keys=[chorister_id])
 
 
 class MonthlyDue(Base):
@@ -224,6 +244,11 @@ def _run_column_migrations():
         ("roster_entries", "praise_worship_song_id",    "INTEGER"),
         ("roster_entries", "thanksgiving_song_id",      "INTEGER"),
         ("roster_entries", "notes",                     "TEXT"),
+        # performance_ratings — structured feedback categories (added v3)
+        ("performance_ratings", "on_key_rating", "INTEGER"),
+        ("performance_ratings", "audience_engagement_rating", "INTEGER"),
+        ("performance_ratings", "stage_management_rating", "INTEGER"),
+        ("performance_ratings", "sync_rating", "INTEGER"),
     ]
 
     with engine.connect() as conn:
@@ -549,18 +574,37 @@ def list_songs_by_month(session: Session, year: int, month: int) -> list:
 # ---------------------------------------------------------------------------
 
 def _serialize_rating(r: PerformanceRating) -> dict:
+    on_key = r.on_key_rating if r.on_key_rating is not None else r.rating
+    audience = r.audience_engagement_rating if r.audience_engagement_rating is not None else r.rating
+    stage = r.stage_management_rating if r.stage_management_rating is not None else r.rating
+    sync = r.sync_rating if r.sync_rating is not None else r.rating
     return {
         "id": r.id,
         "roster_entry_id": r.roster_entry_id,
         "role": r.role,
         "chorister_id": r.chorister_id,
         "rating": r.rating,
+        "on_key_rating": on_key,
+        "audience_engagement_rating": audience,
+        "stage_management_rating": stage,
+        "sync_rating": sync,
         "comment": r.comment,
         "created_at": r.created_at.isoformat() if r.created_at else None,
     }
 
 
-def upsert_rating(session: Session, roster_entry_id: int, role: str, chorister_id: int, rating: int, comment: str | None) -> dict:
+def upsert_rating(
+    session: Session,
+    roster_entry_id: int,
+    role: str,
+    chorister_id: int,
+    rating: int,
+    comment: str | None,
+    on_key_rating: int | None = None,
+    audience_engagement_rating: int | None = None,
+    stage_management_rating: int | None = None,
+    sync_rating: int | None = None,
+) -> dict:
     existing = session.execute(
         select(PerformanceRating).where(
             PerformanceRating.roster_entry_id == roster_entry_id,
@@ -570,6 +614,10 @@ def upsert_rating(session: Session, roster_entry_id: int, role: str, chorister_i
     if existing:
         existing.chorister_id = chorister_id
         existing.rating = rating
+        existing.on_key_rating = on_key_rating
+        existing.audience_engagement_rating = audience_engagement_rating
+        existing.stage_management_rating = stage_management_rating
+        existing.sync_rating = sync_rating
         existing.comment = comment
     else:
         existing = PerformanceRating(
@@ -577,6 +625,10 @@ def upsert_rating(session: Session, roster_entry_id: int, role: str, chorister_i
             role=role,
             chorister_id=chorister_id,
             rating=rating,
+            on_key_rating=on_key_rating,
+            audience_engagement_rating=audience_engagement_rating,
+            stage_management_rating=stage_management_rating,
+            sync_rating=sync_rating,
             comment=comment,
         )
         session.add(existing)
@@ -620,6 +672,99 @@ def delete_rating(session: Session, rating_id: int) -> bool:
     session.delete(r)
     session.commit()
     return True
+
+
+# ---------------------------------------------------------------------------
+# Chorister feedback CRUD
+# ---------------------------------------------------------------------------
+
+FEEDBACK_TOPICS = {
+    "roster",
+    "songs_lyrics",
+    "practice_training",
+    "service_flow",
+    "app_issue",
+    "other",
+}
+FEEDBACK_STATUSES = {"new", "reviewed", "resolved"}
+
+
+def _serialize_chorister_feedback(row: ChoristerFeedback) -> dict:
+    return {
+        "id": row.id,
+        "chorister_id": row.chorister_id,
+        "chorister_name": row.chorister.name if row.chorister else None,
+        "feedback_type": row.feedback_type,
+        "topic": row.topic,
+        "message": row.message,
+        "suggested_action": row.suggested_action,
+        "status": row.status,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def create_chorister_feedback(
+    session: Session,
+    chorister_id: int,
+    topic: str,
+    message: str,
+    suggested_action: str | None = None,
+) -> dict | None:
+    if not session.get(Chorister, chorister_id):
+        return None
+    row = ChoristerFeedback(
+        chorister_id=chorister_id,
+        feedback_type="general",
+        topic=topic,
+        message=message,
+        suggested_action=suggested_action,
+        status="new",
+    )
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return _serialize_chorister_feedback(row)
+
+
+def list_feedback_by_chorister(session: Session, chorister_id: int) -> list[dict]:
+    rows = session.execute(
+        select(ChoristerFeedback)
+        .where(ChoristerFeedback.chorister_id == chorister_id)
+        .options(selectinload(ChoristerFeedback.chorister))
+        .order_by(ChoristerFeedback.created_at.desc())
+    ).scalars().all()
+    return [_serialize_chorister_feedback(row) for row in rows]
+
+
+def list_chorister_feedback(
+    session: Session,
+    year: int | None = None,
+    month: int | None = None,
+    status: str | None = None,
+) -> list[dict]:
+    query = (
+        select(ChoristerFeedback)
+        .options(selectinload(ChoristerFeedback.chorister))
+        .order_by(ChoristerFeedback.created_at.desc())
+    )
+    if year is not None:
+        query = query.where(extract("year", ChoristerFeedback.created_at) == year)
+    if month is not None:
+        query = query.where(extract("month", ChoristerFeedback.created_at) == month)
+    if status:
+        query = query.where(ChoristerFeedback.status == status)
+    rows = session.execute(query).scalars().all()
+    return [_serialize_chorister_feedback(row) for row in rows]
+
+
+def update_chorister_feedback_status(session: Session, feedback_id: int, status: str) -> dict | None:
+    row = session.get(ChoristerFeedback, feedback_id)
+    if not row:
+        return None
+    row.status = status
+    session.commit()
+    session.refresh(row)
+    return _serialize_chorister_feedback(row)
 
 
 # ---------------------------------------------------------------------------

@@ -58,11 +58,6 @@
 
           <!-- Public -->
           <li>
-            <button class="dropdown-item" id="btnViewLyrics">
-              <i class="bi bi-book me-2"></i>View Lyrics
-            </button>
-          </li>
-          <li>
             <button class="dropdown-item" id="btnSongsLibrary">
               <i class="bi bi-music-note-list me-2"></i>Add New Song
             </button>
@@ -126,6 +121,11 @@
             </button>
           </li>
           <li>
+            <button class="dropdown-item d-none" id="btnSubmitFeedback">
+              <i class="bi bi-chat-square-heart me-2"></i>Submit Feedback
+            </button>
+          </li>
+          <li>
             <button class="dropdown-item text-warning d-none" id="btnChoristerLogout">
               <i class="bi bi-box-arrow-right me-2"></i>Chorister Sign Out
             </button>
@@ -141,7 +141,6 @@
         <section class="page-shell" data-page="home">
       <div class="toolbar">
         <div>
-          <span class="section-kicker">Home Schedule</span>
           <h2 class="page-title mb-1" id="monthTitle">Monthly Roster</h2>
           <p class="chart-subtitle mb-0">Hymn &middot; Praise Worship &middot; Thanksgiving assignments</p>
         </div>
@@ -291,6 +290,32 @@
                   </div>
                 </div>
               </div>
+
+              <section class="analytics-feedback-section d-none" id="analyticsFeedbackSection">
+                <div class="analytics-song-section__header">
+                  <div>
+                    <span class="section-kicker">Performance Feedback</span>
+                    <h6 class="page-title analytics-song-title mb-1">Monthly Feedback Summary</h6>
+                  </div>
+                  <p class="analytics-pane__subtitle mb-0">Overall scoring, category averages, and leadership follow-up cues for the selected month.</p>
+                </div>
+                <div id="analyticsFeedbackOutput">
+                  <p class="text-muted small mb-0">No feedback data yet.</p>
+                </div>
+              </section>
+
+              <section class="analytics-feedback-section d-none" id="analyticsGeneralFeedbackSection">
+                <div class="analytics-song-section__header">
+                  <div>
+                    <span class="section-kicker">General Feedback</span>
+                    <h6 class="page-title analytics-song-title mb-1">Chorister Submissions</h6>
+                  </div>
+                  <p class="analytics-pane__subtitle mb-0">Named feedback submitted from the chorister portal for the selected month.</p>
+                </div>
+                <div id="analyticsGeneralFeedbackOutput">
+                  <p class="text-muted small mb-0">No general feedback yet.</p>
+                </div>
+              </section>
 
               <section class="analytics-song-section">
                 <div class="analytics-song-section__header">
@@ -804,19 +829,32 @@
     </div>
   </div>
 
-  <!-- Performance Rating Modal (admin) -->
+  <!-- Performance Feedback Modal (admin) -->
   <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header pb-2">
-          <h6 class="modal-title fw-bold" id="ratingModalLabel">Rate Performance</h6>
+          <h6 class="modal-title fw-bold" id="ratingModalLabel">Performance Feedback</h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p class="text-muted small mb-2" id="ratingModalContext"></p>
-          <div class="star-rating mb-3" id="starRatingGroup" role="group" aria-label="Rating"></div>
-          <label class="form-label small fw-semibold mb-1">Comments / Improvements</label>
-          <textarea class="form-control form-control-sm" id="ratingComment" rows="3" placeholder="Optional coaching note…"></textarea>
+          <p class="text-muted small mb-3" id="ratingModalContext"></p>
+          <div class="feedback-rating-fields mb-3" id="feedbackRatingFields"></div>
+          <div class="feedback-overall-preview mb-3" id="feedbackOverallPreview">
+            <span>Overall score</span>
+            <strong>- / 5</strong>
+          </div>
+          <div class="feedback-written-grid">
+            <div>
+              <label class="form-label small fw-semibold mb-1" for="ratingWentWell">What went well</label>
+              <textarea class="form-control form-control-sm" id="ratingWentWell" rows="3" placeholder="Strengths, wins, and encouraging notes..."></textarea>
+            </div>
+            <div>
+              <label class="form-label small fw-semibold mb-1" for="ratingImproveNext">What to improve next</label>
+              <textarea class="form-control form-control-sm" id="ratingImproveNext" rows="3" placeholder="One or two focused improvement points..."></textarea>
+            </div>
+          </div>
+          <textarea class="d-none" id="ratingComment"></textarea>
         </div>
         <div class="modal-footer justify-content-between pt-2">
           <button class="btn btn-outline-danger btn-sm d-none" id="btnClearRating">
@@ -832,7 +870,7 @@
 
   <!-- My Ratings Modal (chorister portal) -->
   <div class="modal fade" id="myRatingsModal" tabindex="-1" aria-labelledby="myRatingsModalLabel">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title fw-bold" id="myRatingsModalLabel">
@@ -845,6 +883,62 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- General Feedback Modal (chorister portal) -->
+  <div class="modal fade" id="generalFeedbackModal" tabindex="-1" aria-labelledby="generalFeedbackModalLabel">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="generalFeedbackModalLabel">
+            <i class="bi bi-chat-square-heart me-2"></i>Submit Feedback
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="general-feedback-shell">
+            <form id="generalFeedbackForm" class="general-feedback-form">
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="generalFeedbackTopic">Topic</label>
+                <select class="form-select" id="generalFeedbackTopic" required>
+                  <option value="roster">Roster</option>
+                  <option value="songs_lyrics">Songs / Lyrics</option>
+                  <option value="practice_training">Practice / Training</option>
+                  <option value="service_flow">Service Flow</option>
+                  <option value="app_issue">App Issue</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="generalFeedbackMessage">Feedback</label>
+                <textarea class="form-control" id="generalFeedbackMessage" rows="5" maxlength="4000" required placeholder="Share what should be improved, clarified, or celebrated..."></textarea>
+              </div>
+              <div class="mb-0">
+                <label class="form-label fw-semibold" for="generalFeedbackSuggestedAction">Suggested action <span class="text-muted fw-normal">(optional)</span></label>
+                <textarea class="form-control" id="generalFeedbackSuggestedAction" rows="3" maxlength="4000" placeholder="What would you like leadership to consider next?"></textarea>
+              </div>
+            </form>
+            <aside class="general-feedback-history">
+              <div class="general-feedback-history__header">
+                <span>My Submitted Feedback</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btnRefreshMyFeedback" type="button">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
+              </div>
+              <div id="myGeneralFeedbackList">
+                <p class="text-muted small mb-0">Loading...</p>
+              </div>
+            </aside>
+          </div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <span class="text-muted small">Admins can see your name so they can follow up.</span>
+          <button class="btn btn-primary" id="btnSendGeneralFeedback" type="button">
+            <i class="bi bi-send me-1"></i>Submit
+          </button>
         </div>
       </div>
     </div>
@@ -872,7 +966,8 @@
   <script src="/js/modals/choristers.js"></script>
   <script src="/js/modals/songs.js"></script>
   <script src="/js/modals/lyrics.js"></script>
-  <script src="/js/modals/ratings.js"></script>
+  <script src="/js/modals/Feedback_Rating.js"></script>
+  <script src="/js/modals/General_Feedback.js"></script>
   <script src="/js/modals/roster.js"></script>
   <script src="/js/modals/analytics.js"></script>
   <script src="/js/modals/prayer.js"></script>

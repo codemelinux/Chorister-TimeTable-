@@ -353,7 +353,7 @@ function renderLyricsColumn(containerId, categorySongs) {
 }
 
 function registerLyricsModalEventHandlers() {
-  document.getElementById("btnViewLyrics").addEventListener("click", openLyricsModal);
+  document.getElementById("btnViewLyrics")?.addEventListener("click", openLyricsModal);
   document.getElementById("btnLoadLyrics").addEventListener("click", loadLyricsByMonth);
   document.getElementById("btnLoadHomeLyrics")?.addEventListener("click", loadHomeLyricsByMonth);
 
