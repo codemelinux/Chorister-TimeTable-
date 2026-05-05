@@ -281,8 +281,27 @@ body {
   min-height: 96px;
 }
 
+.home-most-sung-section {
+  margin-top: 1.6rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--panel-border);
+}
+
+.home-most-sung-section__header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.home-most-sung-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--title-color);
+}
+
 .home-all-songs-section {
-  margin-top: 1.5rem !important;
+  margin-top: 1.6rem !important;
 }
 
 /* ---- Toolbar ---- */

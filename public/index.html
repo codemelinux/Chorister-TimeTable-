@@ -212,7 +212,44 @@
           </div>
         </div>
 
-        <div class="all-songs-section home-all-songs-section mt-4">
+        <section class="home-most-sung-section">
+          <div class="home-most-sung-section__header">
+            <span class="section-kicker">Song Library</span>
+            <h3 class="home-most-sung-title mb-1">Most Sung Songs</h3>
+            <p class="chart-subtitle mb-0">A quick category breakdown of the songs used most often across the selected period.</p>
+          </div>
+          <div class="category-analytics-grid" id="categoryAnalyticsGrid">
+            <div class="category-card category-card--hymn">
+              <div class="category-card__header">
+                <span class="category-card__emoji">ðŸŽµ</span>
+                <span class="category-card__label">Hymn</span>
+              </div>
+              <div class="category-card__body" id="analyticsHymn">
+                <p class="text-muted small mb-0">No data yet.</p>
+              </div>
+            </div>
+            <div class="category-card category-card--praise">
+              <div class="category-card__header">
+                <span class="category-card__emoji">ðŸ™Œ</span>
+                <span class="category-card__label">Praise Worship</span>
+              </div>
+              <div class="category-card__body" id="analyticsPraise">
+                <p class="text-muted small mb-0">No data yet.</p>
+              </div>
+            </div>
+            <div class="category-card category-card--thanksgiving">
+              <div class="category-card__header">
+                <span class="category-card__emoji">ðŸ™</span>
+                <span class="category-card__label">Thanksgiving</span>
+              </div>
+              <div class="category-card__body" id="analyticsThanksgiving">
+                <p class="text-muted small mb-0">No data yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="all-songs-section home-all-songs-section">
           <div class="all-songs-section__header">
             <i class="bi bi-music-note-list me-2"></i>All Songs in Library
           </div>
@@ -322,7 +359,7 @@
                 </div>
               </section>
 
-              <section class="analytics-song-section">
+              <section class="analytics-song-section d-none" aria-hidden="true">
                 <div class="analytics-song-section__header">
                   <div>
                     <span class="section-kicker">Song Library</span>
@@ -330,13 +367,13 @@
                   </div>
                   <p class="analytics-pane__subtitle mb-0">A quick category breakdown of the songs used most often across the selected period.</p>
                 </div>
-                <div class="category-analytics-grid" id="categoryAnalyticsGrid">
+                <div class="category-analytics-grid" id="categoryAnalyticsGridAnalytics">
                   <div class="category-card category-card--hymn">
                     <div class="category-card__header">
                       <span class="category-card__emoji">🎵</span>
                       <span class="category-card__label">Hymn</span>
                     </div>
-                    <div class="category-card__body" id="analyticsHymn">
+                    <div class="category-card__body" id="analyticsHymnHidden">
                       <p class="text-muted small mb-0">No data yet.</p>
                     </div>
                   </div>
@@ -345,7 +382,7 @@
                       <span class="category-card__emoji">🙌</span>
                       <span class="category-card__label">Praise Worship</span>
                     </div>
-                    <div class="category-card__body" id="analyticsPraise">
+                    <div class="category-card__body" id="analyticsPraiseHidden">
                       <p class="text-muted small mb-0">No data yet.</p>
                     </div>
                   </div>
@@ -354,7 +391,7 @@
                       <span class="category-card__emoji">🙏</span>
                       <span class="category-card__label">Thanksgiving</span>
                     </div>
-                    <div class="category-card__body" id="analyticsThanksgiving">
+                    <div class="category-card__body" id="analyticsThanksgivingHidden">
                       <p class="text-muted small mb-0">No data yet.</p>
                     </div>
                   </div>
