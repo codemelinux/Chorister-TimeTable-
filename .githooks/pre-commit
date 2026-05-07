@@ -1,0 +1,8 @@
+#!/bin/sh
+# If public/index.html is staged, sync it to the project-root index.html
+# (the root copy is bundled in Vercel's Lambda to serve / cleanly).
+if git diff --cached --name-only | grep -q "^public/index\.html$"; then
+  cp public/index.html index.html
+  git add index.html
+  echo "pre-commit: synced public/index.html -> index.html"
+fi
