@@ -997,5 +997,5 @@ def api_sync_monthly_dues_to_sheets(
     return {"synced": len(rows), "year": year}
 
 
-if PUBLIC_DIR.exists() and not os.getenv("VERCEL_ENV"):
+if PUBLIC_DIR.exists():
     app.mount("/", StaticFiles(directory=str(PUBLIC_DIR), html=True), name="public")
