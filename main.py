@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, or_
@@ -88,6 +89,10 @@ def startup():
     """Create/migrate DB tables on first run."""
     db.init_db()
 
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/index.html", status_code=302)
 
 
 
