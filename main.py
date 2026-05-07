@@ -89,6 +89,25 @@ def startup():
     db.init_db()
 
 
+@app.get("/debug-fs")
+def debug_fs():
+    import os
+    entries = []
+    for root, dirs, files in os.walk("/var/task"):
+        for f in files:
+            entries.append(os.path.join(root, f).replace("/var/task/", ""))
+        if len(entries) > 60:
+            entries.append("...truncated")
+            break
+    return {
+        "base_dir": str(BASE_DIR),
+        "public_dir": str(PUBLIC_DIR),
+        "public_exists": PUBLIC_DIR.exists(),
+        "cwd": os.getcwd(),
+        "files": entries[:60],
+    }
+
+
 def get_session():
     """FastAPI dependency: yields a SQLAlchemy session, closed after request."""
     with db.get_session() as session:
