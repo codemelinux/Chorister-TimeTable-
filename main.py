@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, or_
@@ -87,6 +88,14 @@ app.add_middleware(
 def startup():
     """Create/migrate DB tables on first run."""
     db.init_db()
+
+
+_INDEX_HTML = (BASE_DIR / "index.html").read_text(encoding="utf-8")
+
+
+@app.get("/")
+def root():
+    return HTMLResponse(content=_INDEX_HTML)
 
 
 
