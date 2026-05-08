@@ -1,20 +1,22 @@
 # Chorister TimeTable
 
-Chorister TimeTable is a FastAPI-based choir planning app for managing service rosters, a shared song library, chorister portal access, prayer assignments, and performance ratings.
+Chorister TimeTable is a FastAPI-based choir planning app for managing service rosters, prayer schedules, songs, chorister portal access, monthly dues, feedback, analytics, and performance ratings.
 
-The app serves a static frontend from `public/` and exposes JSON APIs for administration and day-to-day choir workflows. It can run locally with SQLite and deploy to platforms like Vercel, Render, or Railway with PostgreSQL.
+The app serves a static frontend from `public/` and exposes JSON APIs for administration and day-to-day choir workflows. It can run locally with SQLite and deploy with PostgreSQL on platforms such as Vercel, Render, or Railway.
 
-## What The Project Currently Does
+## Features
 
-- Public users can view the monthly service roster, prayer roster, and analytics data.
+- Public users can view monthly service rosters, prayer rosters, and analytics.
 - Admins can log in with a shared password stored in environment variables.
 - Admins can add and remove choristers.
+- Choristers can receive portal access with a PIN and log in separately from admins.
 - Admins can create, edit, and delete roster entries for `Hymn`, `Praise Worship`, and `Thanksgiving`.
-- Choristers can be granted portal access with a PIN and log in separately from admins.
-- Authenticated choristers can submit songs to the shared library.
+- Choristers can submit songs to the shared song library.
 - Admins can assign songs to specific choristers.
 - Songs can optionally sync to Google Docs in Google Drive.
 - Admins can record performance ratings, and choristers can view their own ratings.
+- Choristers can submit feedback, and admins can review and update it.
+- Monthly dues can be tracked in the app and optionally synced with Google Sheets.
 
 ## Tech Stack
 
@@ -22,51 +24,54 @@ The app serves a static frontend from `public/` and exposes JSON APIs for admini
 - Database: SQLite for local development, PostgreSQL in deployment
 - Auth: Starlette `SessionMiddleware`, shared admin password, chorister PIN login with `bcrypt`
 - Frontend: static HTML, CSS, and JavaScript in `public/`
-- Optional integrations: Google Drive API and Google Docs API for song lyric documents
+- Optional integrations: Google Drive, Google Docs, and Google Sheets APIs
 
 ## Project Structure
 
 ```text
 Chorister TimeTable/
-├── api/
-│   └── index.py                 # Deployment entrypoint importing main:app
-├── public/
-│   ├── app.js                   # Frontend logic
-│   ├── index.html               # Main UI
-│   └── style.css                # Styling
-├── scripts/
-│   ├── google_auth_setup.py     # One-time Google OAuth helper
-│   ├── setup.bat                # Windows setup
-│   ├── setup.sh                 # Unix/macOS/WSL setup
-│   ├── start.bat                # Windows start script
-│   └── start.sh                 # Unix/macOS/WSL start script
-├── database.py                  # ORM models, DB helpers, startup migrations
-├── google_drive.py              # Google Drive / Docs sync helpers
-├── main.py                      # FastAPI app, routes, auth, static file mount
-├── Procfile                     # Railway/Procfile start command
-├── requirements.txt             # Python dependencies
-├── .env.example                 # Example environment variables
-└── chorister_timetable.db       # Local SQLite database fallback
+|-- api/
+|   `-- index.py                 # Deployment entrypoint importing main:app
+|-- public/
+|   |-- app.js                   # Frontend bootstrap / shared logic
+|   |-- index.html               # Main UI
+|   |-- style.css                # Styling
+|   `-- js/modals/               # Modal-specific frontend modules
+|-- scripts/
+|   |-- google_auth_setup.py     # One-time Google OAuth helper
+|   |-- setup.bat                # Windows setup
+|   |-- setup.sh                 # Unix/macOS/WSL setup
+|   |-- start.bat                # Windows start script
+|   `-- start.sh                 # Unix/macOS/WSL start script
+|-- database.py                  # ORM models, DB helpers, startup migrations
+|-- google_drive.py              # Google Drive / Docs sync helpers
+|-- google_sheets.py             # Monthly dues Google Sheets helpers
+|-- main.py                      # FastAPI app, routes, auth, static file mount
+|-- requirements.txt             # Python dependencies
+|-- vercel.json                  # Vercel routing configuration
+|-- .env.example                 # Example environment variables
+`-- chorister_timetable.db       # Local SQLite database fallback
 ```
 
 ## Architecture Notes
 
 - `main.py` loads `.env` locally, configures sessions, creates the FastAPI app, and mounts the `public/` directory.
-- `database.py` contains the SQLAlchemy models plus all CRUD and analytics helpers.
-- Database tables are created automatically on startup, and lightweight column migrations run at startup as well.
+- `database.py` contains the SQLAlchemy models plus CRUD, analytics, ratings, feedback, and monthly dues helpers.
+- Database tables are created automatically on startup, and lightweight column migrations run at startup as needed.
 - If `DATABASE_URL` or `POSTGRES_URL` is not set, the app falls back to a local SQLite file.
 - Session cookies are marked `https_only=True` in production.
 
 ## Data Model Overview
 
-Core tables in `database.py`:
+Core tables in `database.py` include:
 
-- `choristers`: choir members, optional PIN hash, portal-access flag
-- `songs`: song library entries, lyrics, category, optional Google Doc link, submission source
-- `song_assignments`: links songs to choristers
-- `roster_entries`: one row per service date with role assignments and notes
-- `prayer_roster`: separate prayer schedule
+- `choristers`: choir members, optional PIN hash, and portal-access flag
+- `songs`: song library entries, lyrics, category, optional Google Doc link, and submission source
+- `song_assignments`: song-to-chorister assignments
+- `roster_entries`: service dates with role assignments and notes
+- `prayer_roster`: prayer schedule entries
 - `performance_ratings`: admin ratings for service performance
+- Feedback and monthly dues tables used by the portal and admin views
 
 ## Environment Variables
 
@@ -80,13 +85,14 @@ SESSION_SECRET=change-me-session-secret
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME
 ```
 
-Optional Google Drive integration:
+Optional Google integrations:
 
 ```env
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REFRESH_TOKEN=your-refresh-token
 GOOGLE_DRIVE_FOLDER_ID=
+MONTHLY_DUES_SPREADSHEET_ID=
 ```
 
 Notes:
@@ -96,6 +102,7 @@ Notes:
 - `DATABASE_URL` is the main database connection string.
 - `POSTGRES_URL` is also accepted.
 - `GOOGLE_DRIVE_FOLDER_ID` is optional. If omitted, song docs are created in the Drive root.
+- `MONTHLY_DUES_SPREADSHEET_ID` is optional and enables monthly dues sync with an existing Google Sheet.
 
 ## Production Safeguards
 
@@ -158,13 +165,20 @@ In production, the app refuses to start if:
 - `PUT /api/prayer-roster/{entry_id}`
 - `DELETE /api/prayer-roster/{entry_id}`
 
-### Analytics And Ratings
+### Analytics, Ratings, Feedback, And Dues
 
 - `GET /api/analytics?from=YYYY-MM&to=YYYY-MM`
 - `POST /api/ratings`
 - `GET /api/ratings?year=YYYY&month=M`
 - `GET /api/ratings/me`
 - `DELETE /api/ratings/{rating_id}`
+- `POST /api/feedback`
+- `GET /api/feedback/me`
+- `GET /api/feedback`
+- `PATCH /api/feedback/{feedback_id}`
+- `GET /api/monthly-dues`
+- `PUT /api/monthly-dues/{chorister_id}/{year}/{month}`
+- `POST /api/monthly-dues/sync`
 
 ## Local Development
 
@@ -204,11 +218,11 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000) after the server starts.
 
-## Google Drive Setup
+## Google Drive And Sheets Setup
 
-Google Drive sync is optional. If configured, songs can be pushed to Google Docs and stored in category folders such as `Hymns`, `Praise & Worship`, and `Thanksgiving`.
+Google integration is optional. If configured, songs can be pushed to Google Docs and stored in category folders such as `Hymns`, `Praise & Worship`, and `Thanksgiving`. Monthly dues can also sync with an existing Google Sheet when `MONTHLY_DUES_SPREADSHEET_ID` is set.
 
-One-time setup:
+One-time OAuth setup:
 
 ```bash
 python scripts/google_auth_setup.py
@@ -220,9 +234,11 @@ That script expects `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to already exi
 
 ### Vercel
 
-- `api/index.py` is the Python entrypoint and simply imports `main.app`.
-- Configure the required environment variables in the Vercel dashboard.
-- Use PostgreSQL in production.
+- `api/index.py` is the Python entrypoint and imports `main.app`.
+- `vercel.json` rewrites API requests to that FastAPI app.
+- Add a Postgres database from Vercel Marketplace, or connect an existing Postgres provider, then set `DATABASE_URL` or `POSTGRES_URL` in the Vercel project environment.
+- Set production values for `ADMIN_PASSWORD` and `SESSION_SECRET`; the app refuses to start in production with the development defaults.
+- Optional Google integrations should also be copied into Vercel environment variables if song Docs or monthly dues Sheets sync are used.
 
 ### Render
 
@@ -235,10 +251,10 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 
 ### Railway
 
-- `Procfile` contains:
+- Use this start command:
 
-```text
-web: uvicorn main:app --host 0.0.0.0 --port $PORT
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
 - The app detects Railway production via `RAILWAY_ENVIRONMENT=production`.
